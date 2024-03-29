@@ -29,18 +29,25 @@ const postSchema = new mongoose.Schema(
       default: 'posted',
       enum: ['editing', 'posted', 'deleted'],
     },
-    // owner: [
-    //   {
-    //     type: mongoose.Schema.ObjectId,
-    //     ref: 'User',
-    //   },
-    // ],
+    author: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User',
+      required: [true, 'Post must have an author'],
+    },
   },
   {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   },
 );
+
+// postSchema.pre(/^find/, function (next) {
+//   this.populate({
+//     path: 'author',
+//     select: 'name photo',
+//   });
+//   next();
+// });
 
 const Post = mongoose.model('Post', postSchema);
 

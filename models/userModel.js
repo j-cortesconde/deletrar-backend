@@ -76,6 +76,14 @@ const userSchema = new mongoose.Schema(
   },
 );
 
+//
+userSchema.virtual('posts', {
+  ref: 'Post',
+  foreignField: 'author',
+  localField: '_id',
+  select: 'title',
+});
+
 // Encrypt password on password create/change
 userSchema.pre('save', async function (next) {
   // Only run this function if password was actually modified
