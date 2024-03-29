@@ -1,3 +1,4 @@
+//TODO: Still missing routes for a bunch of the auth methods and still missing an auth method for requesting account invitation (to admins or to a known user)
 const express = require('express');
 
 const userController = require('../controllers/userController');
@@ -5,7 +6,7 @@ const authController = require('../controllers/authController');
 
 const router = express.Router();
 
-router.post('/invite', authController.invite);
+router.post('/invite', authController.protect, authController.invite);
 router.post('/login', authController.login);
 router.get('/logout', authController.logout);
 

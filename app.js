@@ -17,6 +17,7 @@ app.use(express.json({ limit: '10kb' }));
 app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/users', userRouter);
 
+//FIXME:This must be fixed
 app.all('*', (req, res, next) => {
   console.log('Error');
   res.send('Not today boy');

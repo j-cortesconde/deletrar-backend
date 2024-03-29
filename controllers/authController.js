@@ -110,7 +110,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     token = req.headers.authorization.split(' ')[1];
-  } else if (req.cookies.jwt) {
+  } else if (req.cookies?.jwt) {
     token = req.cookies.jwt;
   }
 
@@ -229,7 +229,6 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 });
 
 // Checks if the reset token on the url corresponds to a user's (and isnt outdated). If so, resets all passwordReset fields on the user and accepts the password and resetpassword into the user document (and creates and sends the jwt so user is logged in)
-//FIXME: Check cases where pw and/or pw confirm don't pass validation. I fear it might not update pw and just login with
 exports.resetPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on the token
   const hashedToken = crypto
@@ -258,7 +257,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 });
 
 // For logged in users. If the currentPw they pass in in body is correct, updates it from body too (pw & pwconfirm)
-//FIXME: Check cases where pw and/or pw confirm don't pass validation. I fear it might not update pw and just login with it.
 exports.updatePassword = catchAsync(async (req, res, next) => {
   // 1) Get user from collection
   const user = await User.findById(req.user.id).select('+password');
