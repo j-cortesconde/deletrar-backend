@@ -1,3 +1,4 @@
+//FIXME: This must be reviewed and changed/fixed
 const nodemailer = require('nodemailer');
 const pug = require('pug');
 const htmlToText = require('html-to-text');
