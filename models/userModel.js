@@ -11,12 +11,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: [40, 'A user name must have less or equal to 40 characters'],
     },
+    // TODO: We must add three functionalities: 1) username be marked as used before waiting for the request send. 2) username not be allowed to be updated. 3) Force the user to create a username when activating the profile (passing it from invitee to user)
     username: {
       type: String,
       unique: true,
       lowercase: true,
       trim: true,
-      required: [true, 'A user must have a username'],
     },
     email: {
       type: String,

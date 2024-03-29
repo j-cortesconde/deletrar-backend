@@ -37,20 +37,42 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
-//Maybe change name to invite
-exports.signup = catchAsync(async (req, res, next) => {
+// Inviting a friend you only pass in their name and email. System creates random password and user is forced to reset it.
+exports.invite = catchAsync(async (req, res, next) => {
+  // 1) Creates a user with a random password
+  const password = `${req.body.email}${Date.now()}`;
   const newUser = await User.create({
     name: req.body.name,
     email: req.body.email,
-    password: req.body.password,
-    passwordConfirm: req.body.passwordConfirm,
+    password,
+    passwordConfirm: password,
   });
 
-  const url = `${req.protocol}://${req.get('host')}/me`;
-  //FIXME: Email isn't currently working (plus, see into sending the new password) Or maybe create with random password and have new user directly go through reset password
-  await new Email(newUser, url).sendWelcome();
+  // 2) Generate a random reset token
+  const resetToken = newUser.createPasswordResetToken();
+  await newUser.save({ validateBeforeSave: false });
 
-  createSendToken(newUser, 201, res);
+  // 3) Sends a welcome email to the user's email (including the pw reset token link)
+  try {
+    const resetURL = `${req.protocol}://${req.get(
+      'host',
+    )}/api/v1/users/resetPassword/${resetToken}`;
+    await new Email(newUser, resetURL).sendWelcome();
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Token sent to email!',
+    });
+  } catch (err) {
+    newUser.passwordResetToken = undefined;
+    newUser.passwordResetExpires = undefined;
+    await newUser.save({ validateBeforeSave: false });
+
+    return next(
+      new AppError('There was an error sending the email. Try again later!'),
+      500,
+    );
+  }
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -183,7 +205,6 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
-  //FIXME: Email not currently working
   // 3) Send it to user's email
   try {
     const resetURL = `${req.protocol}://${req.get(

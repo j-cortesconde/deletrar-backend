@@ -1,4 +1,5 @@
 //TODO: Missing a global error handler
+//TODO: Email templates must be fixed
 const express = require('express');
 const morgan = require('morgan');
 

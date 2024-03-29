@@ -1,0 +1,16 @@
+extends baseEmail
+
+block content
+  p ¡Hola #{firstName}!
+  p Recibiste una invitación para unirte a Deletrar y queremos darte la bienvenida. Estamos muy contentos de tenerte con nosotros 🎉🙏
+  p Para empezar vas a tener que crear una nueva contraseña:
+  table.btn.btn-primary(role='presentation', border='0', cellpadding='0', cellspacing='0')
+    tbody
+      tr
+        td(align='left')
+          table(role='presentation', border='0', cellpadding='0', cellspacing='0')
+            tbody
+              tr
+                td
+                  a(href=`${url}`, target='_blank') Crear nueva contraseña
+  p - Joaquín Cortés Conde, administrador.
