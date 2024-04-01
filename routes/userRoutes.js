@@ -28,6 +28,7 @@ router.patch(
   userController.updateMe,
 );
 router.delete('/deleteMe', userController.deleteMe);
+//TODO: Add a functionality so a user can modify their account settings (and make those account settings impactful elsewhere)
 
 // Make the following routes accessible only to admins:
 router.use(authController.restrictTo('admin'));
