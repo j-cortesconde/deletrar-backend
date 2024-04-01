@@ -6,19 +6,36 @@ const authController = require('../controllers/authController');
 
 const router = express.Router();
 
-router.post('/invite', authController.protect, authController.invite);
+// TODO:No signup, but yes signup request here
 router.post('/login', authController.login);
 router.get('/logout', authController.logout);
 
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 
+// TODO: Must think about and add public user search features. They must be safe.
+
+// Protect all routes from now on:
+router.use(authController.protect);
+
+router.post('/invite', authController.invite);
+router.patch('/updateMyPassword', authController.updatePassword);
+router.get('/me', userController.getMe, userController.getUserById);
+router.patch(
+  '/updateMe',
+  userController.uploadUserPhoto,
+  userController.resizeUserPhoto,
+  userController.updateMe,
+);
+router.delete('/deleteMe', userController.deleteMe);
+
+// Make the following routes accessible only to admins:
+router.use(authController.restrictTo('admin'));
+
 router
   .route('/')
   .get(userController.getAllUsers)
-  //TODO: MAKE SURE this is only possible for specific users as per app's requirements
   .post(userController.createUser);
-
 router
   .route('/:id')
   .get(userController.getUserById)

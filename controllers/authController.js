@@ -147,7 +147,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
-// TODO: Check use cases: (seems to be for view renders). Ill do it in React on a different dir. Old message: Only for rendered pages, no errors!
+// FIXME: Check use cases: (seems to be for view renders). Ill do it in React on a different dir. Old message: Only for rendered pages, no errors!
 exports.isLoggedIn = async (req, res, next) => {
   if (req.cookies.jwt) {
     try {
@@ -182,7 +182,7 @@ exports.isLoggedIn = async (req, res, next) => {
 exports.restrictTo =
   (...roles) =>
   (req, res, next) => {
-    // roles ['admin', 'lead-guide']. role='user'
+    // roles=['admin', 'user'] includes req.user.role='user'
     if (!roles.includes(req.user.role)) {
       return next(
         new AppError('You do not have permission to perform this action', 403),

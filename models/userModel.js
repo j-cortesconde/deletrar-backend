@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: 'default.jpg',
     },
+    description: {
+      type: String,
+      trim: true,
+    },
     //TODO: Must make sure this role isn't modifiable by unauthorized users
     role: {
       type: String,
