@@ -54,7 +54,6 @@ exports.getMe = (req, res, next) => {
   next();
 };
 
-//TODO: Must add a way of changing a user's email (with password prompting and email confirmation)
 // Updates currently loggedin user's information. Excludes password info and all info that isn't name & description (also allows to update photo path)
 exports.updateMe = catchAsync(async (req, res, next) => {
   // 1) Create error if user POSTs password data
@@ -70,6 +69,31 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   // 2) Filtered out unwanted fields names that are not allowed to be updated
   const filteredBody = filterObj(req.body, 'name', 'description');
   if (req.file) filteredBody.photo = req.file.filename;
+
+  // 3) Update user document
+  const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: updatedUser,
+    },
+  });
+});
+
+// Initializes the user (adds custom username and changes role from invitee to user)
+exports.initializeMe = catchAsync(async (req, res, next) => {
+  // 1) Make sure the request includes a username and the user isn't initiated (is invitee)
+  if (!req.body.username) next(new AppError('Must inform a username', 401));
+  if (req.user.role !== 'invitee')
+    next(new AppError('User is already initialized', 401));
+
+  // 2) Filtered out unwanted fields names that are not allowed to be updated
+  const filteredBody = filterObj(req.body, 'username');
+  filteredBody.role = 'user';
 
   // 3) Update user document
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {

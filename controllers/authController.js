@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-//FIXME: This Email module isn't currently working
 const Email = require('../utils/email');
 
 const signToken = (id) =>
@@ -39,11 +38,12 @@ const createSendToken = (user, statusCode, res) => {
 
 // Inviting a friend you only pass in their name and email. System creates random password and user is forced to reset it.
 exports.invite = catchAsync(async (req, res, next) => {
-  // 1) Creates a user with a random password
+  // 1) Creates a user with a random password and a throwaway username (the user's email address)
   const password = `${req.body.email}${Date.now()}`;
   const newUser = await User.create({
     name: req.body.name,
     email: req.body.email,
+    username: req.body.email,
     password,
     passwordConfirm: password,
   });
@@ -101,7 +101,8 @@ exports.logout = (req, res) => {
   res.status(200).json({ status: 'success' });
 };
 
-// Checks the user is logged in. If so, nexts, if not, errors. Adds the user document from the User model to  req.user
+// Checks the user is logged in and if pw hasn't changed sin jwt emission. If so, nexts, if not, errors.
+// Adds the user document from the User model to  req.user
 exports.protect = catchAsync(async (req, res, next) => {
   // 1) Getting token and check of it's there
   let token;
@@ -146,6 +147,22 @@ exports.protect = catchAsync(async (req, res, next) => {
   res.locals.user = currentUser;
   next();
 });
+
+// Checks the user is initialized (isn't invitee). If so, nexts, if not, errors and prompts to initialize.
+exports.isInitialized = (req, res, next) => {
+  if (req.user.role === 'invitee') {
+    const initializeURL = `${req.protocol}://${req.get(
+      'host',
+    )}/api/v1/users/initializeMe`;
+    return next(
+      new AppError(
+        `User isnt yet initialized. Please do so by patching a username request at ${initializeURL}`,
+        401,
+      ),
+    );
+  }
+  next();
+};
 
 // FIXME: Check use cases: (seems to be for view renders). Ill do it in React on a different dir. Old message: Only for rendered pages, no errors!
 exports.isLoggedIn = async (req, res, next) => {
@@ -196,7 +213,7 @@ exports.restrictTo =
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on POSTed email
   const user = await User.findOne({ email: req.body.email });
-  // FIXME: Insecure, it's giving email address info (but not very insecure, since there may be other ways to find out, like at signup)
+
   if (!user) {
     return next(new AppError('There is no user with email address.', 404));
   }
@@ -250,7 +267,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
   await user.save();
-
   // 3) changedPasswordAt property for the user gets auto updated as per Model's pre-save MW
   // 4) Log the user in, send JWT
   createSendToken(user, 200, res);

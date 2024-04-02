@@ -14,9 +14,23 @@ const userSchema = new mongoose.Schema(
     // TODO: We must add three functionalities: 1) username be marked as used before waiting for the request send. 2) username not be allowed to be updated. 3) Force the user to create a username when activating the profile (passing it from invitee to user)
     username: {
       type: String,
-      unique: true,
       lowercase: true,
       trim: true,
+      validate: {
+        validator: async function (value) {
+          // Allow uniqueness check only if the username is not null
+          if (value !== null) {
+            // Accessing the document being updated via `this`
+            const existingUser = await mongoose.models.User.findOne({
+              id: { $ne: this.id },
+              username: value,
+            });
+            return !existingUser;
+          }
+          return true; // Allow null values
+        },
+        message: (props) => `Username ${props.value} already exists!`,
+      },
     },
     email: {
       type: String,
@@ -33,13 +47,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    //TODO: Must make sure this role isn't modifiable by unauthorized users
     role: {
       type: String,
       enum: ['invitee', 'user', 'admin'],
       default: 'invitee',
     },
-    //TODO:PW logic not yet implemented
     password: {
       type: String,
       required: [true, 'Please provide a password'],
@@ -50,7 +62,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please confirm your password'],
       validate: {
-        // TODO: Make sure this is fine: This only works on CREATE and SAVE!!!
+        // This only works on CREATE and SAVE!!!
         validator: function (el) {
           return el === this.password;
         },
@@ -116,7 +128,7 @@ userSchema.pre(/^find/, function (next) {
   next();
 });
 
-// TODO: Check, implement and document the following three password methods:
+// Checks that two given passwords, the first flat, the second hashed, are the same
 userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword,
@@ -124,6 +136,7 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
+// Checks whether JWToken is outdated because the password has been changed since its emission (true if outdated)
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
     const changedTimestamp = parseInt(
@@ -138,6 +151,7 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false;
 };
 
+// Creates and returns a unique encrypted token that will be sent by email and will be used as ownership validation for password reset
 userSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString('hex');
 
