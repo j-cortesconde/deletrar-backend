@@ -1,0 +1,23 @@
+// TODO: Agregar links a las políticas y a la configuración
+extends baseEmail
+
+block content
+  p ¡Hola #{firstName}!
+  p Recibimos una solicitud de parte de un usuario para que lo invites a Deletrar. Nos encanta que te ofrezcas para agrandar la comunidad 🎉🙏
+  p Queremos recordarte que no es obligación que aceptes su solicitud y que hacerlo podría tener consecuencias negativas para tu cuenta si el usuario no se comporta como es debido.
+  p Si no conocés o no confiás en esta persona, podés simplemente ignorar este mensaje. Además, si preferís no recibir más solicitudes de este estilo, podés cambiar la configuración de tu cuenta. 
+  p El usuario que te solicitó acceso se presentó como #{requesterUser.name}, su correo electrónico es #{requesterUser.email} y en su solicitud escribió el siguiente texto:
+  p #{requestText}
+  p Si no querés aceptarlo, ignorá este correo. Si querés hacerlo, hace click en el siguiente botón:
+  table.btn.btn-primary(role='presentation', border='0', cellpadding='0', cellspacing='0')
+    tbody
+      tr
+        td(align='left')
+          table(role='presentation', border='0', cellpadding='0', cellspacing='0')
+            tbody
+              tr
+                td
+                  a(href=`${url}`, target='_blank') Invitar
+  p Si tenés dudas sobre lo que implica para tu cuenta invitar a alguien a Deletrar, te invitamos a leer las políticas.
+  p Te saluda y te desea buena escritura,
+  p - Joaquín Cortés Conde, administrador.

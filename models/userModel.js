@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['invitee', 'user', 'admin'],
+      enum: ['requestor', 'invitee', 'user', 'admin'],
       default: 'invitee',
     },
     password: {
@@ -83,8 +83,14 @@ const userSchema = new mongoose.Schema(
     },
     //TODO: Settings still to do:
     settings: {
-      type: String,
+      type: {
+        recievingInvitationRequests: {
+          type: Boolean,
+          default: true,
+        },
+      },
     },
+    notes: [String],
   },
   {
     toJSON: { virtuals: true },

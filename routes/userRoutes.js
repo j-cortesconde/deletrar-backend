@@ -1,7 +1,7 @@
-//TODO: Adding public user search features that are app safe
-//TODO: Must add a way of changing a user's email (with password prompting and email confirmation) (in /updateMe)
-//TODO: Add a functionality so a user can modify their account settings (and make those account settings impactful elsewhere) (also add them to userModel)
-//TODO: Still missing routes for a bunch of the auth methods and still missing an auth method for requesting account invitation (to admins or to a known user)
+// TODO: Adding public user search features that are app safe
+// TODO: Must add a way of changing a user's email (with password prompting and email confirmation) (in /updateMe)
+// TODO: Add a functionality so a user can modify their account settings (and make those account settings impactful elsewhere) (also add them to userModel)
+// TODO: Still missing an auth method for requesting account invitation (to admins or to a known user)
 // TODO: Must add an error catch in the error handler that contemplates when in the authController.invite the user tries to invite someone that has already been invited.
 const express = require('express');
 
@@ -10,6 +10,7 @@ const authController = require('../controllers/authController');
 
 const router = express.Router();
 
+router.post('/requestAccount', authController.requestAccount);
 router.post('/login', authController.login);
 router.get('/logout', authController.logout);
 

@@ -6,6 +6,8 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const Email = require('../utils/email');
 
+const ADMIN = require('../utils/constants');
+
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -36,9 +38,171 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
+// Highly complex method that handles foreign user's account request (to admins or users) and that contemplates the account already existing (in any role)
+exports.requestAccount = catchAsync(async (req, res, next) => {
+  const homepageURL = `${req.protocol}://${req.get('host')}/home`;
+  // A) Validate all fields have been sent. toWhom = {isUser=boolean, username}
+  if (
+    !req.body.email ||
+    !req.body.name ||
+    !req.body.request ||
+    !req.body.toWhom
+  )
+    return next(
+      new AppError('Request must include email, name, request and toWhom', 401),
+    );
+
+  // B) Check if user already exists. If so, mail them informing them of their account status
+  const existingRequestorUser = await User.findOne({ email: req.body.email });
+  if (existingRequestorUser) {
+    try {
+      const forgotPasswordURL = `${req.protocol}://${req.get(
+        'host',
+      )}/api/v1/users/forgotPassword`;
+
+      if (existingRequestorUser.role === 'user') {
+        await new Email(
+          existingRequestorUser,
+          forgotPasswordURL,
+        ).sendAccountRequestUser();
+      }
+      if (existingRequestorUser.role === 'invitee') {
+        await new Email(
+          existingRequestorUser,
+          forgotPasswordURL,
+        ).sendAccountRequestInvitee();
+      }
+      //TODO: Add an url to redirect the user to the homepage
+      if (existingRequestorUser.role === 'request') {
+        await new Email(
+          existingRequestorUser,
+          homepageURL,
+        ).sendAccountRequestRequestor();
+      }
+
+      return res.status(200).json({
+        status: 'success',
+        message: "Check your invoice to follow your request's status",
+      });
+    } catch (err) {
+      return next(
+        new AppError(
+          'There was an error sending the email with instructions. Try again later!',
+          500,
+        ),
+      );
+    }
+  }
+
+  // C) If the account invitation was requested to a user
+  if (req.body.toWhom.isUser) {
+    const requestedUser = await User.findOne({
+      username: req.body.toWhom.username,
+    });
+
+    // C-I) Check user exists and is recieving invitations
+    if (
+      requestedUser?.settings.recievingInvitationRequests &&
+      requestedUser?.active
+    ) {
+      try {
+        // Create a 'requestor' type user
+        //FIXME: Change to random password
+        const password = `${req.body.email}${Date.now()}`;
+        const newUser = await User.create({
+          name: req.body.name,
+          email: req.body.email,
+          role: 'requestor',
+          notes: [req.body.request],
+          username: req.body.email,
+          password,
+          passwordConfirm: password,
+        });
+
+        //TODO: See if you can add /id (for newUser.id) after /invite (and to add /:id as a param in the route to read it if it's there)
+        const inviteURL = `${req.protocol}://${req.get(
+          'host',
+        )}/api/v1/users/invite`;
+
+        // Email requester and requested users
+        await new Email(requestedUser, inviteURL).sendAccountRequestRecieved(
+          req.body.request,
+          newUser,
+        );
+        await new Email(newUser, homepageURL).sendAccountRequestSent();
+
+        return res.status(200).json({
+          status: 'success',
+          message: "Check your invoice to follow your request's status",
+        });
+      } catch (err) {
+        return next(
+          new AppError(
+            'There was an error sending the request email. Please try again later!',
+            500,
+          ),
+        );
+      }
+
+      // C-II) Handle if user doesn't exist or isn't recieving requests
+    } else if (
+      !requestedUser?.settings.recievingInvitationRequests ||
+      !requestedUser?.active
+    ) {
+      return res.status(400).json({
+        status: 'fail',
+        message:
+          "The user specified does not exist or isn't recieving access requests at the moment",
+      });
+    }
+  }
+
+  // D) If the account invitation was requested to an admin
+  if (!req.body.toWhom.isUser) {
+    try {
+      // Create a 'requestor' type user
+      //FIXME: Change to random password
+      const password = `${req.body.email}${Date.now()}`;
+      const newUser = await User.create({
+        name: req.body.name,
+        email: req.body.email,
+        role: 'requestor',
+        notes: [req.body.request],
+        username: req.body.email,
+        password,
+        passwordConfirm: password,
+      });
+
+      const requestorURL = `${req.protocol}://${req.get(
+        'host',
+      )}/api/v1/users/${newUser._id}`;
+
+      // Email admin and requester user
+      await new Email(ADMIN, requestorURL).sendAccountRequestAdmin(
+        req.body.request,
+        newUser,
+      );
+      await new Email(newUser, homepageURL).sendAccountRequestSent();
+
+      return res.status(200).json({
+        status: 'success',
+        message: "Check your invoice to follow your request's status",
+      });
+    } catch (err) {
+      return next(
+        new AppError(
+          'There was an error sending the request email. Please try again later!',
+          500,
+        ),
+      );
+    }
+  }
+});
+
 // Inviting a friend you only pass in their name and email. System creates random password and user is forced to reset it.
 exports.invite = catchAsync(async (req, res, next) => {
   // 1) Creates a user with a random password and a throwaway username (the user's email address)
+  //FIXME: Change to random password
   const password = `${req.body.email}${Date.now()}`;
   const newUser = await User.create({
     name: req.body.name,
@@ -69,8 +233,10 @@ exports.invite = catchAsync(async (req, res, next) => {
     await newUser.save({ validateBeforeSave: false });
 
     return next(
-      new AppError('There was an error sending the email. Try again later!'),
-      500,
+      new AppError(
+        'There was an error sending the email. Try again later!',
+        500,
+      ),
     );
   }
 });
@@ -239,8 +405,10 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     return next(
-      new AppError('There was an error sending the email. Try again later!'),
-      500,
+      new AppError(
+        'There was an error sending the email. Try again later!',
+        500,
+      ),
     );
   }
 });

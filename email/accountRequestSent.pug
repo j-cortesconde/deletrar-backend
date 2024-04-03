@@ -1,0 +1,20 @@
+// TODO: The button is not working because no url is being passed yet
+extends baseEmail
+
+block content
+  p ¡Hola #{firstName}!
+  p Recibimos una solicitud de parte tuya para unirte a Deletrar. Nos encanta que quieras estar con nosotros 🎉🙏
+  p Queremos confirmarte tu solicitud ya fue recibida y que la misma está pendiente de revisión.
+  p Si esta solicitud no la hiciste vos, no tenés de qué preocuparte: toda la comunicación la vamos a seguir por esta dirección de correo electrónico.
+  p Mientras tu solicitud está siendo revisada, te invitamos a disfrutar de los textos y las colecciones que podés encontrar en Deletrar:
+  table.btn.btn-primary(role='presentation', border='0', cellpadding='0', cellspacing='0')
+    tbody
+      tr
+        td(align='left')
+          table(role='presentation', border='0', cellpadding='0', cellspacing='0')
+            tbody
+              tr
+                td
+                  a(href=`${url}`, target='_blank') Visitar Deletrar
+  p Te saluda y te desea buena lectura,
+  p - Joaquín Cortés Conde, administrador.

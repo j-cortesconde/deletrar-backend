@@ -1,0 +1,11 @@
+// TODO: Agregar links a las políticas y a la configuración
+extends baseEmail
+
+block content
+  p ¡Hola #{firstName}!
+  p Recibimos una solicitud de parte de un usuario para que lo invites a Deletrar. Su id es #{requesterUser._id}
+  p El usuario que te solicitó acceso se presentó como #{requesterUser.name}, su correo electrónico es #{requesterUser.email} y en su solicitud escribió el siguiente texto:
+  p #{requestText}
+  p Podés ver más información mandando un GET request a #{url}
+  p Te saluda y te desea que te sea leve,
+  p - Joaquín Cortés Conde, administrador.
