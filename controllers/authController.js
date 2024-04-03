@@ -193,13 +193,20 @@ exports.requestInvite = catchAsync(async (req, res, next) => {
   }
 });
 
-// TODO: Step 0 won't work if user.active=false (if user deleted their account). Find solution to bug.
 // Inviting a friend you only pass in their name and email. System creates random password and user is forced to reset it. Handles cases where user already has account (or has already received an invite)
 exports.invite = catchAsync(async (req, res, next) => {
   // 1) Checks if user already exists.
-  let user = await User.findOne({ email: req.body.email });
+  let user = await User.findOne({ email: req.body.email }).select('+password');
 
-  // I- If exists as invitee,
+  // I- If user is inactive
+  if (!user?.active) {
+    res.status(401).json({
+      status: 'fail',
+      message:
+        'User already had an account and deleted it. If they want to recover it they should head to /recover',
+    });
+  }
+  // II- If exists as invitee,
   if (user?.role === 'invitee') {
     res.status(401).json({
       status: 'fail',
@@ -207,7 +214,7 @@ exports.invite = catchAsync(async (req, res, next) => {
         'User has already received an invitation. They should try logging into their account or reset their account password',
     });
   }
-  // II- If exists as initalized user,
+  // III- If exists as initalized user,
   if (user?.role === 'user' || user?.role === 'admin') {
     res.status(401).json({
       status: 'fail',
@@ -215,13 +222,13 @@ exports.invite = catchAsync(async (req, res, next) => {
         'User already has an account. If they forgot their password, they should try to reset it',
     });
   }
-  // III- If exists as requestor, turns it to an invitee. Else, continues.
+  // IV- If exists as requestor, turns it to an invitee. Else, continues.
   if (user?.role === 'requestor') {
     user.role = 'invitee';
     await user.save({ validateBeforeSave: false });
   }
 
-  // IV) If doesn't already exist, create one with a random password and a throwaway username (the user's email address)
+  // V) If doesn't already exist, create one with a random password and a throwaway username (the user's email address)
   if (!user) {
     //FIXME: Change to random password
     const password = `${req.body.email}${Date.now()}`;
@@ -313,7 +320,9 @@ exports.protect = catchAsync(async (req, res, next) => {
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   // 3) Check if user still exists
-  const currentUser = await User.findById(decoded.id);
+  const currentUser = await User.findById(decoded.id, '+active', {
+    includeInactive: true,
+  });
   if (!currentUser) {
     return next(
       new AppError(
@@ -345,6 +354,23 @@ exports.isInitialized = (req, res, next) => {
     return next(
       new AppError(
         `User isnt yet initialized. Please do so by patching a username request at ${initializeURL}`,
+        401,
+      ),
+    );
+  }
+  next();
+};
+
+// TODO: @frontend must redirect inactive users to /reactivateMe (workaround in backend by isActive mw)
+// Checks the user account is active. If so, nexts, if not, errors and prompts to reactivate.
+exports.isActive = (req, res, next) => {
+  if (!req.user.active) {
+    const reactivateURL = `${req.protocol}://${req.get(
+      'host',
+    )}/api/v1/users/reactivateMe`;
+    return next(
+      new AppError(
+        `User has been deactivated. Please reactivate it by sending a GET request to ${reactivateURL}`,
         401,
       ),
     );

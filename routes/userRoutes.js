@@ -20,8 +20,13 @@ router.use(authController.protect);
 
 router.patch('/initializeMe', userController.initializeMe);
 
-// Make sure user account is initialized (isnt invitee)
+// Make sure user account is initialized (isnt invitee) from now on:
 router.use(authController.isInitialized);
+
+router.get('/reactivateMe', userController.reactivateMe);
+
+// Make sure user account is active from now on:
+router.use(authController.isActive);
 
 router.post('/invite', authController.invite);
 router.patch('/updateMyPassword', authController.updatePassword);

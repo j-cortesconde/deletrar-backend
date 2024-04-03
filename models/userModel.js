@@ -111,10 +111,10 @@ userSchema.pre('save', function (next) {
   next();
 });
 
-// Remove inactive users from user queries
+// Remove inactive users from user queries (unless includeInactive=true is specified in query options)
 userSchema.pre(/^find/, function (next) {
   // this points to the current query
-  this.find({ active: { $ne: false } });
+  if (!this.options.includeInactive) this.find({ active: { $ne: false } });
   next();
 });
 

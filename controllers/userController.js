@@ -5,6 +5,23 @@ const handlerFactory = require('./handlerFactory');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
+// Makes sure the user submitted a currentPassword and checks it's correct
+const checkPassword = async (req) => {
+  // 1.1) Demands currentPassword
+  if (!req.body.currentPassword)
+    throw new AppError(
+      'You must submit your currentPassword before continuing.',
+      401,
+    );
+  // 1.2) Get user's hashed password from collection
+  const user = await User.findById(req.user.id).select('+password');
+
+  // 1.3) Check if POSTed currentPassword is correct. If so, continues, else it errors
+  if (!(await user.correctPassword(req.body.currentPassword, user.password))) {
+    throw new AppError('The password you entered is wrong.', 401);
+  }
+};
+
 const multerStorage = multer.memoryStorage();
 
 const multerFilter = (req, file, cb) => {
@@ -66,23 +83,12 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     );
   }
 
-  // 1.1) Demands currentPassword if user is trying to update the email address
+  // 1) Demands and checks currentPassword if user is trying to update the email address
   if (req.body.email) {
-    if (!req.body.currentPassword)
-      return next(
-        new AppError(
-          "It seems you're trying to update your email address. Please submit your currentPassword to do so.",
-          401,
-        ),
-      );
-    // 1.2) Get user's hashed password from collection
-    const user = await User.findById(req.user.id).select('+password');
-
-    // 1.3) Check if POSTed currentPassword is correct. If so, continues, else it errors
-    if (
-      !(await user.correctPassword(req.body.currentPassword, user.password))
-    ) {
-      return next(new AppError('The password you entered is wrong.', 401));
+    try {
+      await checkPassword(req);
+    } catch (error) {
+      return next(error);
     }
   }
 
@@ -137,11 +143,31 @@ exports.initializeMe = catchAsync(async (req, res, next) => {
 
 // Finds the document for the current logged in user and sets it 'active' property to false, effectively disabling it.
 exports.deleteMe = catchAsync(async (req, res, next) => {
+  try {
+    await checkPassword(req);
+  } catch (error) {
+    return next(error);
+  }
+
   await User.findByIdAndUpdate(req.user.id, { active: false });
 
   res.status(204).json({
     status: 'success',
     data: null,
+  });
+});
+
+// Finds the document for the current logged in user and sets it 'active' property to true, effectively reenabling it.
+exports.reactivateMe = catchAsync(async (req, res, next) => {
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    { active: true },
+    { new: true, includeInactive: true },
+  );
+
+  res.status(200).json({
+    status: 'success',
+    data: { user },
   });
 });
 
