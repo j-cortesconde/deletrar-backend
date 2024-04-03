@@ -74,9 +74,9 @@ module.exports = class Email {
   }
 
   // TODO: Check the {requestText} being passed in like this isn't generating a naming issue in send().
-  async sendAccountRequestRecieved(requestText, requesterUser) {
+  async sendAccountRequestReceived(requestText, requesterUser) {
     await this.send(
-      'accountRequestRecieved',
+      'accountRequestReceived',
       'Recibiste una Solicitud de Invitación',
       { requestText, requesterUser },
     );

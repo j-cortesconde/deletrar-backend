@@ -16,21 +16,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       lowercase: true,
       trim: true,
-      validate: {
-        validator: async function (value) {
-          // Allow uniqueness check only if the username is not null
-          if (value !== null) {
-            // Accessing the document being updated via `this`
-            const existingUser = await mongoose.models.User.findOne({
-              id: { $ne: this.id },
-              username: value,
-            });
-            return !existingUser;
-          }
-          return true; // Allow null values
-        },
-        message: (props) => `Username ${props.value} already exists!`,
-      },
+      unique: true,
     },
     email: {
       type: String,
@@ -83,11 +69,9 @@ const userSchema = new mongoose.Schema(
     },
     //TODO: Settings still to do:
     settings: {
-      type: {
-        recievingInvitationRequests: {
-          type: Boolean,
-          default: true,
-        },
+      receivingInvitationRequests: {
+        type: Boolean,
+        default: true,
       },
     },
     notes: [String],

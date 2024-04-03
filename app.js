@@ -1,5 +1,5 @@
 //TODO: Missing a global error handler
-//TODO: Email templates must be fixed
+//TODO: @frontend: Email url constants (xxxxURL) should be adapted
 const express = require('express');
 const morgan = require('morgan');
 

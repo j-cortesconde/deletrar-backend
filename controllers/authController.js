@@ -6,7 +6,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const Email = require('../utils/email');
 
-const ADMIN = require('../utils/constants');
+const { ADMIN } = require('../utils/constants');
 
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -39,7 +39,7 @@ const createSendToken = (user, statusCode, res) => {
 };
 
 // Highly complex method that handles foreign user's account request (to admins or users) and that contemplates the account already existing (in any role)
-exports.requestAccount = catchAsync(async (req, res, next) => {
+exports.requestInvite = catchAsync(async (req, res, next) => {
   const homepageURL = `${req.protocol}://${req.get('host')}/home`;
   // A) Validate all fields have been sent. toWhom = {isUser=boolean, username}
   if (
@@ -73,7 +73,7 @@ exports.requestAccount = catchAsync(async (req, res, next) => {
         ).sendAccountRequestInvitee();
       }
       //TODO: Add an url to redirect the user to the homepage
-      if (existingRequestorUser.role === 'request') {
+      if (existingRequestorUser.role === 'requestor') {
         await new Email(
           existingRequestorUser,
           homepageURL,
@@ -100,11 +100,8 @@ exports.requestAccount = catchAsync(async (req, res, next) => {
       username: req.body.toWhom.username,
     });
 
-    // C-I) Check user exists and is recieving invitations
-    if (
-      requestedUser?.settings.recievingInvitationRequests &&
-      requestedUser?.active
-    ) {
+    // C-I) Check user exists and is receiving invitations
+    if (requestedUser?.settings.receivingInvitationRequests) {
       try {
         // Create a 'requestor' type user
         //FIXME: Change to random password
@@ -119,13 +116,12 @@ exports.requestAccount = catchAsync(async (req, res, next) => {
           passwordConfirm: password,
         });
 
-        //TODO: See if you can add /id (for newUser.id) after /invite (and to add /:id as a param in the route to read it if it's there)
         const inviteURL = `${req.protocol}://${req.get(
           'host',
         )}/api/v1/users/invite`;
 
         // Email requester and requested users
-        await new Email(requestedUser, inviteURL).sendAccountRequestRecieved(
+        await new Email(requestedUser, inviteURL).sendAccountRequestReceived(
           req.body.request,
           newUser,
         );
@@ -144,15 +140,12 @@ exports.requestAccount = catchAsync(async (req, res, next) => {
         );
       }
 
-      // C-II) Handle if user doesn't exist or isn't recieving requests
-    } else if (
-      !requestedUser?.settings.recievingInvitationRequests ||
-      !requestedUser?.active
-    ) {
+      // C-II) Handle if user doesn't exist or isn't receiving requests
+    } else if (!requestedUser?.settings.receivingInvitationRequests) {
       return res.status(400).json({
         status: 'fail',
         message:
-          "The user specified does not exist or isn't recieving access requests at the moment",
+          "The user specified does not exist or isn't receiving access requests at the moment",
       });
     }
   }
@@ -182,6 +175,7 @@ exports.requestAccount = catchAsync(async (req, res, next) => {
         req.body.request,
         newUser,
       );
+
       await new Email(newUser, homepageURL).sendAccountRequestSent();
 
       return res.status(200).json({
@@ -199,38 +193,66 @@ exports.requestAccount = catchAsync(async (req, res, next) => {
   }
 });
 
-// Inviting a friend you only pass in their name and email. System creates random password and user is forced to reset it.
+// TODO: Step 0 won't work if user.active=false (if user deleted their account). Find solution to bug.
+// Inviting a friend you only pass in their name and email. System creates random password and user is forced to reset it. Handles cases where user already has account (or has already received an invite)
 exports.invite = catchAsync(async (req, res, next) => {
-  // 1) Creates a user with a random password and a throwaway username (the user's email address)
-  //FIXME: Change to random password
-  const password = `${req.body.email}${Date.now()}`;
-  const newUser = await User.create({
-    name: req.body.name,
-    email: req.body.email,
-    username: req.body.email,
-    password,
-    passwordConfirm: password,
-  });
+  // 1) Checks if user already exists.
+  let user = await User.findOne({ email: req.body.email });
+
+  // I- If exists as invitee,
+  if (user?.role === 'invitee') {
+    res.status(401).json({
+      status: 'fail',
+      message:
+        'User has already received an invitation. They should try logging into their account or reset their account password',
+    });
+  }
+  // II- If exists as initalized user,
+  if (user?.role === 'user' || user?.role === 'admin') {
+    res.status(401).json({
+      status: 'fail',
+      message:
+        'User already has an account. If they forgot their password, they should try to reset it',
+    });
+  }
+  // III- If exists as requestor, turns it to an invitee. Else, continues.
+  if (user?.role === 'requestor') {
+    user.role = 'invitee';
+    await user.save({ validateBeforeSave: false });
+  }
+
+  // IV) If doesn't already exist, create one with a random password and a throwaway username (the user's email address)
+  if (!user) {
+    //FIXME: Change to random password
+    const password = `${req.body.email}${Date.now()}`;
+    user = await User.create({
+      name: req.body.name,
+      email: req.body.email,
+      username: req.body.email,
+      password,
+      passwordConfirm: password,
+    });
+  }
 
   // 2) Generate a random reset token
-  const resetToken = newUser.createPasswordResetToken();
-  await newUser.save({ validateBeforeSave: false });
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
 
   // 3) Sends a welcome email to the user's email (including the pw reset token link)
   try {
     const resetURL = `${req.protocol}://${req.get(
       'host',
     )}/api/v1/users/resetPassword/${resetToken}`;
-    await new Email(newUser, resetURL).sendWelcome();
+    await new Email(user, resetURL).sendWelcome();
 
     res.status(200).json({
       status: 'success',
-      message: 'Token sent to email!',
+      message: 'User has recieved an invitation email!',
     });
   } catch (err) {
-    newUser.passwordResetToken = undefined;
-    newUser.passwordResetExpires = undefined;
-    await newUser.save({ validateBeforeSave: false });
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
 
     return next(
       new AppError(
