@@ -110,7 +110,7 @@ exports.requestInvite = catchAsync(async (req, res, next) => {
           name: req.body.name,
           email: req.body.email,
           role: 'requestor',
-          notes: [req.body.request],
+          notes: [`Invite Request: ${req.body.request}`],
           username: req.body.email,
           password,
           passwordConfirm: password,

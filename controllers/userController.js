@@ -54,9 +54,9 @@ exports.getMe = (req, res, next) => {
   next();
 };
 
-// Updates currently loggedin user's information. Excludes password info and all info that isn't name & description (also allows to update photo path)
+// Updates currently loggedin user's information. Excludes password info and all info that isn't allowed to update this way (also allows to update photo path)
 exports.updateMe = catchAsync(async (req, res, next) => {
-  // 1) Create error if user POSTs password data
+  // 0) Create error if user POSTs password data
   if (req.body.password || req.body.passwordConfirm) {
     return next(
       new AppError(
@@ -66,8 +66,34 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     );
   }
 
+  // 1.1) Demands currentPassword if user is trying to update the email address
+  if (req.body.email) {
+    if (!req.body.currentPassword)
+      return next(
+        new AppError(
+          "It seems you're trying to update your email address. Please submit your currentPassword to do so.",
+          401,
+        ),
+      );
+    // 1.2) Get user's hashed password from collection
+    const user = await User.findById(req.user.id).select('+password');
+
+    // 1.3) Check if POSTed currentPassword is correct. If so, continues, else it errors
+    if (
+      !(await user.correctPassword(req.body.currentPassword, user.password))
+    ) {
+      return next(new AppError('The password you entered is wrong.', 401));
+    }
+  }
+
   // 2) Filtered out unwanted fields names that are not allowed to be updated
-  const filteredBody = filterObj(req.body, 'name', 'description');
+  const filteredBody = filterObj(
+    req.body,
+    'name',
+    'description',
+    'email',
+    'settings',
+  );
   if (req.file) filteredBody.photo = req.file.filename;
 
   // 3) Update user document
