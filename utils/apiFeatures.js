@@ -7,15 +7,30 @@ class APIFeatures {
   filter() {
     // A) Basic filtering
     //FIXME: Add actual funcionality to this
-    const queryObj = { ...this.queryString };
+    let queryObj = { ...this.queryString };
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     excludedFields.forEach((el) => delete queryObj[el]);
 
     // B) Advanced filtering
+    // I- For quantity operators
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+    queryObj = JSON.parse(queryStr);
 
-    this.query = this.query.find(JSON.parse(queryStr));
+    // II- For regular expressions
+    Object.keys(queryObj).forEach((key) => {
+      const value = queryObj[key];
+      if (
+        typeof value === 'object' &&
+        Object.prototype.hasOwnProperty.call(value, 'regex')
+      ) {
+        queryObj[key] = { $regex: new RegExp(value.regex, 'i') };
+      } else {
+        queryObj[key] = value;
+      }
+    });
+
+    this.query = this.query.find(queryObj);
 
     return this;
   }
@@ -42,6 +57,7 @@ class APIFeatures {
     return this;
   }
 
+  // FIXME: Maybe this should change (and all APIFeatures, to reflect a React sending queries through body and not through a modification of the URL. MAYBE)
   paginate() {
     const page = this.queryString.page * 1 || 1;
     const limit = this.queryString.limit * 1 || 100;

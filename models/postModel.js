@@ -24,9 +24,11 @@ const postSchema = new mongoose.Schema(
       type: Date,
       default: Date.now(),
     },
+    postedAt: Date,
+    updatedAt: Date,
     status: {
       type: String,
-      default: 'posted',
+      default: 'editing',
       enum: ['editing', 'posted', 'deleted'],
     },
     author: {
@@ -34,6 +36,17 @@ const postSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Post must have an author'],
     },
+    settings: {
+      public: {
+        type: Boolean,
+        default: true,
+      },
+    },
+    currentVersion: {
+      type: Number,
+      default: 1,
+    },
+    previousVersion: String,
   },
   {
     toJSON: { virtuals: true },
@@ -41,13 +54,13 @@ const postSchema = new mongoose.Schema(
   },
 );
 
-// postSchema.pre(/^find/, function (next) {
-//   this.populate({
-//     path: 'author',
-//     select: 'name photo',
-//   });
-//   next();
-// });
+postSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'author',
+    select: 'name photo',
+  });
+  next();
+});
 
 const Post = mongoose.model('Post', postSchema);
 

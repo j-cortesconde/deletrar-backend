@@ -3,6 +3,7 @@ const sharp = require('sharp');
 const User = require('../models/userModel');
 const handlerFactory = require('./handlerFactory');
 const catchAsync = require('../utils/catchAsync');
+const filterObj = require('../utils/filterObj');
 const AppError = require('../utils/appError');
 
 // Makes sure the user submitted a currentPassword and checks it's correct
@@ -54,16 +55,6 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
 
   next();
 });
-
-// Helper fn that takes an object and a set of authorized keys and returns a new object excluding all none-authorized keys
-// Used to limit all request bodies so they only what's authorized interacts with the db and not whatever was freely requested.
-const filterObj = (obj, ...allowedFields) => {
-  const newObj = {};
-  Object.keys(obj).forEach((el) => {
-    if (allowedFields.includes(el)) newObj[el] = obj[el];
-  });
-  return newObj;
-};
 
 // MW that sets current loggedin user's id as a param of the req so that getUserById searches for it's document.
 exports.getMe = (req, res, next) => {
