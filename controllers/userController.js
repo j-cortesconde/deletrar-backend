@@ -1,10 +1,10 @@
-const multer = require('multer');
 const sharp = require('sharp');
 const User = require('../models/userModel');
 const handlerFactory = require('./handlerFactory');
 const catchAsync = require('../utils/catchAsync');
 const filterObj = require('../utils/filterObj');
 const AppError = require('../utils/appError');
+const uploadImage = require('../utils/uploadImage');
 
 // Makes sure the user submitted a currentPassword and checks it's correct
 const checkPassword = async (req) => {
@@ -23,23 +23,8 @@ const checkPassword = async (req) => {
   }
 };
 
-const multerStorage = multer.memoryStorage();
-
-const multerFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image')) {
-    cb(null, true);
-  } else {
-    cb(new AppError('Not an image! Please upload only images.', 400), false);
-  }
-};
-
-const upload = multer({
-  storage: multerStorage,
-  fileFilter: multerFilter,
-});
-
 // If an 'image' type file is sent in the request as 'photo' field it gets uploaded to the memoryStorage
-exports.uploadUserPhoto = upload.single('photo');
+exports.uploadUserPhoto = uploadImage.single('photo');
 
 // If an 'image' type file was uploaded to the memoryStorage, it gets a filename, it gets reshaped/reformatted and it is uploaded to public>img>users
 exports.resizeUserPhoto = catchAsync(async (req, res, next) => {

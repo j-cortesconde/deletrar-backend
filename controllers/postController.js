@@ -1,8 +1,28 @@
+const sharp = require('sharp');
 const Post = require('../models/postModel');
 const handlerFactory = require('./handlerFactory');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
+const uploadImage = require('../utils/uploadImage');
+
+// If an 'image' type file is sent in the request as 'coverImage' field it gets uploaded to the memoryStorage
+exports.uploadPostImage = uploadImage.single('coverImage');
+
+// If an 'image' type file was uploaded to the memoryStorage, it gets a filename, it gets reshaped/reformatted and it is uploaded to public>img>posts
+exports.resizePostImage = catchAsync(async (req, res, next) => {
+  if (!req.file) return next();
+
+  req.file.filename = `post-${req.user.id}-${Date.now()}.jpeg`;
+
+  await sharp(req.file.buffer)
+    .resize(500, 500)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/posts/${req.file.filename}`);
+
+  next();
+});
 
 //TODO: updatePost and createPost need image uploading capabilities
 // Function that creates posts filtering out of the creating object the fields the user isnt allowed to enter
@@ -12,13 +32,13 @@ exports.createPost = catchAsync(async (req, res, next) => {
     'title',
     'content',
     'summary',
-    'imageCover',
     'status',
     'settings',
   );
   filteredBody.author = req.user.id;
   filteredBody.currentVersion = 1;
   if (filteredBody.status === 'posted') filteredBody.postedAt = Date.now();
+  if (req.file) filteredBody.coverImage = req.file.filename;
 
   const doc = await Post.create(filteredBody);
 
@@ -50,7 +70,6 @@ exports.updatePost = catchAsync(async (req, res, next) => {
     'title',
     'content',
     'summary',
-    'imageCover',
     'status',
     'settings',
   );
@@ -66,6 +85,7 @@ exports.updatePost = catchAsync(async (req, res, next) => {
   filteredBody.updatedAt = Date.now();
   if (filteredBody.status === 'posted' && oldDoc.status === 'editing')
     filteredBody.postedAt = Date.now();
+  if (req.file) filteredBody.coverImage = req.file.filename;
 
   const doc = await Post.findByIdAndUpdate(req.params.id, filteredBody, {
     new: true,

@@ -17,9 +17,18 @@ router.use(authController.isInitialized);
 router.use(authController.isActive);
 
 router
-  .post('/', postController.createPost)
-  .patch('/:id', postController.updatePost)
-  .get('/:id/old/:version?', postController.getPreviousVersion);
+  .post(
+    '/',
+    postController.uploadPostImage,
+    postController.resizePostImage,
+    postController.createPost,
+  )
+  .patch(
+    '/:id',
+    postController.uploadPostImage,
+    postController.resizePostImage,
+    postController.getPreviousVersion,
+  );
 
 // Make the following routes accessible only to admins:
 router.use(authController.restrictTo('admin'));

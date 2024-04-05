@@ -17,8 +17,9 @@ const postSchema = new mongoose.Schema(
       trim: true,
       required: [true, 'A post must have a summary'],
     },
-    imageCover: {
+    coverImage: {
       type: String,
+      default: 'default.jpg',
     },
     createdAt: {
       type: Date,
