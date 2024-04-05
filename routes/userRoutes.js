@@ -1,4 +1,4 @@
-// TODO: Adding public user search features that are app safe
+// TODO: Add functionality to follow a user
 // TODO: @frontend Add a functionality so a user can modify their account settings (and make those account settings impactful elsewhere) (also add them to userModel)
 // TODO: Must add an error catch in the error handler that contemplates when in the authController.invite the user tries to invite someone that has already been invited.
 const express = require('express');
@@ -14,6 +14,9 @@ router.get('/logout', authController.logout);
 
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
+
+router.get('/', userController.getAllUsers);
+router.get('/:id', userController.getUserById);
 
 // Protect all routes from now on:
 router.use(authController.protect);
@@ -42,13 +45,9 @@ router.delete('/deleteMe', userController.deleteMe);
 // Make the following routes accessible only to admins:
 router.use(authController.restrictTo('admin'));
 
-router
-  .route('/')
-  .get(userController.getAllUsers)
-  .post(userController.createUser);
+router.post('/', userController.createUser);
 router
   .route('/:id')
-  .get(userController.getUserById)
   .patch(userController.updateUser)
   .delete(userController.deleteUser);
 

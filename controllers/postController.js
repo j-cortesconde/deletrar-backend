@@ -24,7 +24,6 @@ exports.resizePostImage = catchAsync(async (req, res, next) => {
   next();
 });
 
-//TODO: updatePost and createPost need image uploading capabilities
 // Function that creates posts filtering out of the creating object the fields the user isnt allowed to enter
 exports.createPost = catchAsync(async (req, res, next) => {
   const filteredBody = filterObj(
@@ -50,7 +49,6 @@ exports.createPost = catchAsync(async (req, res, next) => {
   });
 });
 
-//TODO: updatePost and createPost need image uploading capabilities
 // Updates the post limiting the fields that can be updated, adding update time, counting number of versions and adding the document's previous state as a string to its previousVersion field.
 exports.updatePost = catchAsync(async (req, res, next) => {
   const oldDoc = await Post.findById(req.params.id);
@@ -145,6 +143,6 @@ exports.getPreviousVersion = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getAllPosts = handlerFactory.getAll(Post);
-exports.getPostById = handlerFactory.getOne(Post);
+exports.getAllPosts = handlerFactory.getAll(Post, '-settings');
+exports.getPostById = handlerFactory.getOne(Post, null, '-settings');
 exports.deletePost = handlerFactory.deleteOne(Post);

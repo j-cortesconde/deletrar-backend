@@ -147,11 +147,18 @@ exports.reactivateMe = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getAllUsers = handlerFactory.getAll(User);
-exports.getUserById = handlerFactory.getOne(User, {
-  path: 'posts',
-  select: 'title -author',
-});
+exports.getAllUsers = handlerFactory.getAll(
+  User,
+  'name username email photo description createdAt',
+);
+exports.getUserById = handlerFactory.getOne(
+  User,
+  {
+    path: 'posts',
+    select: 'title -author',
+  },
+  'name username email photo description createdAt',
+);
 
 exports.createUser = handlerFactory.createOne(User);
 // Shouldn't be used for password updating.

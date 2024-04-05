@@ -1,3 +1,5 @@
+const { QUERY_LIMIT } = require('./constants');
+
 class APIFeatures {
   constructor(query, queryString) {
     this.query = query;
@@ -6,7 +8,6 @@ class APIFeatures {
 
   filter() {
     // A) Basic filtering
-    //FIXME: Add actual funcionality to this
     let queryObj = { ...this.queryString };
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     excludedFields.forEach((el) => delete queryObj[el]);
@@ -59,8 +60,9 @@ class APIFeatures {
 
   // FIXME: Maybe this should change (and all APIFeatures, to reflect a React sending queries through body and not through a modification of the URL. MAYBE)
   paginate() {
-    const page = this.queryString.page * 1 || 1;
-    const limit = this.queryString.limit * 1 || 100;
+    const page = Number(this.queryString.page) || 1;
+    const userLimit = Number(this.queryString.limit) || QUERY_LIMIT;
+    const limit = userLimit < QUERY_LIMIT ? userLimit : QUERY_LIMIT;
     const skip = (page - 1) * limit;
 
     this.query = this.query.skip(skip).limit(limit);

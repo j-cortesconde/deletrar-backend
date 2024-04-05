@@ -1,3 +1,4 @@
+// TODO: Add functionality to like and favorite a post (sharing will be in feed)
 const express = require('express');
 
 const postController = require('../controllers/postController');

@@ -196,7 +196,7 @@ exports.requestInvite = catchAsync(async (req, res, next) => {
 // Inviting a friend you only pass in their name and email. System creates random password and user is forced to reset it. Handles cases where user already has account (or has already received an invite)
 exports.invite = catchAsync(async (req, res, next) => {
   // 1) Checks if user already exists.
-  let user = await User.findOne({ email: req.body.email }).select('+password');
+  let user = await User.findOne({ email: req.body.email });
 
   // I- If user is inactive
   if (!user?.active) {

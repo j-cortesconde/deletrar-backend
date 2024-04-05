@@ -73,7 +73,6 @@ module.exports = class Email {
     );
   }
 
-  // TODO: Check the {requestText} being passed in like this isn't generating a naming issue in send().
   async sendAccountRequestReceived(requestText, requesterUser) {
     await this.send(
       'accountRequestReceived',
@@ -82,7 +81,6 @@ module.exports = class Email {
     );
   }
 
-  // TODO: Check the {requestText} being passed in like this isn't generating a naming issue in send().
   async sendAccountRequestAdmin(requestText, requesterUser) {
     await this.send(
       'accountRequestAdmin',

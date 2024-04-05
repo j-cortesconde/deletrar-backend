@@ -54,6 +54,7 @@ const userSchema = new mongoose.Schema(
         },
         message: 'Passwords are not the same!',
       },
+      select: false,
     },
     passwordChangedAt: Date,
     passwordResetToken: String,
@@ -74,7 +75,10 @@ const userSchema = new mongoose.Schema(
         default: true,
       },
     },
-    notes: [String],
+    notes: {
+      type: [String],
+      select: false,
+    },
   },
   {
     toJSON: { virtuals: true },

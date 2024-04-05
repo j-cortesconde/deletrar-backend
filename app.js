@@ -1,3 +1,5 @@
+//TODO: Missing FEED, MESSAGE, COLLECTION, COMMENT(this will require nested route on post and on collection)
+//TODO: Missing report (security) features
 //TODO: Missing a global error handler
 //TODO: @frontend: Email url constants (xxxxURL) should be adapted
 const express = require('express');
