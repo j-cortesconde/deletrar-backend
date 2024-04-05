@@ -17,7 +17,7 @@ router.use(authController.isInitialized);
 router.use(authController.isActive);
 
 router
-  .post('/', postController.setAuthor, postController.createPost)
+  .post('/', postController.createPost)
   .patch('/:id', postController.updatePost)
   .get('/:id/old/:version?', postController.getPreviousVersion);
 

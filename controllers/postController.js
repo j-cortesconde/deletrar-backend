@@ -4,11 +4,31 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
 
-// MW that sets the logged in user as the author of whatever comes next
-exports.setAuthor = (req, res, next) => {
-  req.body.author = req.user.id;
-  next();
-};
+//TODO: updatePost and createPost need image uploading capabilities
+// Function that creates posts filtering out of the creating object the fields the user isnt allowed to enter
+exports.createPost = catchAsync(async (req, res, next) => {
+  const filteredBody = filterObj(
+    req.body,
+    'title',
+    'content',
+    'summary',
+    'imageCover',
+    'status',
+    'settings',
+  );
+  filteredBody.author = req.user.id;
+  filteredBody.currentVersion = 1;
+  if (filteredBody.status === 'posted') filteredBody.postedAt = Date.now();
+
+  const doc = await Post.create(filteredBody);
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      data: doc,
+    },
+  });
+});
 
 //TODO: updatePost and createPost need image uploading capabilities
 // Updates the post limiting the fields that can be updated, adding update time, counting number of versions and adding the document's previous state as a string to its previousVersion field.
@@ -107,5 +127,4 @@ exports.getPreviousVersion = catchAsync(async (req, res, next) => {
 
 exports.getAllPosts = handlerFactory.getAll(Post);
 exports.getPostById = handlerFactory.getOne(Post);
-exports.createPost = handlerFactory.createOne(Post);
 exports.deletePost = handlerFactory.deleteOne(Post);
