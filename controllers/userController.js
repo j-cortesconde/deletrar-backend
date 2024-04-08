@@ -6,6 +6,8 @@ const AppError = require('../utils/appError');
 const uploadImage = require('../utils/uploadImage');
 const userService = require('../services/userService');
 
+//Cars
+
 class UserController {
   // Makes sure the user submitted a currentPassword and checks it's correct
   #checkPassword = async (req) => {
