@@ -5,8 +5,7 @@
 const express = require('express');
 const morgan = require('morgan');
 
-const postRouter = require(`./routes/postRoutes`);
-const userRouter = require(`./routes/userRoutes`);
+const indexRouter = require(`./routes/index`);
 
 const app = express();
 
@@ -16,8 +15,7 @@ if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 // Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
 
-app.use('/api/v1/posts', postRouter);
-app.use('/api/v1/users', userRouter);
+app.use('/api/v1', indexRouter);
 
 //FIXME:This must be fixed
 app.all('*', (req, res, next) => {
