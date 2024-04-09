@@ -1,6 +1,5 @@
 // FIXME: Handle the case of catchAsync
 // TODO: Review user.save. May be able to servicialize it
-// FIXME: REFACTOR
 const crypto = require('crypto');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
@@ -205,7 +204,6 @@ class AuthController {
     }
   });
 
-  // FIXME: REFACTOR
   // Inviting a friend you only pass in their name and email. System creates random password and user is forced to reset it. Handles cases where user already has account (or has already received an invite)
   invite = catchAsync(async (req, res, next) => {
     // 1) Checks if user already exists.
@@ -238,11 +236,9 @@ class AuthController {
           'User already has an account. If they forgot their password, they should try to reset it',
       });
     }
-    // FIXME: REFACTOR
     // IV- If exists as requestor, turns it to an invitee. Else, continues.
     if (user?.role === 'requestor') {
-      user.role = 'invitee';
-      await user.save({ validateBeforeSave: false });
+      await this.#service.setInvitee(user);
     }
 
     // V) If doesn't already exist, create one with a random password and a throwaway username (the user's email address)
@@ -258,10 +254,8 @@ class AuthController {
       });
     }
 
-    // FIXME: REFACTOR
     // 2) Generate and get a random reset token
-    const resetToken = user.createPasswordResetToken();
-    await user.save({ validateBeforeSave: false });
+    const resetToken = await this.#service.createPasswordResetToken(user);
 
     // 3) Sends a welcome email to the user's email (including the pw reset token link)
     try {
@@ -275,10 +269,7 @@ class AuthController {
         message: 'User has recieved an invitation email!',
       });
     } catch (err) {
-      // FIXME: REFACTOR
-      user.passwordResetToken = undefined;
-      user.passwordResetExpires = undefined;
-      await user.save({ validateBeforeSave: false });
+      await this.#service.clearResetToken(user);
 
       return next(
         new AppError(
@@ -459,7 +450,6 @@ class AuthController {
       next();
     };
 
-  //FIXME: REFACTOR
   // User posts mail in req body, if belong to db user, gets a reset link on mail
   forgotPassword = catchAsync(async (req, res, next) => {
     // 1) Get user based on POSTed email
@@ -471,10 +461,8 @@ class AuthController {
       );
     }
 
-    //FIXME: REFACTOR
     // 2) Generate the random reset token
-    const resetToken = user.createPasswordResetToken();
-    await user.save({ validateBeforeSave: false });
+    const resetToken = await this.#service.createPasswordResetToken(user);
 
     // 3) Send it to user's email
     try {
@@ -488,9 +476,7 @@ class AuthController {
         message: 'Token sent to email!',
       });
     } catch (err) {
-      user.passwordResetToken = undefined;
-      user.passwordResetExpires = undefined;
-      await user.save({ validateBeforeSave: false });
+      await this.#service.clearPasswordResetToken(user);
 
       return next(
         new AppError(
@@ -501,7 +487,6 @@ class AuthController {
     }
   });
 
-  //FIXME: REFACTOR
   // Checks if the reset token on the url corresponds to a user's (and isnt outdated). If so, resets all passwordReset fields on the user and accepts the password and resetpassword into the user document (and creates and sends the jwt so user is logged in)
   resetPassword = catchAsync(async (req, res, next) => {
     // 1) Get user based on the token
@@ -520,18 +505,14 @@ class AuthController {
       return next(new AppError('Token is invalid or has expired', 400));
     }
 
-    //FIXME: REFACTOR
-    user.password = req.body.password;
-    user.passwordConfirm = req.body.passwordConfirm;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save();
+    const { password, passwordConfirm } = req.body;
+    await this.#service.setPassword(user, { password, passwordConfirm });
+    await this.#service.clearPasswordResetToken(user);
     // 3) changedPasswordAt property for the user gets auto updated as per Model's pre-save MW
     // 4) Log the user in, send JWT
     this.#createSendToken(user, 200, res);
   });
 
-  //FIXME: REFACTOR
   // For logged in users. If the currentPw they pass in in body is correct, updates it from body too (pw & pwconfirm)
   updatePassword = catchAsync(async (req, res, next) => {
     // 1) Get user from collection
@@ -549,11 +530,10 @@ class AuthController {
       );
     }
 
-    //FIXME: REFACTOR
     // 3) If so, update password
-    user.password = req.body.password;
-    user.passwordConfirm = req.body.passwordConfirm;
-    await user.save();
+    const { password, passwordConfirm } = req.body;
+    await this.#service.setPassword(user, { password, passwordConfirm });
+    await this.#service.clearPasswordResetToken(user);
     // User.findByIdAndUpdate will NOT work as intended!
 
     // 4) Log user in, send JWT

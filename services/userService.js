@@ -46,6 +46,30 @@ class UserService {
   findOneUser(query, optionsObject) {
     return this.#Model.findOne(query, null, optionsObject);
   }
+
+  setInvitee(user) {
+    user.role = 'invitee';
+    return user.save({ validateBeforeSave: false });
+  }
+
+  createPasswordResetToken(user) {
+    const resetToken = user.createPasswordResetToken();
+    user.save({ validateBeforeSave: false });
+    return resetToken;
+  }
+
+  clearPasswordResetToken(user) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    return user.save({ validateBeforeSave: false });
+  }
+
+  setPassword(user, passwordObject) {
+    const { password, passwordConfirm } = passwordObject;
+    user.password = password;
+    user.passwordConfirm = passwordConfirm;
+    return user.save();
+  }
 }
 
 module.exports = UserService;
