@@ -3,10 +3,11 @@
 // TODO: Must add an error catch in the error handler that contemplates when in the authController.invite the user tries to invite someone that has already been invited.
 const express = require('express');
 
-const userController = require('../controllers/userController');
+const UserController = require('../controllers/userController');
 const authController = require('../controllers/authController');
 
 const router = express.Router();
+const userController = new UserController();
 
 router.post('/requestInvite', authController.requestInvite);
 router.post('/login', authController.login);

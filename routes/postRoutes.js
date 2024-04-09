@@ -1,14 +1,16 @@
 // TODO: Add functionality to like and favorite a post (sharing will be in feed)
 const express = require('express');
 
-const postController = require('../controllers/postController');
+const PostController = require('../controllers/postController');
 const authController = require('../controllers/authController');
 
 const router = express.Router();
+const postController = new PostController();
 
 router
   .get('/', postController.getAllPosts)
-  .get('/:id', postController.getPostById);
+  .get('/:id', postController.getPostById)
+  .get('/:id/old/:version?', postController.getPreviousVersion);
 
 // Protect all routes from now on:
 router.use(authController.protect);
@@ -28,7 +30,7 @@ router
     '/:id',
     postController.uploadPostImage,
     postController.resizePostImage,
-    postController.getPreviousVersion,
+    postController.updatePost,
   );
 
 // Make the following routes accessible only to admins:

@@ -24,7 +24,6 @@ class UserService {
   }
 
   getUser(userId, populateOptions, selectOptions) {
-    console.log(`At service: ${userId}`);
     let query = this.#Model.findById(userId);
     if (populateOptions) query = query.populate(populateOptions);
     if (selectOptions) query = query.select(selectOptions);
@@ -49,6 +48,4 @@ class UserService {
   }
 }
 
-const userService = new UserService();
-
-module.exports = userService;
+module.exports = UserService;
