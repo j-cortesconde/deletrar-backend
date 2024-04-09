@@ -123,11 +123,12 @@ userSchema.pre(/^find/, function (next) {
 });
 
 // Checks that two given passwords, the first flat, the second hashed, are the same
-userSchema.methods.correctPassword = async function (
-  candidatePassword,
-  userPassword,
-) {
-  return await bcrypt.compare(candidatePassword, userPassword);
+userSchema.methods.correctPassword = async function (candidatePassword) {
+  const user = await this.constructor
+    .findById(this._id, null, { includeInactive: true })
+    .select('+password');
+
+  return await bcrypt.compare(candidatePassword, user.password);
 };
 
 // Checks whether JWToken is outdated because the password has been changed since its emission (true if outdated)

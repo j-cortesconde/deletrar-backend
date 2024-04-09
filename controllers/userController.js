@@ -18,11 +18,10 @@ class UserController {
         401,
       );
 
+    const user = await this.#service.getUserById(req.user.id);
+
     if (
-      !(await this.#service.isPasswordCorrect(
-        req.user.id,
-        req.body.currentPassword,
-      ))
+      !(await this.#service.isPasswordCorrect(user, req.body.currentPassword))
     ) {
       // 1.3) Check if POSTed currentPassword is correct. If so, continues, else it errors
       throw new AppError('The password you entered is wrong.', 401);
@@ -51,14 +50,12 @@ class UserController {
   // MW that sets current loggedin user's id as a param of the req so that getUserById searches for it's document.
   // FIXME: This is duplicating getUserById code.
   getMe = async (req, res, next) => {
-    const doc = await this.#service.getUser(
-      req.user.id,
-      {
-        path: 'posts',
-        select: 'title -author',
-      },
-      'name username email photo description createdAt',
-    );
+    const populate = { path: 'posts', select: 'title -author' };
+    const select = 'name username email photo description createdAt';
+    const doc = await this.#service.getUserById(req.user.id, {
+      populate,
+      select,
+    });
 
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
@@ -124,9 +121,10 @@ class UserController {
   // Initializes the user (adds custom username and changes role from invitee to user)
   initializeMe = async (req, res, next) => {
     // 1) Make sure the request includes a username and the user isn't initiated (is invitee)
-    if (!req.body.username) next(new AppError('Must inform a username', 401));
+    if (!req.body.username)
+      return next(new AppError('Must inform a username', 401));
     if (req.user.role !== 'invitee')
-      next(new AppError('User is already initialized', 401));
+      return next(new AppError('User is already initialized', 401));
 
     // 2) Filtered out unwanted fields names that are not allowed to be updated
     const filteredBody = filterObj(req.body, 'username');
@@ -197,14 +195,12 @@ class UserController {
   };
 
   getUserById = async (req, res, next) => {
-    const doc = await this.#service.getUser(
-      req.params.id,
-      {
-        path: 'posts',
-        select: 'title -author',
-      },
-      'name username email photo description createdAt',
-    );
+    const populate = { path: 'posts', select: 'title -author' };
+    const select = 'name username email photo description createdAt';
+    const doc = await this.#service.getUserById(req.params.id, {
+      populate,
+      select,
+    });
 
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));

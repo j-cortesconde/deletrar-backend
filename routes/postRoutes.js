@@ -2,10 +2,11 @@
 const express = require('express');
 
 const PostController = require('../controllers/postController');
-const authController = require('../controllers/authController');
+const AuthController = require('../controllers/authController');
 
 const router = express.Router();
 const postController = new PostController();
+const authController = new AuthController();
 
 router
   .get('/', postController.getAllPosts)

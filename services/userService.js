@@ -23,12 +23,8 @@ class UserService {
     return features.query;
   }
 
-  getUser(userId, populateOptions, selectOptions) {
-    let query = this.#Model.findById(userId);
-    if (populateOptions) query = query.populate(populateOptions);
-    if (selectOptions) query = query.select(selectOptions);
-
-    return query;
+  getUserById(userId, optionsObject) {
+    return this.#Model.findById(userId, null, optionsObject);
   }
 
   updateUser(userId, updateObject, updateOptions) {
@@ -39,12 +35,16 @@ class UserService {
     return this.#Model.findByIdAndDelete(userId);
   }
 
-  async isPasswordCorrect(userId, submittedPassword) {
-    // 1) Get user's hashed password from collection
-    const user = await User.findById(userId).select('+password');
+  isPasswordCorrect(user, submittedPassword) {
+    return user?.correctPassword(submittedPassword);
+  }
 
-    // 2) Check if POSTed currentPassword is correct. If so, continues, else it errors
-    return user.correctPassword(submittedPassword, user.password);
+  changedPasswordAfter(user, JWTTimestamp) {
+    return user.changedPasswordAfter(JWTTimestamp);
+  }
+
+  findOneUser(query, optionsObject) {
+    return this.#Model.findOne(query, null, optionsObject);
   }
 }
 

@@ -4,10 +4,11 @@
 const express = require('express');
 
 const UserController = require('../controllers/userController');
-const authController = require('../controllers/authController');
+const AuthController = require('../controllers/authController');
 
 const router = express.Router();
 const userController = new UserController();
+const authController = new AuthController();
 
 router.post('/requestInvite', authController.requestInvite);
 router.post('/login', authController.login);
