@@ -1,3 +1,4 @@
+// FIXME: REFACTOR so you don't have to search for users you can pass in (eg req.user or others previously searched users)
 const User = require('../models/userModel');
 const APIFeatures = require('../utils/apiFeatures');
 
@@ -69,6 +70,12 @@ class UserService {
     user.password = password;
     user.passwordConfirm = passwordConfirm;
     return user.save();
+  }
+
+  // Might be inefficient. Check with .push (in case the field is being indexed) or without populating. Double updating
+  followUser(currentUser, followUserId) {
+    currentUser.following.unshift(followUserId);
+    return currentUser.save();
   }
 }
 

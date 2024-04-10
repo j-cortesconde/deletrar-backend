@@ -1,5 +1,5 @@
 // FIXME: Handle the case of catchAsync
-// TODO: Review user.save. May be able to servicialize it
+// FIXME: Move to a MW folder&file protect, isInitialized, isActive and restrictTo
 const crypto = require('crypto');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');

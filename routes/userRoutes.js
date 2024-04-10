@@ -1,4 +1,4 @@
-// TODO: Add functionality to follow a user
+// TODO: Tidy (same with other routers)
 // TODO: @frontend Add a functionality so a user can modify their account settings (and make those account settings impactful elsewhere) (also add them to userModel)
 // TODO: Must add an error catch in the error handler that contemplates when in the authController.invite the user tries to invite someone that has already been invited.
 const express = require('express');
@@ -44,6 +44,7 @@ router.patch(
   userController.updateMe,
 );
 router.delete('/deleteMe', userController.deleteMe);
+router.get('/id/:id/follow', userController.followUser);
 
 // Make the following routes accessible only to admins:
 router.use(authController.restrictTo('admin'));

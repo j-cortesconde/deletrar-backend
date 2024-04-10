@@ -1,4 +1,4 @@
-// FIXME: I removed the catchAsync function from all methods that call services. Should add again
+// FIXME: I removed the catchAsync function from all methods that call services. Should add again somehow
 const sharp = require('sharp');
 const catchAsync = require('../utils/catchAsync');
 const filterObj = require('../utils/filterObj');
@@ -48,10 +48,13 @@ class UserController {
   });
 
   // MW that sets current loggedin user's id as a param of the req so that getUserById searches for it's document.
-  // FIXME: This is duplicating getUserById code.
+  // FIXME: This is duplicating getUserById code. PosSol: Pass (req.params.id || req.user.id) into .getUserById()
   getMe = async (req, res, next) => {
-    const populate = { path: 'posts', select: 'title -author' };
-    const select = 'name username email photo description createdAt';
+    const populate = [
+      { path: 'posts', select: 'title -author' },
+      { path: 'followers', select: 'name -following' },
+    ];
+    const select = 'name username email photo description createdAt following';
     const doc = await this.#service.getUserById(req.user.id, {
       populate,
       select,
@@ -195,8 +198,11 @@ class UserController {
   };
 
   getUserById = async (req, res, next) => {
-    const populate = { path: 'posts', select: 'title -author' };
-    const select = 'name username email photo description createdAt';
+    const populate = [
+      { path: 'posts', select: 'title -author' },
+      { path: 'followers', select: 'name -following' },
+    ];
+    const select = 'name username email photo description createdAt following';
     const doc = await this.#service.getUserById(req.params.id, {
       populate,
       select,
@@ -254,6 +260,15 @@ class UserController {
     res.status(204).json({
       status: 'success',
       data: null,
+    });
+  };
+
+  followUser = async (req, res, next) => {
+    await this.#service.followUser(req.user, req.params.id);
+
+    res.status(200).json({
+      status: 'success',
+      data: req.user,
     });
   };
 }
