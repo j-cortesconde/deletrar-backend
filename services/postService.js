@@ -38,6 +38,12 @@ class PostService {
   deletePost(postId) {
     return this.#Model.findByIdAndDelete(postId);
   }
+
+  searchPosts(fieldName, searchTerm) {
+    return this.#Model.find({
+      [fieldName]: { $regex: searchTerm, $options: 'i' },
+    });
+  }
 }
 
 module.exports = PostService;

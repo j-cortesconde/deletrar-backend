@@ -156,9 +156,7 @@ class PostController {
     res.status(200).json({
       status: 'success',
       results: docs.length,
-      data: {
-        data: docs,
-      },
+      data: docs,
     });
   };
 
@@ -187,6 +185,26 @@ class PostController {
     res.status(204).json({
       status: 'success',
       data: null,
+    });
+  };
+
+  searchPosts = async (req, res, next) => {
+    const titleDocs = await this.#service.searchPosts(
+      'title',
+      req.params.searchTerm,
+    );
+
+    const summaryDocs = await this.#service.searchPosts(
+      'summary',
+      req.params.searchTerm,
+    );
+
+    const docs = [...titleDocs, ...summaryDocs];
+
+    res.status(200).json({
+      status: 'success',
+      results: docs.length,
+      data: docs,
     });
   };
 }
