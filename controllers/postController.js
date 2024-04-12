@@ -46,9 +46,7 @@ class PostController {
 
     res.status(201).json({
       status: 'success',
-      data: {
-        data: doc,
-      },
+      data: doc,
     });
   };
 
@@ -98,9 +96,7 @@ class PostController {
 
     res.status(200).json({
       status: 'success',
-      data: {
-        data: doc,
-      },
+      data: doc,
     });
   };
 
@@ -169,9 +165,7 @@ class PostController {
 
     res.status(200).json({
       status: 'success',
-      data: {
-        data: doc,
-      },
+      data: doc,
     });
   };
 
