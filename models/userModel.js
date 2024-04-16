@@ -97,7 +97,7 @@ userSchema.virtual('posts', {
   ref: 'Post',
   foreignField: 'author',
   localField: '_id',
-  select: 'title',
+  select: 'title summary',
 });
 
 userSchema.virtual('followers', {
