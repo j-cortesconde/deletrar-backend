@@ -9,7 +9,7 @@ const postSchema = new mongoose.Schema(
       maxlength: [40, 'A post title must have less or equal to 40 characters'],
     },
     content: {
-      type: String,
+      type: Object,
       required: [true, 'A post must have content'],
     },
     summary: {
