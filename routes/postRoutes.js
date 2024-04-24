@@ -12,7 +12,7 @@ router
   .get('/', postController.getAllPosts)
   .get('/:id', postController.getPostById)
   .get('/:id/old/:version?', postController.getPreviousVersion)
-  .post('/:searchTerm', postController.searchPosts);
+  .get('/search/:searchTerm', postController.searchPosts);
 
 // Protect all routes from now on:
 router.use(authController.protect);

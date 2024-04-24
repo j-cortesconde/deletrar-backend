@@ -39,10 +39,44 @@ class PostService {
     return this.#Model.findByIdAndDelete(postId);
   }
 
-  searchPosts(fieldName, searchTerm) {
-    return this.#Model.find({
-      [fieldName]: { $regex: searchTerm, $options: 'i' },
-    });
+  async searchPosts(searchTerm) {
+    return this.#Model.aggregate([
+      {
+        $search: {
+          index: 'posts',
+          text: {
+            query: searchTerm,
+            path: {
+              wildcard: '*', // To search all fields in the index
+            },
+          },
+          returnStoredSource: true, // To return only data stored in index (id, title, author)
+        },
+      },
+      {
+        $lookup: {
+          from: 'users', // Assuming the name of the collection is 'users'
+          localField: 'author',
+          foreignField: '_id',
+          as: 'authorInfo',
+        },
+      },
+      {
+        $unwind: '$authorInfo',
+      },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          summary: 1,
+          content: 1,
+          author: { name: '$authorInfo.name' },
+        },
+      },
+      {
+        $limit: 10, // Limit results to 10 documents
+      },
+    ]);
   }
 }
 
