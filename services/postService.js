@@ -39,7 +39,7 @@ class PostService {
     return this.#Model.findByIdAndDelete(postId);
   }
 
-  async searchPosts(searchTerm) {
+  searchPosts(searchTerm) {
     return this.#Model.aggregate([
       {
         $search: {

@@ -77,6 +77,26 @@ class UserService {
     currentUser.following.unshift(followUserId);
     return currentUser.save();
   }
+
+  searchUsers(searchTerm) {
+    return this.#Model.aggregate([
+      {
+        $search: {
+          index: 'users',
+          text: {
+            query: searchTerm,
+            path: {
+              wildcard: '*', // To search all fields in the index
+            },
+          },
+          returnStoredSource: true, // To return only data stored in index (id, title, author)
+        },
+      },
+      {
+        $limit: 10, // Limit results to 10 documents
+      },
+    ]);
+  }
 }
 
 module.exports = UserService;

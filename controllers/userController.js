@@ -261,6 +261,16 @@ class UserController {
       data: req.user,
     });
   };
+
+  searchUsers = async (req, res, next) => {
+    const docs = await this.#service.searchUsers(req.params.searchTerm);
+
+    res.status(200).json({
+      status: 'success',
+      results: docs.length,
+      data: docs,
+    });
+  };
 }
 
 module.exports = UserController;
