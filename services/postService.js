@@ -70,6 +70,7 @@ class PostService {
           title: 1,
           summary: 1,
           content: 1,
+          coverImage: 1,
           author: { name: '$authorInfo.name', _id: '$authorInfo._id' },
         },
       },
