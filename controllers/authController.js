@@ -215,9 +215,8 @@ class AuthController {
     if (user && !user?.active) {
       return res.status(401).json({
         status: 'fail',
-        // FIXME: Update this link
         message:
-          'El usuario tenía una cuenta y la eliminó. Si quiere recuperarla, tiene que dirigirse hacerlo desde /recover.',
+          'El usuario tenía una cuenta y la eliminó. Si quiere recuperarla, puede intentar iniciando sesión o reiniciando su contraseña.',
       });
     }
     // II- If exists as invitee,
