@@ -8,7 +8,7 @@ const AppError = require('../utils/appError');
 const Email = require('../utils/email');
 const UserService = require('../services/userService');
 
-const { ADMIN } = require('../utils/constants');
+const { ADMIN, FRONTEND_ADDRESS } = require('../utils/constants');
 
 class AuthController {
   #service = new UserService();
@@ -46,7 +46,7 @@ class AuthController {
 
   // Highly complex method that handles foreign user's account request (to admins or users) and that contemplates the account already existing (in any role)
   requestInvite = catchAsync(async (req, res, next) => {
-    const homepageURL = `${req.protocol}://${req.get('host')}/home`;
+    const homepageURL = `${FRONTEND_ADDRESS}/home`;
     // A) Validate all fields have been sent. toWhom = {isUser=boolean, username}
     if (
       !req.body.email ||
@@ -56,7 +56,7 @@ class AuthController {
     )
       return next(
         new AppError(
-          'Request must include email, name, request and toWhom',
+          'La solicitud tiene que incluir un correo, un nombre y un destinatario.',
           401,
         ),
       );
@@ -67,9 +67,7 @@ class AuthController {
     });
     if (existingRequestorUser) {
       try {
-        const forgotPasswordURL = `${req.protocol}://${req.get(
-          'host',
-        )}/api/v1/users/forgotPassword`;
+        const forgotPasswordURL = `${FRONTEND_ADDRESS}/forgot-password`;
 
         if (existingRequestorUser.role === 'user') {
           await new Email(
@@ -93,12 +91,13 @@ class AuthController {
 
         return res.status(200).json({
           status: 'success',
-          message: "Check your invoice to follow your request's status",
+          message:
+            'Revisa la bandeja de entrada de tu correo para saber cómo sigue tu solicitud.',
         });
       } catch (err) {
         return next(
           new AppError(
-            'There was an error sending the email with instructions. Try again later!',
+            'Hubo un problema enviando el correo electrónico con instrucciones. ¡Volvé a intentarlo más tarde!',
             500,
           ),
         );
@@ -127,9 +126,7 @@ class AuthController {
             passwordConfirm: password,
           });
 
-          const inviteURL = `${req.protocol}://${req.get(
-            'host',
-          )}/api/v1/users/invite`;
+          const inviteURL = `${FRONTEND_ADDRESS}/users/invite?email=${req.body.email}`;
 
           // Email requester and requested users
           await new Email(requestedUser, inviteURL).sendAccountRequestReceived(
@@ -140,12 +137,13 @@ class AuthController {
 
           return res.status(200).json({
             status: 'success',
-            message: "Check your invoice to follow your request's status",
+            message:
+              'Revisa la bandeja de entrada de tu correo para saber cómo sigue tu solicitud.',
           });
         } catch (err) {
           return next(
             new AppError(
-              'There was an error sending the request email. Please try again later!',
+              'Hubo un problema enviando el correo electrónico con instrucciones. ¡Volvé a intentarlo más tarde!',
               500,
             ),
           );
@@ -156,7 +154,7 @@ class AuthController {
         return res.status(400).json({
           status: 'fail',
           message:
-            "The user specified does not exist or isn't receiving access requests at the moment",
+            'El usuario indicado no existe o no está recibiendo solicitudes de invitación.',
         });
       }
     }
@@ -191,12 +189,13 @@ class AuthController {
 
         return res.status(200).json({
           status: 'success',
-          message: "Check your invoice to follow your request's status",
+          message:
+            'Revisa la bandeja de entrada de tu correo para saber cómo sigue tu solicitud.',
         });
       } catch (err) {
         return next(
           new AppError(
-            'There was an error sending the request email. Please try again later!',
+            'Hubo un problema enviando el correo electrónico con instrucciones. ¡Volvé a intentarlo más tarde!',
             500,
           ),
         );
@@ -216,8 +215,9 @@ class AuthController {
     if (user && !user?.active) {
       return res.status(401).json({
         status: 'fail',
+        // FIXME: Update this link
         message:
-          'User already had an account and deleted it. If they want to recover it they should head to /recover',
+          'El usuario tenía una cuenta y la eliminó. Si quiere recuperarla, tiene que dirigirse hacerlo desde /recover.',
       });
     }
     // II- If exists as invitee,
@@ -225,7 +225,7 @@ class AuthController {
       return res.status(401).json({
         status: 'fail',
         message:
-          'User has already received an invitation. They should try logging into their account or reset their account password',
+          'El usuario ya recibió otra invitación. Puede activar su cuenta iniciando sesión o reiniciando su contraseña.',
       });
     }
     // III- If exists as initalized user,
@@ -233,7 +233,7 @@ class AuthController {
       return res.status(401).json({
         status: 'fail',
         message:
-          'User already has an account. If they forgot their password, they should try to reset it',
+          'El usuario ya tiene una cuenta. Si olvidó su contraseña, tiene que intentar reiniciarla',
       });
     }
     // IV- If exists as requestor, turns it to an invitee. Else, continues.
@@ -259,21 +259,19 @@ class AuthController {
 
     // 3) Sends a welcome email to the user's email (including the pw reset token link)
     try {
-      const resetURL = `${req.protocol}://${req.get(
-        'host',
-      )}/api/v1/users/resetPassword/${resetToken}`;
+      const resetURL = `${FRONTEND_ADDRESS}/reset-password/${resetToken}`;
       await new Email(user, resetURL).sendWelcome();
 
       res.status(200).json({
         status: 'success',
-        message: 'User has recieved an invitation email!',
+        message: 'El usuario recibirá una invitación a su correo electrónico.',
       });
     } catch (err) {
       await this.#service.clearResetToken(user);
 
       return next(
         new AppError(
-          'There was an error sending the email. Try again later!',
+          'Hubo un problema enviando el correo electrónico con instrucciones. ¡Volvé a intentarlo más tarde!',
           500,
         ),
       );

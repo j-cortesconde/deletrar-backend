@@ -4,3 +4,5 @@ exports.ADMIN = {
 };
 
 exports.QUERY_LIMIT = 100;
+
+exports.FRONTEND_ADDRESS = 'http://localhost:5173';
