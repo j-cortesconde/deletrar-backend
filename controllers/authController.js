@@ -264,7 +264,7 @@ class AuthController {
 
       res.status(200).json({
         status: 'success',
-        message: 'El usuario recibirá una invitación a su correo electrónico.',
+        message: 'El usuario recibirá una invitación en su correo electrónico.',
       });
     } catch (err) {
       await this.#service.clearResetToken(user);
