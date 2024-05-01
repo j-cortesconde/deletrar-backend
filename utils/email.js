@@ -1,3 +1,4 @@
+//FIXME: All emails must be adapted for frontend
 const sgMail = require('@sendgrid/mail');
 const pug = require('pug');
 const { convert } = require('html-to-text');

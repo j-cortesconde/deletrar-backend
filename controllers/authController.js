@@ -453,9 +453,12 @@ class AuthController {
     const user = await this.#service.findOneUser({ email: req.body.email });
 
     if (!user) {
-      return next(
-        new AppError('There is no user with the provided email address.', 404),
-      );
+      return res.status(404).json({
+        status: 'fail',
+        // FIXME: Quiero abrir esta vulnerabilidad? Tiene sentido evitarla?
+        message:
+          'No se encontró ningún usuario asociado a esa dirección de correo electrónico.',
+      });
     }
 
     // 2) Generate the random reset token
@@ -463,21 +466,20 @@ class AuthController {
 
     // 3) Send it to user's email
     try {
-      const resetURL = `${req.protocol}://${req.get(
-        'host',
-      )}/api/v1/users/resetPassword/${resetToken}`;
+      const resetURL = `${FRONTEND_ADDRESS}/reset-password/${resetToken}`;
       await new Email(user, resetURL).sendPasswordReset();
 
       res.status(200).json({
         status: 'success',
-        message: 'Token sent to email!',
+        message:
+          'Se enviaron instrucciones para reiniciar tu contraseña a tu correo electrónico.',
       });
     } catch (err) {
       await this.#service.clearPasswordResetToken(user);
 
       return next(
         new AppError(
-          'There was an error sending the email. Try again later!',
+          'Hubo un problema enviando el correo electrónico con instrucciones. ¡Volvé a intentarlo más tarde!',
           500,
         ),
       );
@@ -499,7 +501,12 @@ class AuthController {
 
     // 2) If token has not expired, and there is user with that resetToken, set the new password
     if (!user) {
-      return next(new AppError('Token is invalid or has expired', 400));
+      return res.status(400).json({
+        status: 'fail',
+        message:
+          // TODO: Update this link
+          'Este link de reinicio es invalido o ha expirado. Generá uno nuevo desde /forgot-password',
+      });
     }
 
     const { password, passwordConfirm } = req.body;
