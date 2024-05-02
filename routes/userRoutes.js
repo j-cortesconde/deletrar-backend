@@ -26,6 +26,7 @@ router.get('/search/:searchTerm', userController.searchUsers);
 router.use(authController.protect);
 
 router.patch('/initializeMe', userController.initializeMe);
+router.get('/me', userController.getMe);
 
 // Make sure user account is initialized (isnt invitee) from now on:
 router.use(authController.isInitialized);
@@ -37,7 +38,6 @@ router.use(authController.isActive);
 
 router.post('/invite', authController.invite);
 router.patch('/updateMyPassword', authController.updatePassword);
-router.get('/me', userController.getMe);
 router.patch(
   '/updateMe',
   userController.uploadUserPhoto,

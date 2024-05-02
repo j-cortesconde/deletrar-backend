@@ -47,17 +47,21 @@ class UserController {
     next();
   });
 
-  // MW that sets current loggedin user's id as a param of the req so that getUserById searches for it's document.
+  // Returns the logged in users' information
   // FIXME: This is duplicating getUserById code. PosSol: Pass (req.params.id || req.user.id) into .getUserById()
+  // TODO: Update. It shouldnt be duplicating. Now it gets different info for frontend route protection (like inactive, state and role)
   getMe = async (req, res, next) => {
     const populate = [
       { path: 'posts', select: 'title -author' },
       { path: 'followers', select: 'name -following' },
     ];
-    const select = 'name username email photo description createdAt following';
+    const select =
+      'name username email photo description createdAt following role settings active';
+
     const doc = await this.#service.getUserById(req.user.id, {
       populate,
       select,
+      includeInactive: true,
     });
 
     if (!doc) {
