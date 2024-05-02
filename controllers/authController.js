@@ -67,7 +67,7 @@ class AuthController {
     });
     if (existingRequestorUser) {
       try {
-        const forgotPasswordURL = `${FRONTEND_ADDRESS}/forgot-password`;
+        const forgotPasswordURL = `${FRONTEND_ADDRESS}/password/forgot`;
 
         if (existingRequestorUser.role === 'user') {
           await new Email(
@@ -258,7 +258,7 @@ class AuthController {
 
     // 3) Sends a welcome email to the user's email (including the pw reset token link)
     try {
-      const resetURL = `${FRONTEND_ADDRESS}/reset-password/${resetToken}`;
+      const resetURL = `${FRONTEND_ADDRESS}/password/reset/${resetToken}`;
       await new Email(user, resetURL).sendWelcome();
 
       res.status(200).json({
@@ -466,7 +466,7 @@ class AuthController {
 
     // 3) Send it to user's email
     try {
-      const resetURL = `${FRONTEND_ADDRESS}/reset-password/${resetToken}`;
+      const resetURL = `${FRONTEND_ADDRESS}/password/reset/${resetToken}`;
       await new Email(user, resetURL).sendPasswordReset();
 
       res.status(200).json({
@@ -505,7 +505,7 @@ class AuthController {
         status: 'fail',
         message:
           // TODO: Update this link
-          'Este link de reinicio es invalido o ha expirado. Generá uno nuevo desde /forgot-password',
+          'Este link de reinicio es invalido o ha expirado. Generá uno nuevo desde /password/forgot',
       });
     }
 
