@@ -46,6 +46,7 @@ class PostService {
           index: 'posts',
           text: {
             query: searchTerm,
+            fuzzy: { maxEdits: 1 },
             path: {
               wildcard: '*', // To search all fields in the index
             },

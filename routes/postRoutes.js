@@ -10,8 +10,8 @@ const authController = new AuthController();
 
 router
   .get('/', postController.getAllPosts)
-  .get('/:id', postController.getPostById)
-  .get('/:id/old/:version?', postController.getPreviousVersion)
+  .get('/id/:id', postController.getPostById)
+  .get('/id/:id/old/:version?', postController.getPreviousVersion)
   .get('/search/:searchTerm', postController.searchPosts);
 
 // Protect all routes from now on:
