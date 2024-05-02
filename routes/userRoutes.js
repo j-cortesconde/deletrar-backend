@@ -31,7 +31,7 @@ router.get('/me', userController.getMe);
 // Make sure user account is initialized (isnt invitee) from now on:
 router.use(authController.isInitialized);
 
-router.get('/reactivateMe', userController.reactivateMe);
+router.patch('/reactivateMe', userController.reactivateMe);
 
 // Make sure user account is active from now on:
 router.use(authController.isActive);

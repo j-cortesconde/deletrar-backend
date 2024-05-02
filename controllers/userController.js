@@ -140,13 +140,17 @@ class UserController {
     filteredBody.role = 'user';
 
     // 3) Update user document
+    const populate = [
+      { path: 'posts', select: 'title -author' },
+      { path: 'followers', select: 'name -following' },
+    ];
+    const select =
+      'name username email photo description createdAt following role settings active';
+
     const updatedUser = await this.#service.updateUser(
       req.user.id,
       filteredBody,
-      {
-        new: true,
-        runValidators: true,
-      },
+      { populate, select, new: true, runValidators: true },
     );
 
     res.status(200).json({
