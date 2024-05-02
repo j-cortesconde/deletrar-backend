@@ -125,9 +125,15 @@ class UserController {
   initializeMe = async (req, res, next) => {
     // 1) Make sure the request includes a username and the user isn't initiated (is invitee)
     if (!req.body.username)
-      return next(new AppError('Must inform a username', 401));
+      return res.status(401).json({
+        status: 'fail',
+        message: 'Se debe informar un nombre de usuario',
+      });
     if (req.user.role !== 'invitee')
-      return next(new AppError('User is already initialized', 401));
+      return res.status(401).json({
+        status: 'fail',
+        message: 'La cuenta del usuario ya fue activada',
+      });
 
     // 2) Filtered out unwanted fields names that are not allowed to be updated
     const filteredBody = filterObj(req.body, 'username');
@@ -167,10 +173,17 @@ class UserController {
 
   // Finds the document for the current logged in user and sets it 'active' property to true, effectively reenabling it.
   reactivateMe = async (req, res, next) => {
+    const populate = [
+      { path: 'posts', select: 'title -author' },
+      { path: 'followers', select: 'name -following' },
+    ];
+    const select =
+      'name username email photo description createdAt following role settings active';
+
     const user = await this.#service.updateUser(
       req.user.id,
       { active: true },
-      { new: true, includeInactive: true },
+      { populate, select, new: true, includeInactive: true },
     );
 
     res.status(200).json({
