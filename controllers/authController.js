@@ -38,9 +38,7 @@ class AuthController {
     res.status(statusCode).json({
       status: 'success',
       token,
-      data: {
-        user,
-      },
+      data: user,
     });
   };
 
@@ -285,16 +283,24 @@ class AuthController {
       return next(new AppError('Please provide email and password!', 400));
     }
 
+    // 2) Get user associated with that email address
+    const populate = [
+      { path: 'posts', select: 'title -author' },
+      { path: 'followers', select: 'name -following' },
+    ];
+    const select =
+      'name username email photo description createdAt following role settings active';
+
     const user = await this.#service.findOneUser(
       { email },
-      { includeInactive: true },
+      { populate, select, includeInactive: true },
     );
-    // 2) Check password is correct
+    // 3) Check password is correct
     if (!(await this.#service.isPasswordCorrect(user, password))) {
       return next(new AppError('Incorrect email or password', 401));
     }
 
-    // 3) If everything ok, send token to client
+    // 4) If everything ok, send token to client
     this.#createSendToken(user, 200, res);
   });
 
