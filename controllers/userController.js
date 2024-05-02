@@ -117,9 +117,7 @@ class UserController {
 
     res.status(200).json({
       status: 'success',
-      data: {
-        user: updatedUser,
-      },
+      data: updatedUser,
     });
   };
 
@@ -147,9 +145,7 @@ class UserController {
 
     res.status(200).json({
       status: 'success',
-      data: {
-        user: updatedUser,
-      },
+      data: updatedUser,
     });
   };
 
@@ -179,7 +175,7 @@ class UserController {
 
     res.status(200).json({
       status: 'success',
-      data: { user },
+      data: user,
     });
   };
 
