@@ -169,7 +169,35 @@ class PostController {
     });
   };
 
-  deletePost = async (req, res, next) => {
+  userDeletePost = async (req, res, next) => {
+    const oldDoc = await this.#service.getPost(req.params.id);
+
+    if (!oldDoc) {
+      return next(new AppError('No post found with that ID', 404));
+    }
+
+    if (oldDoc.author.id !== req.user.id) {
+      return next(
+        new AppError("You don't own the post you're trying to update", 400),
+      );
+    }
+
+    const doc = await this.#service.updatePost(
+      req.params.id,
+      { status: 'deleted' },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: doc,
+    });
+  };
+
+  adminDeletePost = async (req, res, next) => {
     const doc = await this.#service.deletePost(req.params.id);
 
     if (!doc) {
