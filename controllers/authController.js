@@ -328,7 +328,9 @@ class AuthController {
     }
 
     if (!token) {
-      req.user.error = 'You are not logged in! Please log in to get access.';
+      req.user = {
+        error: 'You are not logged in! Please log in to get access.',
+      };
       return next();
     }
 
@@ -344,13 +346,17 @@ class AuthController {
     });
 
     if (!currentUser) {
-      req.user.error = 'The user belonging to this token does no longer exist.';
+      req.user = {
+        error: 'The user belonging to this token does no longer exist.',
+      };
       return next();
     }
 
     // 4) Check if user changed password after the token was issued
     if (this.#service.changedPasswordAfter(currentUser, decoded.iat)) {
-      req.user.error = 'User recently changed password! Please log in again.';
+      req.user = {
+        error: 'User recently changed password! Please log in again.',
+      };
       return next();
     }
 
