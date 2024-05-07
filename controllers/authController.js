@@ -1,5 +1,6 @@
 // FIXME: Handle the case of catchAsync
 // FIXME: Move to a MW folder&file protect, isInitialized, isActive and restrictTo
+// FIXME: Coudln't adding the logged in user to req.user (what the auth mw does) be falsified?
 const crypto = require('crypto');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
