@@ -39,6 +39,7 @@ class PostService {
     return this.#Model.findByIdAndDelete(postId);
   }
 
+  // TODO: Could add filtering for posted documents that are private in their settings (but public to specific users). This would have a new layer of difficulty (maybe in the Controller)
   searchPosts(searchTerm) {
     return this.#Model.aggregate([
       {
@@ -66,11 +67,15 @@ class PostService {
         $unwind: '$authorInfo',
       },
       {
+        $match: {
+          status: 'posted', // Filter only posts with status "posted"
+        },
+      },
+      {
         $project: {
           _id: 1,
           title: 1,
           summary: 1,
-          content: 1,
           coverImage: 1,
           author: { name: '$authorInfo.name', _id: '$authorInfo._id' }, // Returns only the author's name & id
         },

@@ -170,7 +170,7 @@ class PostController {
       });
     }
 
-    if (doc.status !== 'posted' && doc.author._id !== req.user.id) {
+    if (doc.status !== 'posted' && doc.author.id !== req.user.id) {
       return res.status(401).json({
         status: 'fail',
         message: 'No tiene autorización para visualizar este texto.',
