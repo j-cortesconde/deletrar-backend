@@ -50,7 +50,7 @@ class PostController {
     });
   };
 
-  // Updates the post limiting the fields that can be updated, adding update time, counting number of versions and adding the document's previous state as a string to its previousVersion field.
+  // Updates the post limiting the fields that can be updated, adding update time, counting number of versions (posted versions) and adding the document's previous state as a string to its previousVersion field (if both previous and new version are posted versions).
   updatePost = async (req, res, next) => {
     const oldDoc = await this.#service.getPost(req.params.id);
 
@@ -82,12 +82,15 @@ class PostController {
       );
     }
 
-    filteredBody.previousVersion = JSON.stringify(oldDoc.toObject());
-    filteredBody.currentVersion = oldDoc.currentVersion + 1;
-    filteredBody.updatedAt = Date.now();
     if (filteredBody.status === 'posted' && oldDoc.status === 'editing')
       filteredBody.postedAt = Date.now();
+
+    if (filteredBody.status === 'posted' && oldDoc.status === 'posted') {
+      filteredBody.previousVersion = JSON.stringify(oldDoc.toObject());
+      filteredBody.currentVersion = oldDoc.currentVersion + 1;
+    }
     if (req.file) filteredBody.coverImage = req.file.filename;
+    filteredBody.updatedAt = Date.now();
 
     const doc = await this.#service.updatePost(req.params.id, filteredBody, {
       new: true,
