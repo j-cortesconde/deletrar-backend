@@ -1,4 +1,5 @@
 // TODO: Add functionality to like and favorite a post (sharing will be in feed)
+// TODO: I commented out the route for .getAllPosts. Check if should add again
 const express = require('express');
 
 const PostController = require('../controllers/postController');
@@ -11,7 +12,7 @@ const authController = new AuthController();
 router.use(authController.getLoggedInUser);
 
 router
-  .get('/', postController.getAllPosts)
+  // .get('/', postController.getAllPosts)
   .get('/id/:id', postController.getPostById)
   .get('/id/:id/old/:version?', postController.getPreviousVersion)
   .get('/search/:searchTerm', postController.searchPosts);

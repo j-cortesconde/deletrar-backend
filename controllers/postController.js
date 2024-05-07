@@ -159,11 +159,22 @@ class PostController {
     });
   };
 
+  // TODO: I could add a setting to posts where one could set post visibility (specific users that could see other users editing posts, private posted posts, etc) and add that logic here
   getPostById = async (req, res, next) => {
     const doc = await this.#service.getPost(req.params.id, null, '-settings');
 
     if (!doc) {
-      return next(new AppError('No document found with that ID', 404));
+      return res.status(404).json({
+        status: 'fail',
+        message: 'No se encontró ningún texto con ese ID.',
+      });
+    }
+
+    if (doc.status !== 'posted' && doc.author._id !== req.user.id) {
+      return res.status(401).json({
+        status: 'fail',
+        message: 'No tiene autorización para visualizar este texto.',
+      });
     }
 
     res.status(200).json({

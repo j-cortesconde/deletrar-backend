@@ -56,7 +56,7 @@ class PostService {
       },
       {
         $lookup: {
-          from: 'users', // Assuming the name of the collection is 'users'
+          from: 'users', // Gets the entire user document that authored this post
           localField: 'author',
           foreignField: '_id',
           as: 'authorInfo',
@@ -72,7 +72,7 @@ class PostService {
           summary: 1,
           content: 1,
           coverImage: 1,
-          author: { name: '$authorInfo.name', _id: '$authorInfo._id' },
+          author: { name: '$authorInfo.name', _id: '$authorInfo._id' }, // Returns only the author's name & id
         },
       },
       {
