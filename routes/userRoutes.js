@@ -10,6 +10,8 @@ const router = express.Router();
 const userController = new UserController();
 const authController = new AuthController();
 
+router.use(authController.getLoggedInUser);
+
 router.post('/requestInvite', authController.requestInvite);
 router.post('/login', authController.login);
 router.get('/logout', authController.logout);

@@ -313,9 +313,9 @@ class AuthController {
     res.status(200).json({ status: 'success' });
   };
 
-  // Checks the user is logged in and if pw hasn't changed sin jwt emission. If so, nexts, if not, errors.
+  // Checks the user is logged in and if pw hasn't changed sin jwt emission. If so, adds it to req.user, if not, adds the error the protect method should return. In any case it nexts.
   // Adds the user document from the User model to  req.user
-  protect = catchAsync(async (req, res, next) => {
+  getLoggedInUser = catchAsync(async (req, res, next) => {
     // 1) Getting token and check of it's there
     let token;
     if (
@@ -328,12 +328,8 @@ class AuthController {
     }
 
     if (!token) {
-      return next(
-        new AppError(
-          'You are not logged in! Please log in to get access.',
-          401,
-        ),
-      );
+      req.user.error = 'You are not logged in! Please log in to get access.';
+      return next();
     }
 
     // 2) Verification token
@@ -348,27 +344,35 @@ class AuthController {
     });
 
     if (!currentUser) {
-      return next(
-        new AppError(
-          'The user belonging to this token does no longer exist.',
-          401,
-        ),
-      );
+      req.user.error = 'The user belonging to this token does no longer exist.';
+      return next();
     }
 
     // 4) Check if user changed password after the token was issued
     if (this.#service.changedPasswordAfter(currentUser, decoded.iat)) {
-      // currentUser.changedPasswordAfter(decoded.iat)) {
-      return next(
-        new AppError(
-          'User recently changed password! Please log in again.',
-          401,
-        ),
-      );
+      req.user.error = 'User recently changed password! Please log in again.';
+      return next();
     }
 
     // GRANT ACCESS TO PROTECTED ROUTE
     req.user = currentUser;
+    next();
+  });
+
+  // IMPORTANT: This MW  must work in tandem with the getLoggedInUser MW
+  // If the user is logged in, it gets it from getLoggedInUser in req.user. If user isnt logged in (or their login is invalid), gets instead an error message in req.user.error. In the first case it nexts, in the second case it returns the error.
+  protect = catchAsync(async (req, res, next) => {
+    // 1) REDUNDANCY. If nothing was passed in req.user, returns a generic error
+    if (!req.user) {
+      return next(new AppError('There was an unexpected issue', 500));
+    }
+
+    // 2) Checks if there is a user error message in req.user.error
+    if (req.user.error) {
+      return next(new AppError(req.user.error, 401));
+    }
+
+    // 3) GRANT ACCESS TO PROTECTED ROUTE
     next();
   });
 

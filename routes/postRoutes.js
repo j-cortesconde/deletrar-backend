@@ -8,6 +8,8 @@ const router = express.Router();
 const postController = new PostController();
 const authController = new AuthController();
 
+router.use(authController.getLoggedInUser);
+
 router
   .get('/', postController.getAllPosts)
   .get('/id/:id', postController.getPostById)
