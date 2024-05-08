@@ -1,3 +1,5 @@
+// TODO: Isnt there a better way to handle text versions by creating multiple documents that point to the initial doc instead of saving each version in a field?
+
 const sharp = require('sharp');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
@@ -82,10 +84,10 @@ class PostController {
       );
     }
 
-    if (filteredBody.status === 'posted' && oldDoc.status === 'editing')
+    if (filteredBody.status === 'posted' && !oldDoc.postedAt)
       filteredBody.postedAt = Date.now();
 
-    if (filteredBody.status === 'posted' && oldDoc.status === 'posted') {
+    if (oldDoc.status === 'posted') {
       filteredBody.previousVersion = JSON.stringify(oldDoc.toObject());
       filteredBody.currentVersion = oldDoc.currentVersion + 1;
     }
@@ -173,7 +175,7 @@ class PostController {
     if (doc.status !== 'posted' && doc.author.id !== req.user.id) {
       return res.status(401).json({
         status: 'fail',
-        message: 'No tiene autorización para visualizar este texto.',
+        message: 'No tiene autorización para acceder a este texto.',
       });
     }
 
