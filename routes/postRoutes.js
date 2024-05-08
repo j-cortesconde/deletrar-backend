@@ -36,8 +36,7 @@ router
     postController.uploadPostImage,
     postController.resizePostImage,
     postController.updatePost,
-  )
-  .patch('/delete/:id', postController.userDeletePost);
+  );
 
 // Make the following routes accessible only to admins:
 router.use(authController.restrictTo('admin'));
