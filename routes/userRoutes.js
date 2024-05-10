@@ -19,9 +19,10 @@ router.get('/logout', authController.logout);
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 
-// FIXME: The getUserById route was "/:id" but it was causing issues since it was before others like "/me", causing getUserById to trigger with the id param set to "me" instead of the getMe being triggered. I changed it now to "/id/:id" but it's uglier. Is there a better way? Find out
+// FIXME: The getUserByUsername route was "/:username" but it was causing issues since it was before others like "/me", causing getUserByUsername to trigger with the username param set to "me" instead of the getMe being triggered. I changed it now to "/username/:username" but it's uglier. Is there a better way? Find out
+// FIXME: Same for all /id/:id (and maybe in postRoute too)
 router.get('/', userController.getAllUsers);
-router.get('/id/:id', userController.getUserById);
+router.get('/username/:username', userController.getUserByUsername);
 router.get('/search/:searchTerm', userController.searchUsers);
 
 // Protect all routes from now on:

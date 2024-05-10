@@ -210,7 +210,7 @@ class UserController {
     });
   };
 
-  getUserById = async (req, res, next) => {
+  getUserByUsername = async (req, res, next) => {
     const populate = [
       {
         path: 'posts',
@@ -219,13 +219,13 @@ class UserController {
       { path: 'followers', select: 'name -following' },
     ];
     const select = 'name username email photo description createdAt following';
-    const doc = await this.#service.getUserById(req.params.id, {
+    const doc = await this.#service.getUserByUsername(req.params.username, {
       populate,
       select,
     });
 
     if (!doc) {
-      return next(new AppError('No document found with that ID', 404));
+      return next(new AppError('No document found with that username', 404));
     }
 
     res.status(200).json({

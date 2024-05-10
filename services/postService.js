@@ -23,6 +23,29 @@ class PostService {
     return features.query;
   }
 
+  getPostsByAuthorUsername(authorUsername) {
+    return this.#Model.aggregate([
+      {
+        $match: {
+          status: 'posted',
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'author',
+          foreignField: '_id',
+          as: 'authorInfo',
+        },
+      },
+      {
+        $match: {
+          'authorInfo.username': authorUsername,
+        },
+      },
+    ]);
+  }
+
   getPost(postId, populateOptions, selectOptions) {
     let query = this.#Model.findById(postId);
     if (populateOptions) query = query.populate(populateOptions);

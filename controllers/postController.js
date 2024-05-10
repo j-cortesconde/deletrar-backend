@@ -151,8 +151,26 @@ class PostController {
     });
   };
 
+  // Only returns status="posted" posts
   getAllPosts = async (req, res, next) => {
+    req.query.status = 'posted';
+
     const docs = await this.#service.getAllPosts(req.query, '-settings');
+
+    // SEND RESPONSE
+    res.status(200).json({
+      status: 'success',
+      results: docs.length,
+      data: docs,
+    });
+  };
+
+  // Only returns status="posted" posts
+  // TODO: Add pagination and sort capabilities
+  getPostsByAuthorUsername = async (req, res, next) => {
+    const docs = await this.#service.getPostsByAuthorUsername(
+      req.params.username,
+    );
 
     // SEND RESPONSE
     res.status(200).json({
