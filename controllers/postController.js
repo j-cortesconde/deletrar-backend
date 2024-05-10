@@ -41,6 +41,7 @@ class PostController {
     );
     filteredBody.author = req.user.id;
     filteredBody.currentVersion = 1;
+    filteredBody.updatedAt = Date.now();
     if (filteredBody.status === 'posted') filteredBody.postedAt = Date.now();
     if (req.file) filteredBody.coverImage = req.file.filename;
 

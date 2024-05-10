@@ -212,7 +212,10 @@ class UserController {
 
   getUserById = async (req, res, next) => {
     const populate = [
-      { path: 'posts', select: 'title -author' },
+      {
+        path: 'posts',
+        select: 'title summary coverImage postedAt updatedAt -author',
+      },
       { path: 'followers', select: 'name -following' },
     ];
     const select = 'name username email photo description createdAt following';
