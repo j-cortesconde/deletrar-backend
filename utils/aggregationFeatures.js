@@ -27,6 +27,8 @@ class AggregationFeatures {
 
   paginate() {
     const page = Number(this.queryString.page) || 1;
+    const userLimit = Number(this.queryString.limit) || POST_LIMIT;
+    const limit = userLimit < POST_LIMIT ? userLimit : POST_LIMIT;
 
     this.pipeline.push({
       $facet: {
@@ -40,10 +42,7 @@ class AggregationFeatures {
           },
         ],
         // Stage 2: Limit documents
-        limitedDocuments: [
-          { $skip: (page - 1) * POST_LIMIT },
-          { $limit: POST_LIMIT },
-        ],
+        limitedDocuments: [{ $skip: (page - 1) * limit }, { $limit: limit }],
       },
     });
 
