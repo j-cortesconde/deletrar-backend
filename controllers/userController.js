@@ -178,7 +178,7 @@ class UserController {
   // Finds the document for the current logged in user and sets it 'active' property to true, effectively reenabling it.
   reactivateMe = async (req, res, next) => {
     const populate = [
-      { path: 'posts', select: 'title -author' },
+      { path: 'posts', select: 'title ' },
       { path: 'followers', select: 'name -following' },
     ];
     const select =
@@ -214,6 +214,7 @@ class UserController {
     const populate = [
       {
         path: 'posts',
+        // select: 'title summary coverImage postedAt updatedAt -author',
         select: 'title summary coverImage postedAt updatedAt -author',
       },
       { path: 'followers', select: 'name -following' },

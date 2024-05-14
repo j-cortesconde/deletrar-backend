@@ -39,7 +39,7 @@ class PostController {
       'status',
       'settings',
     );
-    filteredBody.author = req.user.id;
+    filteredBody.author = req.user.username;
     filteredBody.currentVersion = 1;
     filteredBody.updatedAt = Date.now();
     if (filteredBody.status === 'posted') filteredBody.postedAt = Date.now();
@@ -55,7 +55,16 @@ class PostController {
 
   // Updates the post limiting the fields that can be updated, adding update time, counting number of versions (posted versions) and adding the document's previous state as a string to its previousVersion field (if both previous and new version are posted versions).
   updatePost = async (req, res, next) => {
-    const oldDoc = await this.#service.getPost(req.params.id);
+    const populate = [
+      {
+        path: 'author',
+        model: 'User',
+        select: 'name photo username',
+        foreignField: 'username',
+      },
+    ];
+
+    const oldDoc = await this.#service.getPost(req.params.id, { populate });
 
     if (!oldDoc) {
       return next(new AppError('No post found with that ID', 404));
@@ -98,6 +107,7 @@ class PostController {
     const doc = await this.#service.updatePost(req.params.id, filteredBody, {
       new: true,
       runValidators: true,
+      populate,
     });
 
     res.status(200).json({
@@ -108,7 +118,16 @@ class PostController {
 
   //Looks for a document's previous version. If no version number is specified in GET, the immediate previous is sent. Else, that which was specified.
   getPreviousVersion = async (req, res, next) => {
-    const doc = await this.#service.getPost(req.params.id);
+    const populate = [
+      {
+        path: 'author',
+        model: 'User',
+        select: 'name photo username',
+        foreignField: 'username',
+      },
+    ];
+
+    const doc = await this.#service.getPost(req.params.id, { populate });
 
     if (!doc) {
       return next(new AppError('No post found with that ID', 404));
@@ -166,23 +185,35 @@ class PostController {
   };
 
   // Only returns status="posted" posts
-  // TODO: Add pagination and sort capabilities
   getPostsByAuthorUsername = async (req, res, next) => {
-    const docs = await this.#service.getPostsByAuthorUsername(
-      req.params.username,
+    const data = await this.#service.getPosts(
+      { author: req.params.username },
+      req.query,
     );
+
+    const response = {
+      count: data[0].totalCount[0].totalCount,
+      docs: data[0].limitedDocuments,
+    };
 
     // SEND RESPONSE
     res.status(200).json({
       status: 'success',
-      results: docs.length,
-      data: docs,
+      data: response,
     });
   };
 
   // TODO: I could add a setting to posts where one could set post visibility (specific users that could see other users editing posts, private posted posts, etc) and add that logic here
   getPostById = async (req, res, next) => {
-    const doc = await this.#service.getPost(req.params.id, null, '-settings');
+    const populate = [
+      {
+        path: 'author',
+        model: 'User',
+        select: 'name photo username',
+        foreignField: 'username',
+      },
+    ];
+    const doc = await this.#service.getPost(req.params.id, { populate });
 
     if (!doc) {
       return res.status(404).json({

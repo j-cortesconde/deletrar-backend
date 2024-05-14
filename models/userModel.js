@@ -95,8 +95,10 @@ const userSchema = new mongoose.Schema(
 //
 userSchema.virtual('posts', {
   ref: 'Post',
+  // foreignField: 'author',
+  // localField: '_id',
   foreignField: 'author',
-  localField: '_id',
+  localField: 'username',
   select: 'title summary',
 });
 

@@ -33,7 +33,7 @@ const postSchema = new mongoose.Schema(
       enum: ['editing', 'posted', 'deleted'],
     },
     author: {
-      type: mongoose.Schema.ObjectId,
+      type: String,
       ref: 'User',
       required: [true, 'Post must have an author'],
     },
@@ -55,13 +55,23 @@ const postSchema = new mongoose.Schema(
   },
 );
 
-postSchema.pre(/^find/, function (next) {
-  this.populate({
-    path: 'author',
-    select: 'name photo username',
-  });
-  next();
-});
+// postSchema.pre(/^find/, function (next) {
+//   this.populate({
+//     path: 'author',
+//     select: 'name photo username',
+//   });
+//   next();
+// });
+// postSchema.pre(/^find/, function (next) {
+//   this.populate({
+//     path: 'author',
+//     model: 'User',
+//     select: 'name photo username',
+//     foreignField: 'username',
+//   });
+
+//   next();
+// });
 
 const Post = mongoose.model('Post', postSchema);
 

@@ -1,4 +1,5 @@
 const Post = require('../models/postModel');
+const AggregationFeatures = require('../utils/aggregationFeatures');
 const APIFeatures = require('../utils/apiFeatures');
 
 class PostService {
@@ -23,35 +24,25 @@ class PostService {
     return features.query;
   }
 
-  getPostsByAuthorUsername(authorUsername) {
-    return this.#Model.aggregate([
+  getPosts(matchObject, reqQuery) {
+    const basePipeline = [
       {
         $match: {
           status: 'posted',
+          ...matchObject,
         },
       },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'author',
-          foreignField: '_id',
-          as: 'authorInfo',
-        },
-      },
-      {
-        $match: {
-          'authorInfo.username': authorUsername,
-        },
-      },
-    ]);
+    ];
+
+    const features = new AggregationFeatures(basePipeline, reqQuery)
+      .sort()
+      .paginate();
+
+    return this.#Model.aggregate(features.pipeline);
   }
 
-  getPost(postId, populateOptions, selectOptions) {
-    let query = this.#Model.findById(postId);
-    if (populateOptions) query = query.populate(populateOptions);
-    if (selectOptions) query = query.select(selectOptions);
-
-    return query;
+  getPost(postId, optionsObject) {
+    return this.#Model.findById(postId, null, optionsObject);
   }
 
   updatePost(postId, updateObject, updateOptions) {
@@ -79,20 +70,20 @@ class PostService {
         },
       },
       {
+        $match: {
+          status: 'posted', // Filter only posts with status "posted"
+        },
+      },
+      {
         $lookup: {
           from: 'users', // Gets the entire user document that authored this post
           localField: 'author',
-          foreignField: '_id',
+          foreignField: 'username',
           as: 'authorInfo',
         },
       },
       {
         $unwind: '$authorInfo',
-      },
-      {
-        $match: {
-          status: 'posted', // Filter only posts with status "posted"
-        },
       },
       {
         $project: {
