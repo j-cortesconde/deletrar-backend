@@ -32,6 +32,18 @@ class PostService {
           ...matchObject,
         },
       },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          postedAt: 1,
+          updatedAt: 1,
+          summary: 1,
+          coverImage: 1,
+          status: 1,
+          author: 1,
+        },
+      },
     ];
 
     const features = new AggregationFeatures(basePipeline, reqQuery)
