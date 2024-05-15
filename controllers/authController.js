@@ -285,10 +285,7 @@ class AuthController {
     }
 
     // 2) Get user associated with that email address
-    const populate = [
-      { path: 'posts', select: 'title -author' },
-      { path: 'followers', select: 'name -following' },
-    ];
+    const populate = [{ path: 'posts', select: 'title -author' }];
     const select =
       'name username email photo description createdAt following role settings active';
 

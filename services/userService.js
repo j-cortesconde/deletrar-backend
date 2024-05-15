@@ -1,5 +1,6 @@
 // FIXME: REFACTOR so you don't have to search for users you can pass in (eg req.user or others previously searched users)
 const User = require('../models/userModel');
+const AggregationFeatures = require('../utils/aggregationFeatures');
 const APIFeatures = require('../utils/apiFeatures');
 
 class UserService {
@@ -101,6 +102,28 @@ class UserService {
         $limit: 10, // Limit results to 10 documents
       },
     ]);
+  }
+
+  getFollowers(username, reqQuery) {
+    const basePipeline = [
+      {
+        $match: {
+          following: { $elemMatch: { $eq: username } },
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          username: 1,
+          photo: 1,
+          description: 1,
+        },
+      },
+    ];
+
+    const features = new AggregationFeatures(basePipeline, reqQuery).paginate();
+
+    return this.#Model.aggregate(features.pipeline);
   }
 }
 

@@ -23,6 +23,7 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 // FIXME: Same for all /id/:id (and maybe in postRoute too)
 router.get('/', userController.getAllUsers);
 router.get('/username/:username', userController.getUserByUsername);
+router.get('/followers/:username', userController.getFollowers);
 router.get('/search/:searchTerm', userController.searchUsers);
 
 // Protect all routes from now on:

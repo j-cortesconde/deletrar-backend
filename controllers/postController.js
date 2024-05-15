@@ -192,8 +192,8 @@ class PostController {
     );
 
     const response = {
-      count: data[0].totalCount[0].totalCount,
-      docs: data[0].limitedDocuments,
+      count: data[0]?.totalCount[0]?.totalCount,
+      docs: data[0]?.limitedDocuments,
     };
 
     // SEND RESPONSE

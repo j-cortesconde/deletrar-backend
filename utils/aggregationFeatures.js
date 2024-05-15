@@ -1,4 +1,4 @@
-const { POST_LIMIT } = require('./constants');
+const { AGGREGATION_LIMIT } = require('./constants');
 
 class AggregationFeatures {
   constructor(pipeline, queryString) {
@@ -27,8 +27,8 @@ class AggregationFeatures {
 
   paginate() {
     const page = Number(this.queryString.page) || 1;
-    const userLimit = Number(this.queryString.limit) || POST_LIMIT;
-    const limit = userLimit < POST_LIMIT ? userLimit : POST_LIMIT;
+    const userLimit = Number(this.queryString.limit) || AGGREGATION_LIMIT;
+    const limit = userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
 
     this.pipeline.push({
       $facet: {

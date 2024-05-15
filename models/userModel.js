@@ -33,9 +33,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    // following: [
+    //   {
+    //     type: mongoose.Schema.ObjectId,
+    //     ref: 'User',
+    //   },
+    // ],
     following: [
       {
-        type: mongoose.Schema.ObjectId,
+        type: String,
         ref: 'User',
       },
     ],
@@ -100,13 +106,6 @@ userSchema.virtual('posts', {
   foreignField: 'author',
   localField: 'username',
   select: 'title summary',
-});
-
-userSchema.virtual('followers', {
-  ref: 'User',
-  foreignField: 'following',
-  localField: '_id',
-  select: 'name',
 });
 
 // Encrypt password on password create/change

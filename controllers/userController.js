@@ -51,10 +51,7 @@ class UserController {
   // FIXME: This is duplicating getUserById code. PosSol: Pass (req.params.id || req.user.id) into .getUserById()
   // TODO: Update. It shouldnt be duplicating. Now it gets different info for frontend route protection (like inactive, state and role)
   getMe = async (req, res, next) => {
-    const populate = [
-      { path: 'posts', select: 'title -author' },
-      { path: 'followers', select: 'name -following' },
-    ];
+    const populate = [{ path: 'posts', select: 'title -author' }];
     const select =
       'name username email photo description createdAt following role settings active';
 
@@ -140,10 +137,7 @@ class UserController {
     filteredBody.role = 'user';
 
     // 3) Update user document
-    const populate = [
-      { path: 'posts', select: 'title -author' },
-      { path: 'followers', select: 'name -following' },
-    ];
+    const populate = [{ path: 'posts', select: 'title -author' }];
     const select =
       'name username email photo description createdAt following role settings active';
 
@@ -177,10 +171,7 @@ class UserController {
 
   // Finds the document for the current logged in user and sets it 'active' property to true, effectively reenabling it.
   reactivateMe = async (req, res, next) => {
-    const populate = [
-      { path: 'posts', select: 'title ' },
-      { path: 'followers', select: 'name -following' },
-    ];
+    const populate = [{ path: 'posts', select: 'title ' }];
     const select =
       'name username email photo description createdAt following role settings active';
 
@@ -214,10 +205,8 @@ class UserController {
     const populate = [
       {
         path: 'posts',
-        // select: 'title summary coverImage postedAt updatedAt -author',
         select: 'title summary coverImage postedAt updatedAt -author',
       },
-      { path: 'followers', select: 'name -following' },
     ];
     const select = 'name username email photo description createdAt following';
     const doc = await this.#service.getUserByUsername(req.params.username, {
@@ -290,6 +279,25 @@ class UserController {
       status: 'success',
       results: docs.length,
       data: docs,
+    });
+  };
+
+  // TODO: The following/follower model isnt ideal. The way it is now, there is a way to order by first/latest followed user (the users one follows) but not by first/latest following user (the users that follow one). Better solution is out there
+  getFollowers = async (req, res, next) => {
+    const data = await this.#service.getFollowers(
+      req.params.username,
+      req.query,
+    );
+
+    const response = {
+      count: data[0]?.totalCount[0]?.totalCount,
+      docs: data[0]?.limitedDocuments,
+    };
+
+    // SEND RESPONSE
+    res.status(200).json({
+      status: 'success',
+      data: response,
     });
   };
 }
