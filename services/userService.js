@@ -2,6 +2,7 @@
 const User = require('../models/userModel');
 const AggregationFeatures = require('../utils/aggregationFeatures');
 const APIFeatures = require('../utils/apiFeatures');
+const { AGGREGATION_LIMIT } = require('../utils/constants');
 
 class UserService {
   #Model = User;
@@ -124,6 +125,80 @@ class UserService {
     const features = new AggregationFeatures(basePipeline, reqQuery).paginate();
 
     return this.#Model.aggregate(features.pipeline);
+  }
+
+  // TODO: This way of doing getFollowing might be useful for the getFollowers if followers start getting stored in the document the same way following does
+  getFollowing(username, reqQuery) {
+    const page = Number(reqQuery.page) || 1;
+    const userLimit = Number(reqQuery.limit) || AGGREGATION_LIMIT;
+    const limit = userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
+
+    return this.#Model.aggregate([
+      // Find the user by their username
+      { $match: { username } },
+      // Project only the following array field so the others don't get unwund
+      { $project: { following: 1 } },
+      // Unwind the following array to prepare for $lookup
+      { $unwind: '$following' },
+      // Lookup user documents based on the following array
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'following',
+          foreignField: 'username',
+          as: 'followingUsers',
+        },
+      },
+      // Project the fields for the following user documents
+      {
+        $project: {
+          followingUsers: {
+            $map: {
+              input: '$followingUsers',
+              as: 'user',
+              in: {
+                username: '$$user.username',
+                name: '$$user.name',
+                description: '$$user.description',
+                photo: '$$user.photo',
+              },
+            },
+          },
+        },
+      },
+      // Group the documents to calculate the total count of following documents
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: { $size: '$followingUsers' } },
+          followingUsers: { $push: '$followingUsers' },
+        },
+      },
+      // Flatten the array of following users
+      {
+        $project: {
+          _id: 0,
+          totalAmount: 1,
+          followingUsers: {
+            $reduce: {
+              input: '$followingUsers',
+              initialValue: [],
+              in: { $concatArrays: ['$$value', '$$this'] },
+            },
+          },
+        },
+      },
+      // Ensure the output documents match the desired structure
+      {
+        $project: {
+          _id: 0,
+          totalAmount: 1,
+          followingUsers: {
+            $slice: ['$followingUsers', (page - 1) * limit, limit],
+          },
+        },
+      },
+    ]);
   }
 }
 

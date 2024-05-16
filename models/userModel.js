@@ -98,7 +98,6 @@ const userSchema = new mongoose.Schema(
   },
 );
 
-//
 userSchema.virtual('posts', {
   ref: 'Post',
   // foreignField: 'author',

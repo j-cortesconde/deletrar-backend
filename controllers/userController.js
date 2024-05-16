@@ -53,7 +53,7 @@ class UserController {
   getMe = async (req, res, next) => {
     const populate = [{ path: 'posts', select: 'title -author' }];
     const select =
-      'name username email photo description createdAt following role settings active';
+      'name username email photo description createdAt role settings active';
 
     const doc = await this.#service.getUserById(req.user.id, {
       populate,
@@ -139,7 +139,7 @@ class UserController {
     // 3) Update user document
     const populate = [{ path: 'posts', select: 'title -author' }];
     const select =
-      'name username email photo description createdAt following role settings active';
+      'name username email photo description createdAt role settings active';
 
     const updatedUser = await this.#service.updateUser(
       req.user.id,
@@ -173,7 +173,7 @@ class UserController {
   reactivateMe = async (req, res, next) => {
     const populate = [{ path: 'posts', select: 'title ' }];
     const select =
-      'name username email photo description createdAt following role settings active';
+      'name username email photo description createdAt role settings active';
 
     const user = await this.#service.updateUser(
       req.user.id,
@@ -208,7 +208,7 @@ class UserController {
         select: 'title summary coverImage postedAt updatedAt -author',
       },
     ];
-    const select = 'name username email photo description createdAt following';
+    const select = 'name username email photo description createdAt';
     const doc = await this.#service.getUserByUsername(req.params.username, {
       populate,
       select,
@@ -282,7 +282,8 @@ class UserController {
     });
   };
 
-  // TODO: The following/follower model isnt ideal. The way it is now, there is a way to order by first/latest followed user (the users one follows) but not by first/latest following user (the users that follow one). Better solution is out there
+  // TODO: The following/follower model isnt ideal. The way it is now, there is a way to order by oldest/latest followed user (the users one follows) but not by oldest/latest following user (the users that follow one). Better solution is out there
+  // TODO: Expanding on this. If you add a followers array field to the user schema and each time a user follows another one the followed username gets unshifted into the following array field of the follower document and the follower username gets unshifted into the followers array field of the followed user, then both the following and the followers arrays become ordered from latest first to oldest last. If this is done so, the getFollowers service should be changed for something that resembles the current state of the getFollowing one (a common service could even be created that just gets passed in the name of the field queried, following/followers)
   getFollowers = async (req, res, next) => {
     const data = await this.#service.getFollowers(
       req.params.username,
@@ -298,6 +299,25 @@ class UserController {
     res.status(200).json({
       status: 'success',
       data: response,
+    });
+  };
+
+  getFollowing = async (req, res, next) => {
+    const data = await this.#service.getFollowing(
+      req.params.username,
+      req.query,
+    );
+
+    // const response = {
+    //   count: data[0]?.totalCount[0]?.totalCount,
+    //   docs: data[0]?.limitedDocuments,
+    // };
+
+    // SEND RESPONSE
+    res.status(200).json({
+      status: 'success',
+      // data: response,
+      data,
     });
   };
 }

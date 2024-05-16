@@ -24,6 +24,7 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 router.get('/', userController.getAllUsers);
 router.get('/username/:username', userController.getUserByUsername);
 router.get('/followers/:username', userController.getFollowers);
+router.get('/following/:username', userController.getFollowing);
 router.get('/search/:searchTerm', userController.searchUsers);
 
 // Protect all routes from now on:
