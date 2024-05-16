@@ -30,8 +30,8 @@ class UserService {
     return this.#Model.findById(userId, null, optionsObject);
   }
 
-  getUserByUsername(username, optionsObject) {
-    return this.#Model.findOne({ username }, null, optionsObject);
+  getUser(matchObject, optionsObject) {
+    return this.#Model.findOne(matchObject, null, optionsObject);
   }
 
   updateUser(userId, updateObject, updateOptions) {

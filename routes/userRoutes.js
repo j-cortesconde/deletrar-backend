@@ -41,6 +41,16 @@ router.patch('/reactivateMe', userController.reactivateMe);
 // Make sure user account is active from now on:
 router.use(authController.isActive);
 
+router.get('/id/:id/follow', userController.followUser);
+router.get(
+  '/isFollowing/:ownUsername/:otherUsername',
+  userController.isFollowing,
+);
+router.get(
+  '/isFollower/:ownUsername/:otherUsername',
+  userController.isFollower,
+);
+
 router.post('/invite', authController.invite);
 router.patch('/updateMyPassword', authController.updatePassword);
 router.patch(
@@ -50,7 +60,6 @@ router.patch(
   userController.updateMe,
 );
 router.delete('/deleteMe', userController.deleteMe);
-router.get('/id/:id/follow', userController.followUser);
 
 // Make the following routes accessible only to admins:
 router.use(authController.restrictTo('admin'));

@@ -33,12 +33,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    // following: [
-    //   {
-    //     type: mongoose.Schema.ObjectId,
-    //     ref: 'User',
-    //   },
-    // ],
+    followers: [
+      {
+        type: String,
+        ref: 'User',
+      },
+    ],
     following: [
       {
         type: String,

@@ -209,10 +209,13 @@ class UserController {
       },
     ];
     const select = 'name username email photo description createdAt';
-    const doc = await this.#service.getUserByUsername(req.params.username, {
-      populate,
-      select,
-    });
+    const doc = await this.#service.getUser(
+      { username: req.params.username },
+      {
+        populate,
+        select,
+      },
+    );
 
     if (!doc) {
       return next(new AppError('No document found with that username', 404));
@@ -282,6 +285,7 @@ class UserController {
     });
   };
 
+  // FIXME: HAVE TO CHANGE THIS as i said below
   // TODO: The following/follower model isnt ideal. The way it is now, there is a way to order by oldest/latest followed user (the users one follows) but not by oldest/latest following user (the users that follow one). Better solution is out there
   // TODO: Expanding on this. If you add a followers array field to the user schema and each time a user follows another one the followed username gets unshifted into the following array field of the follower document and the follower username gets unshifted into the followers array field of the followed user, then both the following and the followers arrays become ordered from latest first to oldest last. If this is done so, the getFollowers service should be changed for something that resembles the current state of the getFollowing one (a common service could even be created that just gets passed in the name of the field queried, following/followers)
   getFollowers = async (req, res, next) => {
@@ -308,16 +312,57 @@ class UserController {
       req.query,
     );
 
-    // const response = {
-    //   count: data[0]?.totalCount[0]?.totalCount,
-    //   docs: data[0]?.limitedDocuments,
-    // };
+    const response = {
+      count: data[0]?.totalAmount,
+      docs: data[0]?.followingUsers,
+    };
 
     // SEND RESPONSE
     res.status(200).json({
       status: 'success',
-      // data: response,
-      data,
+      data: response,
+    });
+  };
+
+  isFollowing = async (req, res, next) => {
+    const select = 'username';
+
+    const doc = await this.#service.getUser(
+      {
+        username: req.params.ownUsername,
+        following: req.params.otherUsername,
+      },
+      { select },
+    );
+
+    const isFollowing = !!doc;
+
+    console.log('isFollowing:', doc);
+
+    res.status(200).json({
+      status: 'success',
+      data: isFollowing,
+    });
+  };
+
+  isFollower = async (req, res, next) => {
+    const select = 'username';
+
+    const doc = await this.#service.getUser(
+      {
+        username: req.params.ownUsername,
+        follower: req.params.otherUsername,
+      },
+      { select },
+    );
+
+    const isFollower = !!doc;
+
+    console.log('isFollower:', doc);
+
+    res.status(200).json({
+      status: 'success',
+      data: isFollower,
     });
   };
 }
