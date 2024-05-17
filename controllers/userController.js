@@ -104,7 +104,7 @@ class UserController {
 
     // 3) Update user document
     const updatedUser = await this.#service.updateUser(
-      req.user.id,
+      { _id: req.user.id },
       filteredBody,
       {
         new: true,
@@ -142,7 +142,7 @@ class UserController {
       'name username email photo description createdAt role settings active';
 
     const updatedUser = await this.#service.updateUser(
-      req.user.id,
+      { _id: req.user.id },
       filteredBody,
       { populate, select, new: true, runValidators: true },
     );
@@ -161,7 +161,7 @@ class UserController {
       return next(error);
     }
 
-    await this.#service.updateUser(req.user.id, { active: false });
+    await this.#service.updateUser({ _id: req.user.id }, { active: false });
 
     res.status(204).json({
       status: 'success',
@@ -176,7 +176,7 @@ class UserController {
       'name username email photo description createdAt role settings active';
 
     const user = await this.#service.updateUser(
-      req.user.id,
+      { _id: req.user.id },
       { active: true },
       { populate, select, new: true, includeInactive: true },
     );
@@ -238,13 +238,17 @@ class UserController {
 
   // Shouldn't be used for password updating.
   updateUser = async (req, res, next) => {
-    const doc = await this.#service.updateUser(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const doc = await this.#service.updateUser(
+      { username: req.params.username },
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
 
     if (!doc) {
-      return next(new AppError('No document found with that ID', 404));
+      return next(new AppError('No document found with that username', 404));
     }
 
     res.status(200).json({
@@ -254,10 +258,10 @@ class UserController {
   };
 
   deleteUser = async (req, res, next) => {
-    const doc = await this.#service.deleteUser(req.params.id);
+    const doc = await this.#service.deleteUser(req.params.username);
 
     if (!doc) {
-      return next(new AppError('No document found with that ID', 404));
+      return next(new AppError('No document found with that username', 404));
     }
 
     res.status(204).json({
@@ -267,11 +271,56 @@ class UserController {
   };
 
   followUser = async (req, res, next) => {
-    await this.#service.followUser(req.user, req.params.id);
+    const ownUser = await this.#service.updateUser(
+      { _id: req.user.id },
+      {
+        $push: {
+          following: { $each: [req.params.otherUsername], $position: 0 },
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    const otherUser = await this.#service.updateUser(
+      { username: req.params.otherUsername },
+      { $push: { followers: { $each: [req.user.username], $position: 0 } } },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
 
     res.status(200).json({
       status: 'success',
-      data: req.user,
+      data: { otherUsername: otherUser.username },
+    });
+  };
+
+  unfollowUser = async (req, res, next) => {
+    const ownUser = await this.#service.updateUser(
+      { _id: req.user.id },
+      { $pull: { following: req.params.otherUsername } },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    const otherUser = await this.#service.updateUser(
+      { username: req.params.otherUsername },
+      { $pull: { followers: req.user.username } },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: { otherUsername: otherUser.username },
     });
   };
 
@@ -324,27 +373,6 @@ class UserController {
     });
   };
 
-  isFollowing = async (req, res, next) => {
-    const select = 'username';
-
-    const doc = await this.#service.getUser(
-      {
-        username: req.params.ownUsername,
-        following: req.params.otherUsername,
-      },
-      { select },
-    );
-
-    const isFollowing = !!doc;
-
-    console.log('isFollowing:', doc);
-
-    res.status(200).json({
-      status: 'success',
-      data: isFollowing,
-    });
-  };
-
   isFollower = async (req, res, next) => {
     const select = 'username';
 
@@ -358,11 +386,28 @@ class UserController {
 
     const isFollower = !!doc;
 
-    console.log('isFollower:', doc);
-
     res.status(200).json({
       status: 'success',
       data: isFollower,
+    });
+  };
+
+  amFollowing = async (req, res, next) => {
+    const select = 'username';
+
+    const doc = await this.#service.getUser(
+      {
+        username: req.params.ownUsername,
+        following: req.params.otherUsername,
+      },
+      { select },
+    );
+
+    const amFollowing = !!doc;
+
+    res.status(200).json({
+      status: 'success',
+      data: amFollowing,
     });
   };
 }

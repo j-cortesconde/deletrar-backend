@@ -41,15 +41,16 @@ router.patch('/reactivateMe', userController.reactivateMe);
 // Make sure user account is active from now on:
 router.use(authController.isActive);
 
-router.get('/id/:id/follow', userController.followUser);
-router.get(
-  '/isFollowing/:ownUsername/:otherUsername',
-  userController.isFollowing,
-);
 router.get(
   '/isFollower/:ownUsername/:otherUsername',
   userController.isFollower,
 );
+router.get(
+  '/amFollowing/:ownUsername/:otherUsername',
+  userController.amFollowing,
+);
+router.patch('/id/:otherUsername/follow', userController.followUser);
+router.patch('/id/:otherUsername/unfollow', userController.unfollowUser);
 
 router.post('/invite', authController.invite);
 router.patch('/updateMyPassword', authController.updatePassword);
@@ -66,7 +67,7 @@ router.use(authController.restrictTo('admin'));
 
 router.post('/', userController.createUser);
 router
-  .route('/id/:id')
+  .route('/id/:username')
   .patch(userController.updateUser)
   .delete(userController.deleteUser);
 

@@ -34,8 +34,12 @@ class UserService {
     return this.#Model.findOne(matchObject, null, optionsObject);
   }
 
-  updateUser(userId, updateObject, updateOptions) {
-    return this.#Model.findByIdAndUpdate(userId, updateObject, updateOptions);
+  updateUser(matchObject, updateObject, updateOptions) {
+    return this.#Model.findOneAndUpdate(
+      matchObject,
+      updateObject,
+      updateOptions,
+    );
   }
 
   deleteUser(userId) {
@@ -76,12 +80,6 @@ class UserService {
     user.password = password;
     user.passwordConfirm = passwordConfirm;
     return user.save();
-  }
-
-  // Might be inefficient. Check with .push (in case the field is being indexed) or without populating. Double updating
-  followUser(currentUser, followUserId) {
-    currentUser.following.unshift(followUserId);
-    return currentUser.save();
   }
 
   searchUsers(searchTerm) {
