@@ -374,7 +374,7 @@ class UserController {
     const doc = await this.#service.getUser(
       {
         username: req.params.ownUsername,
-        follower: req.params.otherUsername,
+        followers: req.params.otherUsername,
       },
       { select },
     );
