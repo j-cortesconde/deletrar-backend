@@ -51,12 +51,10 @@ class UserController {
   // FIXME: This is duplicating getUserById code. PosSol: Pass (req.params.id || req.user.id) into .getUserById()
   // TODO: Update. It shouldnt be duplicating. Now it gets different info for frontend route protection (like inactive, state and role)
   getMe = async (req, res, next) => {
-    const populate = [{ path: 'posts', select: 'title -author' }];
     const select =
       'name username email photo description createdAt role settings active';
 
     const doc = await this.#service.getUserById(req.user.id, {
-      populate,
       select,
       includeInactive: true,
     });
@@ -137,14 +135,13 @@ class UserController {
     filteredBody.role = 'user';
 
     // 3) Update user document
-    const populate = [{ path: 'posts', select: 'title -author' }];
     const select =
       'name username email photo description createdAt role settings active';
 
     const updatedUser = await this.#service.updateUser(
       { _id: req.user.id },
       filteredBody,
-      { populate, select, new: true, runValidators: true },
+      { select, new: true, runValidators: true },
     );
 
     res.status(200).json({
@@ -171,14 +168,13 @@ class UserController {
 
   // Finds the document for the current logged in user and sets it 'active' property to true, effectively reenabling it.
   reactivateMe = async (req, res, next) => {
-    const populate = [{ path: 'posts', select: 'title ' }];
     const select =
       'name username email photo description createdAt role settings active';
 
     const user = await this.#service.updateUser(
       { _id: req.user.id },
       { active: true },
-      { populate, select, new: true, includeInactive: true },
+      { select, new: true, includeInactive: true },
     );
 
     res.status(200).json({
@@ -202,17 +198,11 @@ class UserController {
   };
 
   getUserByUsername = async (req, res, next) => {
-    const populate = [
-      {
-        path: 'posts',
-        select: 'title summary coverImage postedAt updatedAt -author',
-      },
-    ];
-    const select = 'name username email photo description createdAt';
+    const select =
+      'name username email photo description followerAmount createdAt';
     const doc = await this.#service.getUser(
       { username: req.params.username },
       {
-        populate,
         select,
       },
     );
@@ -286,7 +276,10 @@ class UserController {
 
     const otherUser = await this.#service.updateUser(
       { username: req.params.otherUsername },
-      { $push: { followers: { $each: [req.user.username], $position: 0 } } },
+      {
+        $push: { followers: { $each: [req.user.username], $position: 0 } },
+        $inc: { followerAmount: 1 },
+      },
       {
         new: true,
         runValidators: true,
@@ -311,7 +304,7 @@ class UserController {
 
     const otherUser = await this.#service.updateUser(
       { username: req.params.otherUsername },
-      { $pull: { followers: req.user.username } },
+      { $pull: { followers: req.user.username }, $inc: { followerAmount: -1 } },
       {
         new: true,
         runValidators: true,

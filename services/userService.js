@@ -1,6 +1,5 @@
 // FIXME: REFACTOR so you don't have to search for users you can pass in (eg req.user or others previously searched users)
 const User = require('../models/userModel');
-const AggregationFeatures = require('../utils/aggregationFeatures');
 const APIFeatures = require('../utils/apiFeatures');
 const { AGGREGATION_LIMIT } = require('../utils/constants');
 

@@ -39,6 +39,7 @@ const userSchema = new mongoose.Schema(
         ref: 'User',
       },
     ],
+    followerAmount: { type: Number, default: 0 },
     following: [
       {
         type: String,
@@ -98,14 +99,26 @@ const userSchema = new mongoose.Schema(
   },
 );
 
-userSchema.virtual('posts', {
-  ref: 'Post',
-  // foreignField: 'author',
-  // localField: '_id',
-  foreignField: 'author',
-  localField: 'username',
-  select: 'title summary',
-});
+// TODO: Im not deleting this because Im not sure doing so wont affect the code. It's here for now
+// userSchema.virtual('posts', {
+//   ref: 'Post',
+//   // foreignField: 'author',
+//   // localField: '_id',
+//   foreignField: 'author',
+//   localField: 'username',
+//   select: 'title summary',
+// });
+
+// // Make sure followerAmount is updated every time followers is
+// userSchema.pre('findOneAndUpdate', async function (next) {
+//   if (this._update.$push?.followers || this._update.$pull?.followers) {
+//     const updatedUser = await this.model.findOne(this.getQuery());
+//     const
+//     this.set({ followerAmount: updatedUser.followerAmount + 1 });
+//     // this.followerAmount = this.followers?.length;
+//   }
+//   next();
+// });
 
 // Encrypt password on password create/change
 userSchema.pre('save', async function (next) {

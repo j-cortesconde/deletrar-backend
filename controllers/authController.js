@@ -285,13 +285,12 @@ class AuthController {
     }
 
     // 2) Get user associated with that email address
-    const populate = [{ path: 'posts', select: 'title -author' }];
     const select =
-      'name username email photo description createdAt following role settings active';
+      'name username email photo description createdAt role settings active';
 
     const user = await this.#service.findOneUser(
       { email },
-      { populate, select, includeInactive: true },
+      { select, includeInactive: true },
     );
     // 3) Check password is correct
     if (!(await this.#service.isPasswordCorrect(user, password))) {
