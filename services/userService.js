@@ -103,30 +103,7 @@ class UserService {
     ]);
   }
 
-  getFollowers(username, reqQuery) {
-    const basePipeline = [
-      {
-        $match: {
-          following: { $elemMatch: { $eq: username } },
-        },
-      },
-      {
-        $project: {
-          name: 1,
-          username: 1,
-          photo: 1,
-          description: 1,
-        },
-      },
-    ];
-
-    const features = new AggregationFeatures(basePipeline, reqQuery).paginate();
-
-    return this.#Model.aggregate(features.pipeline);
-  }
-
-  // TODO: This way of doing getFollowing might be useful for the getFollowers if followers start getting stored in the document the same way following does
-  getFollowing(username, reqQuery) {
+  getFollowingOrFollowers(getFieldName, username, reqQuery) {
     const page = Number(reqQuery.page) || 1;
     const userLimit = Number(reqQuery.limit) || AGGREGATION_LIMIT;
     const limit = userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
@@ -135,24 +112,24 @@ class UserService {
       // Find the user by their username
       { $match: { username } },
       // Project only the following array field so the others don't get unwund
-      { $project: { following: 1 } },
+      { $project: { [getFieldName]: 1 } },
       // Unwind the following array to prepare for $lookup
-      { $unwind: '$following' },
+      { $unwind: `$${getFieldName}` },
       // Lookup user documents based on the following array
       {
         $lookup: {
           from: 'users',
-          localField: 'following',
+          localField: getFieldName,
           foreignField: 'username',
-          as: 'followingUsers',
+          as: getFieldName,
         },
       },
       // Project the fields for the following user documents
       {
         $project: {
-          followingUsers: {
+          [getFieldName]: {
             $map: {
-              input: '$followingUsers',
+              input: `$${getFieldName}`,
               as: 'user',
               in: {
                 username: '$$user.username',
@@ -168,8 +145,8 @@ class UserService {
       {
         $group: {
           _id: null,
-          totalAmount: { $sum: { $size: '$followingUsers' } },
-          followingUsers: { $push: '$followingUsers' },
+          totalAmount: { $sum: { $size: `$${getFieldName}` } },
+          [getFieldName]: { $push: `$${getFieldName}` },
         },
       },
       // Flatten the array of following users
@@ -177,9 +154,9 @@ class UserService {
         $project: {
           _id: 0,
           totalAmount: 1,
-          followingUsers: {
+          [getFieldName]: {
             $reduce: {
-              input: '$followingUsers',
+              input: `$${getFieldName}`,
               initialValue: [],
               in: { $concatArrays: ['$$value', '$$this'] },
             },
@@ -191,8 +168,8 @@ class UserService {
         $project: {
           _id: 0,
           totalAmount: 1,
-          followingUsers: {
-            $slice: ['$followingUsers', (page - 1) * limit, limit],
+          [getFieldName]: {
+            $slice: [`$${getFieldName}`, (page - 1) * limit, limit],
           },
         },
       },

@@ -271,7 +271,7 @@ class UserController {
   };
 
   followUser = async (req, res, next) => {
-    const ownUser = await this.#service.updateUser(
+    await this.#service.updateUser(
       { _id: req.user.id },
       {
         $push: {
@@ -300,7 +300,7 @@ class UserController {
   };
 
   unfollowUser = async (req, res, next) => {
-    const ownUser = await this.#service.updateUser(
+    await this.#service.updateUser(
       { _id: req.user.id },
       { $pull: { following: req.params.otherUsername } },
       {
@@ -338,14 +338,15 @@ class UserController {
   // TODO: The following/follower model isnt ideal. The way it is now, there is a way to order by oldest/latest followed user (the users one follows) but not by oldest/latest following user (the users that follow one). Better solution is out there
   // TODO: Expanding on this. If you add a followers array field to the user schema and each time a user follows another one the followed username gets unshifted into the following array field of the follower document and the follower username gets unshifted into the followers array field of the followed user, then both the following and the followers arrays become ordered from latest first to oldest last. If this is done so, the getFollowers service should be changed for something that resembles the current state of the getFollowing one (a common service could even be created that just gets passed in the name of the field queried, following/followers)
   getFollowers = async (req, res, next) => {
-    const data = await this.#service.getFollowers(
+    const data = await this.#service.getFollowingOrFollowers(
+      'followers',
       req.params.username,
       req.query,
     );
 
     const response = {
-      count: data[0]?.totalCount[0]?.totalCount,
-      docs: data[0]?.limitedDocuments,
+      count: data[0]?.totalAmount,
+      docs: data[0]?.followers,
     };
 
     // SEND RESPONSE
@@ -356,14 +357,15 @@ class UserController {
   };
 
   getFollowing = async (req, res, next) => {
-    const data = await this.#service.getFollowing(
+    const data = await this.#service.getFollowingOrFollowers(
+      'following',
       req.params.username,
       req.query,
     );
 
     const response = {
       count: data[0]?.totalAmount,
-      docs: data[0]?.followingUsers,
+      docs: data[0]?.following,
     };
 
     // SEND RESPONSE
