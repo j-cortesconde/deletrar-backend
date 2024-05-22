@@ -31,11 +31,6 @@ const collectionSchema = new mongoose.Schema(
         ref: 'Post',
       },
     ],
-    postIntroductions: [
-      {
-        type: String,
-      },
-    ],
     createdAt: {
       type: Date,
       default: Date.now(),

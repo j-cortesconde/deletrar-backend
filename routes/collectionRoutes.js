@@ -38,7 +38,9 @@ router
     collectionController.uploadCollectionImage,
     collectionController.resizeCollectionImage,
     collectionController.updateCollection,
-  );
+  )
+  .patch('/id/:id/addPost', collectionController.addPost)
+  .patch('/id/:id/removePost', collectionController.removePost);
 
 // Make the following routes accessible only to admins:
 router.use(authController.restrictTo('admin'));

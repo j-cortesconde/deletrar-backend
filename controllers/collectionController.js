@@ -37,7 +37,6 @@ class CollectionController {
       'subtitle',
       'summary',
       'posts',
-      'postIntroductions',
       'status',
       'settings',
     );
@@ -88,7 +87,6 @@ class CollectionController {
       'subtitle',
       'summary',
       'posts',
-      'postIntroductions',
       'status',
       'settings',
     );
@@ -221,6 +219,42 @@ class CollectionController {
       status: 'success',
       results: docs.length,
       data: docs,
+    });
+  };
+
+  addPost = async (req, res, next) => {
+    const doc = await this.#service.updateCollection(
+      req.params.id,
+      {
+        $push: {
+          posts: { $each: [req.body.postId], $position: req.body.postPosition },
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: doc,
+    });
+  };
+
+  removePost = async (req, res, next) => {
+    const doc = await this.#service.updateCollection(
+      req.params.id,
+      { $pull: { posts: req.body.postId } },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: doc,
     });
   };
 }
