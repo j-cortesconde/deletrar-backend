@@ -27,7 +27,7 @@ const collectionSchema = new mongoose.Schema(
     },
     posts: [
       {
-        type: String,
+        type: mongoose.Schema.ObjectId,
         ref: 'Post',
       },
     ],

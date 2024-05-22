@@ -163,8 +163,19 @@ class CollectionController {
       {
         path: 'collector',
         model: 'User',
-        select: 'name photo username',
+        select: 'name username',
         foreignField: 'username',
+      },
+      {
+        path: 'posts',
+        model: 'Post',
+        select: 'title author',
+        populate: {
+          path: 'author',
+          model: 'User',
+          select: 'name',
+          foreignField: 'username',
+        },
       },
     ];
     const doc = await this.#service.getCollection(req.params.id, { populate });
@@ -176,7 +187,7 @@ class CollectionController {
       });
     }
 
-    if (doc.status !== 'posted' && doc.collector.id !== req.user.id) {
+    if (doc.status !== 'shared' && doc.collector.id !== req.user.id) {
       return res.status(401).json({
         status: 'fail',
         message: 'No tiene autorización para acceder a esta colección.',
