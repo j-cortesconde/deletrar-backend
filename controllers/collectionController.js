@@ -257,9 +257,7 @@ class CollectionController {
     const doc = await this.#service.updateCollection(
       req.params.id,
       {
-        $push: {
-          posts: { $each: [req.body.postId], $position: req.body.position },
-        },
+        $push: { posts: req.body.postId },
       },
       {
         new: true,
@@ -298,6 +296,58 @@ class CollectionController {
     const doc = await this.#service.updateCollection(
       req.params.id,
       { $pull: { posts: req.body.postId } },
+      {
+        new: true,
+        runValidators: true,
+        populate,
+      },
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: doc,
+    });
+  };
+
+  movePost = async (req, res, next) => {
+    const populate = [
+      {
+        path: 'collector',
+        model: 'User',
+        select: 'name photo username',
+        foreignField: 'username',
+      },
+      {
+        path: 'posts',
+        model: 'Post',
+        select: 'title author',
+        populate: {
+          path: 'author',
+          model: 'User',
+          select: 'name',
+          foreignField: 'username',
+        },
+      },
+    ];
+
+    await this.#service.updateCollection(
+      req.params.id,
+      {
+        $pull: { posts: req.body.postId },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    const doc = await this.#service.updateCollection(
+      req.params.id,
+      {
+        $push: {
+          posts: { $each: [req.body.postId], $position: req.body.position },
+        },
+      },
       {
         new: true,
         runValidators: true,
