@@ -28,7 +28,7 @@ class CollectionService {
     const basePipeline = [
       {
         $match: {
-          status: 'shared',
+          status: 'posted',
           ...matchObject,
         },
       },
@@ -37,7 +37,7 @@ class CollectionService {
           _id: 1,
           title: 1,
           subtitle: 1,
-          sharedAt: 1,
+          postedAt: 1,
           updatedAt: 1,
           summary: 1,
           coverImage: 1,
@@ -71,7 +71,7 @@ class CollectionService {
   }
 
   // FIXME: Collection search isnt yet implemented
-  // TODO: Could add filtering for shared documents that are private in their settings (but public to specific users). This would have a new layer of difficulty (maybe in the Controller)
+  // TODO: Could add filtering for posted documents that are private in their settings (but public to specific users). This would have a new layer of difficulty (maybe in the Controller)
   searchCollections(searchTerm) {
     return this.#Model.aggregate([
       {

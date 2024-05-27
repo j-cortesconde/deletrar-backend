@@ -35,12 +35,12 @@ const collectionSchema = new mongoose.Schema(
       type: Date,
       default: Date.now(),
     },
-    sharedAt: Date,
+    postedAt: Date,
     updatedAt: Date,
     status: {
       type: String,
-      default: 'saved',
-      enum: ['saved', 'shared', 'deleted'],
+      default: 'editing',
+      enum: ['editing', 'posted', 'deleted'],
     },
     collector: {
       type: String,

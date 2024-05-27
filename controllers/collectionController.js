@@ -42,7 +42,7 @@ class CollectionController {
     );
     filteredBody.collector = req.user.username;
     filteredBody.updatedAt = Date.now();
-    if (filteredBody.status === 'shared') filteredBody.sharedAt = Date.now();
+    if (filteredBody.status === 'posted') filteredBody.postedAt = Date.now();
     if (req.file) filteredBody.coverImage = req.file.filename;
 
     const doc = await this.#service.createCollection(filteredBody);
@@ -53,7 +53,7 @@ class CollectionController {
     });
   };
 
-  // Updates the collection limiting the fields that can be updated, adding update time, counting number of versions (shared versions) and adding the document's previous state as a string to its previousVersion field (if both previous and new version are shared versions).
+  // Updates the collection limiting the fields that can be updated, adding update time.
   updateCollection = async (req, res, next) => {
     const populate = [
       {
@@ -65,7 +65,7 @@ class CollectionController {
       {
         path: 'posts',
         model: 'Post',
-        select: 'title author',
+        select: 'title author postedAt coverImage',
         populate: {
           path: 'author',
           model: 'User',
@@ -111,8 +111,8 @@ class CollectionController {
       );
     }
 
-    if (filteredBody.status === 'shared' && !oldDoc.sharedAt)
-      filteredBody.sharedAt = Date.now();
+    if (filteredBody.status === 'posted' && !oldDoc.postedAt)
+      filteredBody.postedAt = Date.now();
 
     if (req.file) filteredBody.coverImage = req.file.filename;
     filteredBody.updatedAt = Date.now();
@@ -133,9 +133,9 @@ class CollectionController {
     });
   };
 
-  // Only returns status="shared" collections
+  // Only returns status="posted" collections
   getAllCollections = async (req, res, next) => {
-    req.query.status = 'shared';
+    req.query.status = 'posted';
 
     const docs = await this.#service.getAllCollections(req.query, '-settings');
 
@@ -147,7 +147,7 @@ class CollectionController {
     });
   };
 
-  // Only returns status="shared" collections
+  // Only returns status="posted" collections
   getCollectionsByCollectorUsername = async (req, res, next) => {
     const data = await this.#service.getCollections(
       { collector: req.params.username },
@@ -178,7 +178,7 @@ class CollectionController {
       {
         path: 'posts',
         model: 'Post',
-        select: 'title author',
+        select: 'title author postedAt coverImage',
         populate: {
           path: 'author',
           model: 'User',
@@ -196,7 +196,7 @@ class CollectionController {
       });
     }
 
-    if (doc.status !== 'shared' && doc.collector.id !== req.user.id) {
+    if (doc.status !== 'posted' && doc.collector.id !== req.user.id) {
       return res.status(401).json({
         status: 'fail',
         message: 'No tiene autorización para acceder a esta colección.',
@@ -244,7 +244,7 @@ class CollectionController {
       {
         path: 'posts',
         model: 'Post',
-        select: 'title author',
+        select: 'title author postedAt coverImage',
         populate: {
           path: 'author',
           model: 'User',
@@ -283,7 +283,7 @@ class CollectionController {
       {
         path: 'posts',
         model: 'Post',
-        select: 'title author',
+        select: 'title author postedAt coverImage',
         populate: {
           path: 'author',
           model: 'User',
@@ -320,7 +320,7 @@ class CollectionController {
       {
         path: 'posts',
         model: 'Post',
-        select: 'title author',
+        select: 'title author postedAt coverImage',
         populate: {
           path: 'author',
           model: 'User',
