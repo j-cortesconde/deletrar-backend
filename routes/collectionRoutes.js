@@ -27,6 +27,7 @@ router.use(authController.isInitialized);
 router.use(authController.isActive);
 
 router
+  .get('/ownHidden', collectionController.getOwnHiddenCollections)
   .post(
     '/',
     collectionController.uploadCollectionImage,

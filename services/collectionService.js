@@ -28,7 +28,6 @@ class CollectionService {
     const basePipeline = [
       {
         $match: {
-          status: 'posted',
           ...matchObject,
         },
       },
@@ -49,7 +48,9 @@ class CollectionService {
       },
     ];
 
-    const features = new AggregationFeatures(basePipeline, reqQuery).paginate();
+    const features = new AggregationFeatures(basePipeline, reqQuery)
+      .sort()
+      .paginate();
 
     return this.#Model.aggregate(features.pipeline);
   }
@@ -70,13 +71,13 @@ class CollectionService {
     return this.#Model.findByIdAndDelete(collectionId);
   }
 
-  // FIXME: Collection search isnt yet implemented
   // TODO: Could add filtering for posted documents that are private in their settings (but public to specific users). This would have a new layer of difficulty (maybe in the Controller)
+  // TODO: Could add pagination
   searchCollections(searchTerm) {
     return this.#Model.aggregate([
       {
         $search: {
-          index: 'posts',
+          index: 'collections',
           text: {
             query: searchTerm,
             fuzzy: { maxEdits: 1 },
@@ -89,19 +90,19 @@ class CollectionService {
       },
       {
         $match: {
-          status: 'posted', // Filter only posts with status "posted"
+          status: 'posted', // Filter only collections with status "posted"
         },
       },
       {
         $lookup: {
           from: 'users', // Gets the entire user document that authored this collection
-          localField: 'author',
+          localField: 'collector',
           foreignField: 'username',
-          as: 'authorInfo',
+          as: 'collectorInfo',
         },
       },
       {
-        $unwind: '$authorInfo',
+        $unwind: '$collectorInfo',
       },
       {
         $project: {
@@ -109,7 +110,8 @@ class CollectionService {
           title: 1,
           summary: 1,
           coverImage: 1,
-          author: { name: '$authorInfo.name', _id: '$authorInfo._id' }, // Returns only the author's name & id
+          status: 1,
+          collector: { name: '$collectorInfo.name', _id: '$collectorInfo._id' }, // Returns only the collector's name & id
         },
       },
       {

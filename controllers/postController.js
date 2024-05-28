@@ -187,7 +187,26 @@ class PostController {
   // Only returns status="posted" posts
   getPostsByAuthorUsername = async (req, res, next) => {
     const data = await this.#service.getPosts(
-      { author: req.params.username },
+      { author: req.params.username, status: 'posted' },
+      req.query,
+    );
+
+    const response = {
+      count: data[0]?.totalCount[0]?.totalCount,
+      docs: data[0]?.limitedDocuments,
+    };
+
+    // SEND RESPONSE
+    res.status(200).json({
+      status: 'success',
+      data: response,
+    });
+  };
+
+  // Returns posts where status isn't "posted"
+  getOwnHidenPosts = async (req, res, next) => {
+    const data = await this.#service.getPosts(
+      { author: req.user.username, status: { $ne: 'posted' } },
       req.query,
     );
 

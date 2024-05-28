@@ -28,7 +28,6 @@ class PostService {
     const basePipeline = [
       {
         $match: {
-          status: 'posted',
           ...matchObject,
         },
       },
@@ -66,6 +65,7 @@ class PostService {
   }
 
   // TODO: Could add filtering for posted documents that are private in their settings (but public to specific users). This would have a new layer of difficulty (maybe in the Controller)
+  // TODO: Could add pagination
   searchPosts(searchTerm) {
     return this.#Model.aggregate([
       {
@@ -103,6 +103,7 @@ class PostService {
           title: 1,
           summary: 1,
           coverImage: 1,
+          status: 1,
           author: { name: '$authorInfo.name', _id: '$authorInfo._id' }, // Returns only the author's name & id
         },
       },

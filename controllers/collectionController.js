@@ -150,7 +150,26 @@ class CollectionController {
   // Only returns status="posted" collections
   getCollectionsByCollectorUsername = async (req, res, next) => {
     const data = await this.#service.getCollections(
-      { collector: req.params.username },
+      { collector: req.params.username, status: 'posted' },
+      req.query,
+    );
+
+    const response = {
+      count: data[0]?.totalCount[0]?.totalCount,
+      docs: data[0]?.limitedDocuments,
+    };
+
+    // SEND RESPONSE
+    res.status(200).json({
+      status: 'success',
+      data: response,
+    });
+  };
+
+  // Returns collections where status isn't "posted"
+  getOwnHiddenCollections = async (req, res, next) => {
+    const data = await this.#service.getCollections(
+      { collector: req.user.username, status: { $ne: 'posted' } },
       req.query,
     );
 
@@ -222,7 +241,6 @@ class CollectionController {
     });
   };
 
-  // FIXME: Collection search isnt yet implemented
   searchCollections = async (req, res, next) => {
     const docs = await this.#service.searchCollections(req.params.searchTerm);
 

@@ -26,6 +26,7 @@ router.use(authController.isInitialized);
 router.use(authController.isActive);
 
 router
+  .get('/ownHidden', postController.getOwnHidenPosts)
   .post(
     '/',
     postController.uploadPostImage,
