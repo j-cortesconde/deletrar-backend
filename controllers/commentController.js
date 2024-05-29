@@ -26,6 +26,58 @@ class CommentController {
     });
   };
 
+  // Updates the comment limiting the fields that can be updated (for now, only the status)
+  updateComment = async (req, res, next) => {
+    const populate = [
+      {
+        path: 'collection',
+        model: 'Collection',
+        select: 'title collector',
+        foreignField: 'id',
+      },
+      {
+        path: 'post',
+        model: 'Post',
+        select: 'title author',
+        foreignField: 'id',
+      },
+    ];
+
+    const oldDoc = await this.#service.getComment(req.params.id, { populate });
+
+    if (!oldDoc) {
+      return next(new AppError('No comment found with that ID', 404));
+    }
+
+    if (oldDoc.author.id !== req.user.id) {
+      return next(
+        new AppError("You don't own the comment you're trying to update", 400),
+      );
+    }
+
+    const filteredBody = filterObj(req.body, 'status');
+
+    if (Object.keys(filteredBody).length === 0) {
+      return next(
+        new AppError(
+          "None of the fields you're trying to update are valid",
+          400,
+        ),
+      );
+    }
+
+    const doc = await this.#service.updateComment(req.params.id, filteredBody, {
+      new: true,
+      runValidators: true,
+      populate,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: doc,
+    });
+  };
+
   // Only returns status="posted" comments
   getCommentsByPostId = async (req, res, next) => {
     const data = await this.#service.getComments(
