@@ -10,8 +10,8 @@ class CommentController {
     const filteredBody = filterObj(
       req.body,
       'content',
-      'post',
-      'collection',
+      'targetPost',
+      'targetCollection',
       'replyingTo',
       'status',
     );
@@ -30,13 +30,13 @@ class CommentController {
   updateComment = async (req, res, next) => {
     const populate = [
       {
-        path: 'collection',
+        path: 'targetCollection',
         model: 'Collection',
         select: 'title collector',
         foreignField: 'id',
       },
       {
-        path: 'post',
+        path: 'targetPost',
         model: 'Post',
         select: 'title author',
         foreignField: 'id',
@@ -81,7 +81,7 @@ class CommentController {
   // Only returns status="posted" comments
   getCommentsByPostId = async (req, res, next) => {
     const data = await this.#service.getComments(
-      { post: req.params.postId, status: 'posted' },
+      { targetPost: req.params.postId, status: 'posted' },
       req.query,
     );
 
@@ -100,7 +100,7 @@ class CommentController {
   // Only returns status="posted" comments
   getCommentsByCollectionId = async (req, res, next) => {
     const data = await this.#service.getComments(
-      { collection: req.params.collectionId, status: 'posted' },
+      { targetCollection: req.params.collectionId, status: 'posted' },
       req.query,
     );
 
@@ -119,7 +119,7 @@ class CommentController {
   // Only returns status="posted" comments
   getCommentsByRepliedCommentId = async (req, res, next) => {
     const data = await this.#service.getComments(
-      { collection: req.params.commentId, status: 'posted' },
+      { targetCollection: req.params.commentId, status: 'posted' },
       req.query,
     );
 
@@ -138,13 +138,13 @@ class CommentController {
   getCommentById = async (req, res, next) => {
     const populate = [
       {
-        path: 'collection',
+        path: 'targetCollection',
         model: 'Collection',
         select: 'title collector',
         foreignField: 'id',
       },
       {
-        path: 'post',
+        path: 'targetPost',
         model: 'Post',
         select: 'title author',
         foreignField: 'id',

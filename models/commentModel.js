@@ -12,11 +12,11 @@ const commentSchema = new mongoose.Schema(
       type: String,
       ref: 'User',
     },
-    post: {
+    targetPost: {
       type: mongoose.Schema.ObjectId,
       ref: 'Post',
     },
-    collection: {
+    targetCollection: {
       type: mongoose.Schema.ObjectId,
       ref: 'Collection',
     },
