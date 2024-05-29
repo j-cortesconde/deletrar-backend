@@ -40,10 +40,29 @@ const commentSchema = new mongoose.Schema(
   },
 );
 
+commentSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'author',
+    model: 'User',
+    select: 'name photo username',
+    foreignField: 'username',
+  });
+  next();
+});
+
+commentSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'replyingTo',
+    select: 'author',
+  });
+  next();
+});
+
 commentSchema.virtual('replies', {
   ref: 'Comment',
   localField: '_id',
   foreignField: 'replyTo',
+  // select: '_id',
 });
 
 const Comment = mongoose.model('Comment', commentSchema);
