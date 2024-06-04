@@ -6,7 +6,7 @@ const commentSchema = new mongoose.Schema(
       type: String,
       required: [true, 'A comment must have content'],
       trim: true,
-      maxlength: [40, 'A comment must have less than 400 characters'],
+      maxlength: [400, 'A comment must have less than 400 characters'],
     },
     author: {
       type: String,

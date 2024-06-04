@@ -8,6 +8,7 @@ class CommentService {
     return this.#Model.create(commentObject);
   }
 
+  // TODO: Must review comment pagination
   getComments(matchObject, reqQuery) {
     const basePipeline = [
       {
@@ -29,9 +30,7 @@ class CommentService {
       },
     ];
 
-    const features = new AggregationFeatures(basePipeline, reqQuery)
-      .sort()
-      .paginate();
+    const features = new AggregationFeatures(basePipeline, reqQuery).paginate();
 
     return this.#Model.aggregate(features.pipeline);
   }

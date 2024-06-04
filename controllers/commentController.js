@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
 const CommentService = require('../services/commentService');
@@ -81,7 +82,12 @@ class CommentController {
   // Only returns status="posted" comments
   getCommentsByPostId = async (req, res, next) => {
     const data = await this.#service.getComments(
-      { targetPost: req.params.postId, status: 'posted' },
+      {
+        targetPost: mongoose.Types.ObjectId.createFromHexString(
+          req.params.postId,
+        ),
+        status: 'posted',
+      },
       req.query,
     );
 
@@ -100,7 +106,12 @@ class CommentController {
   // Only returns status="posted" comments
   getCommentsByCollectionId = async (req, res, next) => {
     const data = await this.#service.getComments(
-      { targetCollection: req.params.collectionId, status: 'posted' },
+      {
+        targetCollection: mongoose.Types.ObjectId.createFromHexString(
+          req.params.collectionId,
+        ),
+        status: 'posted',
+      },
       req.query,
     );
 
@@ -119,7 +130,12 @@ class CommentController {
   // Only returns status="posted" comments
   getCommentsByRepliedCommentId = async (req, res, next) => {
     const data = await this.#service.getComments(
-      { targetCollection: req.params.commentId, status: 'posted' },
+      {
+        targetCollection: mongoose.Types.ObjectId.createFromHexString(
+          req.params.commentId,
+        ),
+        status: 'posted',
+      },
       req.query,
     );
 

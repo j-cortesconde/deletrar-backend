@@ -13,7 +13,7 @@ router.use(authController.getLoggedInUser);
 router
   .get('/post/:postId', commentController.getCommentsByPostId)
   .get('/collection/:collectionId', commentController.getCommentsByCollectionId)
-  .get('/replies/:commentId', commentController.getCommentsByRepliedCommentId)
+  .get('/comment/:commentId', commentController.getCommentsByRepliedCommentId)
   .get('/id/:id', commentController.getCommentById)
   .post('/', commentController.createComment);
 
