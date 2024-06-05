@@ -1,4 +1,5 @@
 const Comment = require('../models/commentModel');
+const { COMMENT_LIMIT } = require('../utils/constants');
 // const AggregationFeatures = require('../utils/aggregationFeatures');
 
 class CommentService {
@@ -8,14 +9,18 @@ class CommentService {
     return this.#Model.create(commentObject);
   }
 
-  // TODO: Must review comment pagination
   getComments(matchObject, optionsObject, reqQuery) {
-    return this.#Model.find(matchObject, null, optionsObject);
+    const limit = COMMENT_LIMIT;
+    const skip = reqQuery?.page ? (reqQuery.page - 1) * limit : 0;
+
+    return this.#Model
+      .find(matchObject, null, optionsObject)
+      .skip(skip)
+      .limit(limit);
   }
 
-  // TODO: Must review comment pagination
   countComments(matchObject) {
-    return this.#Model.estimatedDocumentCount(matchObject);
+    return this.#Model.countDocuments(matchObject);
   }
 
   getComment(commentId, optionsObject) {

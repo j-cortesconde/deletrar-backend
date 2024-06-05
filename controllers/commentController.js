@@ -85,23 +85,23 @@ class CommentController {
       req.params.postId,
     );
 
+    const matchObject = {
+      targetPost,
+      replyingTo: { $exists: false },
+      status: 'posted',
+    };
+
     const populate = [
-      { path: 'reply', select: '_id' },
-      { path: 'replyingTo', select: 'author' },
+      { path: 'reply', populate: { path: 'replies' } },
       'replies',
     ];
+    const sort = { createdAt: -1 };
 
-    const totalDocs = await this.#service.countComments({
-      targetPost,
-      status: 'posted',
-    });
+    const totalDocs = await this.#service.countComments(matchObject);
 
     const paginatedDocs = await this.#service.getComments(
-      {
-        targetPost,
-        status: 'posted',
-      },
-      { populate },
+      matchObject,
+      { populate, sort },
       req.query,
     );
 
@@ -119,19 +119,32 @@ class CommentController {
 
   // Only returns status="posted" comments
   getCommentsByCollectionId = async (req, res, next) => {
-    const data = await this.#service.getComments(
-      {
-        targetCollection: mongoose.Types.ObjectId.createFromHexString(
-          req.params.collectionId,
-        ),
-        status: 'posted',
-      },
+    const replyingTo = mongoose.Types.ObjectId.createFromHexString(
+      req.params.collectionId,
+    );
+
+    const matchObject = {
+      replyingTo,
+      status: 'posted',
+    };
+
+    const populate = [
+      { path: 'reply', populate: { path: 'replies' } },
+      'replies',
+    ];
+    const sort = { createdAt: -1 };
+
+    const totalDocs = await this.#service.countComments(matchObject);
+
+    const paginatedDocs = await this.#service.getComments(
+      matchObject,
+      { populate, sort },
       req.query,
     );
 
     const response = {
-      count: data[0]?.totalCount[0]?.totalCount,
-      docs: data[0]?.limitedDocuments,
+      count: totalDocs,
+      docs: paginatedDocs,
     };
 
     // SEND RESPONSE
@@ -143,19 +156,29 @@ class CommentController {
 
   // Only returns status="posted" comments
   getCommentsByRepliedCommentId = async (req, res, next) => {
-    const data = await this.#service.getComments(
-      {
-        targetCollection: mongoose.Types.ObjectId.createFromHexString(
-          req.params.commentId,
-        ),
-        status: 'posted',
-      },
+    const replyingTo = mongoose.Types.ObjectId.createFromHexString(
+      req.params.commentId,
+    );
+
+    const matchObject = {
+      replyingTo,
+      status: 'posted',
+    };
+
+    const populate = 'replies';
+    const sort = { createdAt: -1 };
+
+    const totalDocs = await this.#service.countComments(matchObject);
+
+    const paginatedDocs = await this.#service.getComments(
+      matchObject,
+      { populate, sort },
       req.query,
     );
 
     const response = {
-      count: data[0]?.totalCount[0]?.totalCount,
-      docs: data[0]?.limitedDocuments,
+      count: totalDocs,
+      docs: paginatedDocs,
     };
 
     // SEND RESPONSE
