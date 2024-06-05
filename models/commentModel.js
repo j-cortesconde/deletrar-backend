@@ -50,19 +50,18 @@ commentSchema.pre(/^find/, function (next) {
   next();
 });
 
-commentSchema.pre(/^find/, function (next) {
-  this.populate({
-    path: 'replyingTo',
-    select: 'author',
-  });
-  next();
+commentSchema.virtual('reply', {
+  ref: 'Comment',
+  localField: '_id',
+  foreignField: 'replyingTo',
+  justOne: true,
 });
 
 commentSchema.virtual('replies', {
   ref: 'Comment',
   localField: '_id',
-  foreignField: 'replyTo',
-  // select: '_id',
+  foreignField: 'replyingTo',
+  count: true,
 });
 
 const Comment = mongoose.model('Comment', commentSchema);

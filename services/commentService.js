@@ -1,5 +1,5 @@
 const Comment = require('../models/commentModel');
-const AggregationFeatures = require('../utils/aggregationFeatures');
+// const AggregationFeatures = require('../utils/aggregationFeatures');
 
 class CommentService {
   #Model = Comment;
@@ -9,30 +9,13 @@ class CommentService {
   }
 
   // TODO: Must review comment pagination
-  getComments(matchObject, reqQuery) {
-    const basePipeline = [
-      {
-        $match: {
-          ...matchObject,
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          content: 1,
-          author: 1,
-          targetPost: 1,
-          targetCollection: 1,
-          replyingTo: 1,
-          createdAt: 1,
-          status: 1,
-        },
-      },
-    ];
+  getComments(matchObject, optionsObject, reqQuery) {
+    return this.#Model.find(matchObject, null, optionsObject);
+  }
 
-    const features = new AggregationFeatures(basePipeline, reqQuery).paginate();
-
-    return this.#Model.aggregate(features.pipeline);
+  // TODO: Must review comment pagination
+  countComments(matchObject) {
+    return this.#Model.estimatedDocumentCount(matchObject);
   }
 
   getComment(commentId, optionsObject) {

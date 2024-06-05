@@ -81,19 +81,33 @@ class CommentController {
 
   // Only returns status="posted" comments
   getCommentsByPostId = async (req, res, next) => {
-    const data = await this.#service.getComments(
+    const targetPost = mongoose.Types.ObjectId.createFromHexString(
+      req.params.postId,
+    );
+
+    const populate = [
+      { path: 'reply', select: '_id' },
+      { path: 'replyingTo', select: 'author' },
+      'replies',
+    ];
+
+    const totalDocs = await this.#service.countComments({
+      targetPost,
+      status: 'posted',
+    });
+
+    const paginatedDocs = await this.#service.getComments(
       {
-        targetPost: mongoose.Types.ObjectId.createFromHexString(
-          req.params.postId,
-        ),
+        targetPost,
         status: 'posted',
       },
+      { populate },
       req.query,
     );
 
     const response = {
-      count: data[0]?.totalCount[0]?.totalCount,
-      docs: data[0]?.limitedDocuments,
+      count: totalDocs,
+      docs: paginatedDocs,
     };
 
     // SEND RESPONSE
