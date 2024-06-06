@@ -119,12 +119,14 @@ class CommentController {
 
   // Only returns status="posted" comments
   getCommentsByCollectionId = async (req, res, next) => {
-    const replyingTo = mongoose.Types.ObjectId.createFromHexString(
+    const targetCollection = mongoose.Types.ObjectId.createFromHexString(
       req.params.collectionId,
     );
 
     const matchObject = {
-      replyingTo,
+      targetCollection,
+      replyingTo: { $exists: false },
+      targetPost: { $exists: false },
       status: 'posted',
     };
 
