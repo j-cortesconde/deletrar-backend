@@ -46,17 +46,15 @@ router.patch('/reactivateMe', userController.reactivateMe);
 router.use(authController.isActive);
 
 router
-  // FIXME: Must change these first two so they dont get ownUsername from request, instead from validating user (and change in frontend)
-  .get('/isFollower/:ownUsername/:otherUsername', userController.isFollower)
-  .get('/amFollowing/:ownUsername/:otherUsername', userController.amFollowing)
+  .get('/isFollower/:otherUsername', userController.isFollower)
+  .get('/amFollowing/:otherUsername', userController.amFollowing)
   .get('/haveSaved/post/:postId', userController.haveSavedPost)
   .get(
     '/haveSaved/collection/:collectionId',
     userController.haveSavedCollection,
   )
-  // FIXME: Perhaps these should be action/type/id (follow/id/:otherUsername or /save/post/:postId)
-  .patch('/id/:otherUsername/follow', userController.followUser)
-  .patch('/id/:otherUsername/unfollow', userController.unfollowUser)
+  .patch('/follow/:otherUsername', userController.followUser)
+  .patch('/unfollow/:otherUsername', userController.unfollowUser)
   .patch('/post/:postId/save', userController.savePost)
   .patch('/post/:postId/unsave', userController.unsavePost)
   .patch('/collection/:collectionId/save', userController.saveCollection)

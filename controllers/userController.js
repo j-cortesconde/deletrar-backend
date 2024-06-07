@@ -373,7 +373,7 @@ class UserController {
 
     const doc = await this.#service.getUser(
       {
-        username: req.params.ownUsername,
+        _id: req.user.id,
         followers: req.params.otherUsername,
       },
       { select },
@@ -387,13 +387,12 @@ class UserController {
     });
   };
 
-  // FIXME: Must change this so the own user is got from req.query after protection (and is _id:req.user.id instead of username)
   amFollowing = async (req, res, next) => {
     const select = 'username';
 
     const doc = await this.#service.getUser(
       {
-        username: req.params.ownUsername,
+        _id: req.user.id,
         following: req.params.otherUsername,
       },
       { select },
