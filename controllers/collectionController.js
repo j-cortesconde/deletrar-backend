@@ -197,7 +197,7 @@ class CollectionController {
       {
         path: 'posts',
         model: 'Post',
-        select: 'title author postedAt coverImage',
+        select: 'title author postedAt coverImage status',
         populate: {
           path: 'author',
           model: 'User',
