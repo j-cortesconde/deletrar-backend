@@ -46,6 +46,18 @@ const userSchema = new mongoose.Schema(
         ref: 'User',
       },
     ],
+    savedPosts: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Post',
+      },
+    ],
+    savedCollections: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Collection',
+      },
+    ],
     role: {
       type: String,
       enum: ['requestor', 'invitee', 'user', 'admin'],

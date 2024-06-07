@@ -387,6 +387,7 @@ class UserController {
     });
   };
 
+  // FIXME: Must change this so the own user is got from req.query after protection (and is _id:req.user.id instead of username)
   amFollowing = async (req, res, next) => {
     const select = 'username';
 
@@ -403,6 +404,118 @@ class UserController {
     res.status(200).json({
       status: 'success',
       data: amFollowing,
+    });
+  };
+
+  savePost = async (req, res, next) => {
+    const doc = await this.#service.updateUser(
+      { _id: req.user.id },
+      {
+        $push: {
+          savedPosts: { $each: [req.params.postId], $position: 0 },
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    res.status(200).json({
+      status: 'success',
+      // TODO: See if ownUser must remain
+      data: { ownUser: doc, docId: req.params.postId },
+    });
+  };
+
+  unsavePost = async (req, res, next) => {
+    const doc = await this.#service.updateUser(
+      { _id: req.user.id },
+      { $pull: { savedPosts: req.params.postId } },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: { ownUser: doc, docId: req.params.postId },
+    });
+  };
+
+  haveSavedPost = async (req, res, next) => {
+    const select = 'username';
+
+    const doc = await this.#service.getUser(
+      {
+        _id: req.user.id,
+        savedPosts: req.params.postId,
+      },
+      { select },
+    );
+
+    const haveSaved = !!doc;
+
+    res.status(200).json({
+      status: 'success',
+      data: haveSaved,
+    });
+  };
+
+  saveCollection = async (req, res, next) => {
+    const doc = await this.#service.updateUser(
+      { _id: req.user.id },
+      {
+        $push: {
+          savedCollections: { $each: [req.params.collectionId], $position: 0 },
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    res.status(200).json({
+      status: 'success',
+      // TODO: See if ownUser must remain
+      data: { ownUser: doc, docId: req.params.collectionId },
+    });
+  };
+
+  unsaveCollection = async (req, res, next) => {
+    const doc = await this.#service.updateUser(
+      { _id: req.user.id },
+      { $pull: { savedCollections: req.params.collectionId } },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: { ownUser: doc, docId: req.params.collectionId },
+    });
+  };
+
+  haveSavedCollection = async (req, res, next) => {
+    const select = 'username';
+
+    const doc = await this.#service.getUser(
+      {
+        _id: req.user.id,
+        savedCollections: req.params.collectionId,
+      },
+      { select },
+    );
+
+    const haveSaved = !!doc;
+
+    res.status(200).json({
+      status: 'success',
+      data: haveSaved,
     });
   };
 }
