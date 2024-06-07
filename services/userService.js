@@ -174,6 +174,201 @@ class UserService {
       },
     ]);
   }
+
+  getSavedPosts(username, reqQuery) {
+    const page = Number(reqQuery.page) || 1;
+    const userLimit = Number(reqQuery.limit) || AGGREGATION_LIMIT;
+    const limit = userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
+    const sortBy = {};
+
+    if (reqQuery.sortBy) {
+      const sortArray = reqQuery.sortBy.split('-');
+      sortBy[sortArray[0]] = sortArray[1] === 'asc' ? 1 : -1;
+    }
+
+    return this.#Model.aggregate([
+      // Find the user by their username
+      { $match: { username } },
+      // Project only the savedPosts array field so the others don't get unwund
+      { $project: { savedPosts: 1 } },
+      // Unwind the savedPosts array to prepare for $lookup
+      { $unwind: `$savedPosts` },
+      // Lookup user documents based on the savedPosts array
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'savedPosts',
+          foreignField: '_id',
+          as: 'savedPosts',
+        },
+      },
+      // Project the fields for the savedPosts post documents
+      {
+        $project: {
+          savedPosts: {
+            $map: {
+              input: `$savedPosts`,
+              as: 'post',
+              in: {
+                _id: '$$post._id',
+                title: '$$post.title',
+                summary: '$$post.summary',
+                coverImage: '$$post.coverImage',
+                postedAt: '$$post.postedAt',
+                status: '$$post.status',
+                author: '$$post.author',
+                updatedAt: '$$post.updatedAt',
+              },
+            },
+          },
+        },
+      },
+      { $match: { 'savedPosts.status': 'posted' } },
+      // Group the documents to calculate the total count of savedPosts documents
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: { $size: `$savedPosts` } },
+          savedPosts: { $push: `$savedPosts` },
+        },
+      },
+      // Flatten the array of savedPosts posts
+      {
+        $project: {
+          _id: 0,
+          totalAmount: 1,
+          savedPosts: {
+            $reduce: {
+              input: `$savedPosts`,
+              initialValue: [],
+              in: { $concatArrays: ['$$value', '$$this'] },
+            },
+          },
+        },
+      },
+      // Ensure the output documents match the desired structure and they get sorted
+      {
+        $project: {
+          _id: 0,
+          totalAmount: 1,
+          savedPosts: {
+            $sortArray: {
+              input: '$savedPosts',
+              sortBy,
+            },
+          },
+        },
+      },
+      // Ensure the output documents match the desired structure and they get paginated
+      {
+        $project: {
+          _id: 0,
+          totalAmount: 1,
+          savedPosts: {
+            $slice: [`$savedPosts`, (page - 1) * limit, limit],
+          },
+        },
+      },
+    ]);
+  }
+
+  getSavedCollections(username, reqQuery) {
+    const page = Number(reqQuery.page) || 1;
+    const userLimit = Number(reqQuery.limit) || AGGREGATION_LIMIT;
+    const limit = userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
+    const sortBy = {};
+
+    if (reqQuery.sortBy) {
+      const sortArray = reqQuery.sortBy.split('-');
+      sortBy[sortArray[0]] = sortArray[1] === 'asc' ? 1 : -1;
+    }
+
+    return this.#Model.aggregate([
+      // Find the user by their username
+      { $match: { username } },
+      // Project only the savedCollections array field so the others don't get unwund
+      { $project: { savedCollections: 1 } },
+      // Unwind the savedCollections array to prepare for $lookup
+      { $unwind: `$savedCollections` },
+      // Lookup collection documents based on the savedCollections array
+      {
+        $lookup: {
+          from: 'collections',
+          localField: 'savedCollections',
+          foreignField: '_id',
+          as: 'savedCollections',
+        },
+      },
+      // Project the fields for the savedCollections collection documents
+      {
+        $project: {
+          savedCollections: {
+            $map: {
+              input: `$savedCollections`,
+              as: 'collection',
+              in: {
+                _id: '$$collection._id',
+                title: '$$collection.title',
+                subtitle: '$$collection.subtitle',
+                summary: '$$collection.summary',
+                coverImage: '$$collection.coverImage',
+                postedAt: '$$collection.postedAt',
+                status: '$$collection.status',
+                collector: '$$collection.collector',
+                updatedAt: '$$collection.updatedAt',
+              },
+            },
+          },
+        },
+      },
+      { $match: { 'savedCollections.status': 'posted' } },
+      // Group the documents to calculate the total count of savedCollections documents
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: { $size: `$savedCollections` } },
+          savedCollections: { $push: `$savedCollections` },
+        },
+      },
+      // Flatten the array of savedCollections users
+      {
+        $project: {
+          _id: 0,
+          totalAmount: 1,
+          savedCollections: {
+            $reduce: {
+              input: `$savedCollections`,
+              initialValue: [],
+              in: { $concatArrays: ['$$value', '$$this'] },
+            },
+          },
+        },
+      },
+      // Ensure the output documents match the desired structure and they get sorted
+      {
+        $project: {
+          _id: 0,
+          totalAmount: 1,
+          savedCollections: {
+            $sortArray: {
+              input: '$savedCollections',
+              sortBy,
+            },
+          },
+        },
+      },
+      // Ensure the output documents match the desired structure and they get paginated
+      {
+        $project: {
+          _id: 0,
+          totalAmount: 1,
+          savedCollections: {
+            $slice: [`$savedCollections`, (page - 1) * limit, limit],
+          },
+        },
+      },
+    ]);
+  }
 }
 
 module.exports = UserService;

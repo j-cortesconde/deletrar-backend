@@ -462,6 +462,26 @@ class UserController {
     });
   };
 
+  getSavedPosts = async (req, res, next) => {
+    const data = await this.#service.getSavedPosts(
+      req.params.username,
+      req.query,
+    );
+    if (!data)
+      return next(new AppError('No user found with that username', 404));
+
+    const response = {
+      count: data[0]?.totalAmount,
+      docs: data[0]?.savedPosts,
+    };
+
+    // SEND RESPONSE
+    res.status(200).json({
+      status: 'success',
+      data: response,
+    });
+  };
+
   saveCollection = async (req, res, next) => {
     const doc = await this.#service.updateUser(
       { _id: req.user.id },
@@ -515,6 +535,26 @@ class UserController {
     res.status(200).json({
       status: 'success',
       data: haveSaved,
+    });
+  };
+
+  getSavedCollections = async (req, res, next) => {
+    const data = await this.#service.getSavedCollections(
+      req.params.username,
+      req.query,
+    );
+    if (!data)
+      return next(new AppError('No user found with that username', 404));
+
+    const response = {
+      count: data[0]?.totalAmount,
+      docs: data[0]?.savedCollections,
+    };
+
+    // SEND RESPONSE
+    res.status(200).json({
+      status: 'success',
+      data: response,
     });
   };
 }

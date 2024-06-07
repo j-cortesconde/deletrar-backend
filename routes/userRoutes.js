@@ -21,13 +21,15 @@ router
   .post('/forgotPassword', authController.forgotPassword)
   .patch('/resetPassword/:token', authController.resetPassword);
 
-// FIXME: The getUserByUsername route was "/:username" but it was causing issues since it was before others like "/me", causing getUserByUsername to trigger with the username param set to "me" instead of the getMe being triggered. I changed it now to "/username/:username" but it's uglier. Is there a better way? Find out
+// FIXME: The getUserByUsername route was "/:username" but it was causing issues since it was before others like "/me", causing getUserByUsername to trigger with the username param set to "me" instead of the getMe being triggered. I changed it now to "/username/:username" but it's uglier. Is there a better way? Find out. (a better one would be /user/:username)
 // FIXME: Same for all /id/:id (and maybe in postRoute too)
 router
   .get('/', userController.getAllUsers)
   .get('/username/:username', userController.getUserByUsername)
   .get('/followers/:username', userController.getFollowers)
   .get('/following/:username', userController.getFollowing)
+  .get('/savedPosts/user/:username', userController.getSavedPosts)
+  .get('/savedCollections/user/:username', userController.getSavedCollections)
   .get('/search/:searchTerm', userController.searchUsers);
 
 // Protect all routes from now on:
@@ -55,6 +57,7 @@ router
   )
   .patch('/follow/:otherUsername', userController.followUser)
   .patch('/unfollow/:otherUsername', userController.unfollowUser)
+  // TODO: Change order. Action, doctype, docid. In frontend too
   .patch('/post/:postId/save', userController.savePost)
   .patch('/post/:postId/unsave', userController.unsavePost)
   .patch('/collection/:collectionId/save', userController.saveCollection)
