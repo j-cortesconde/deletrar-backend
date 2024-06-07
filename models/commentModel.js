@@ -61,6 +61,7 @@ commentSchema.virtual('replies', {
   localField: '_id',
   foreignField: 'replyingTo',
   count: true,
+  match: () => ({ status: 'posted' }),
 });
 
 // TODO: See if can add a similar yet better functionality (like starred reply)
@@ -69,6 +70,7 @@ commentSchema.virtual('reply', {
   localField: '_id',
   foreignField: 'replyingTo',
   justOne: true,
+  match: () => ({ status: 'posted' }),
 });
 
 const Comment = mongoose.model('Comment', commentSchema);
