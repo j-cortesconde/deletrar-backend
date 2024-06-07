@@ -14,8 +14,10 @@ class CommentController {
       'targetPost',
       'targetCollection',
       'replyingTo',
+      'replyingToArray',
       'status',
     );
+
     filteredBody.author = req.user?.username || null;
     filteredBody.createdAt = Date.now();
 
@@ -190,21 +192,64 @@ class CommentController {
     });
   };
 
+  getCommentThread = async (req, res, next) => {
+    const populate = { path: 'replyingToArray', populate: 'replies' };
+
+    const doc = await this.#service.getComment(req.params.commentId, {
+      populate,
+    });
+
+    if (!doc) return next(new AppError('No comment found with that ID', 404));
+
+    const docs = doc.replyingToArray;
+
+    if (!docs)
+      return next(
+        new AppError('No comment thread found for that comment', 404),
+      );
+
+    // SEND RESPONSE
+    res.status(200).json({
+      status: 'success',
+      data: docs,
+    });
+  };
+
   getCommentById = async (req, res, next) => {
     const populate = [
       {
         path: 'targetCollection',
         model: 'Collection',
         select: 'title collector',
-        foreignField: 'id',
+        foreignField: '_id',
+        populate: {
+          path: 'collector',
+          select: 'name username',
+          model: 'User',
+          foreignField: 'username',
+        },
       },
       {
         path: 'targetPost',
         model: 'Post',
         select: 'title author',
-        foreignField: 'id',
+        foreignField: '_id',
+        populate: {
+          path: 'author',
+          select: 'name username',
+          model: 'User',
+          foreignField: 'username',
+        },
       },
+      {
+        path: 'replyingToArray',
+        model: 'Comment',
+        foreignField: '_id',
+        populate: { path: 'replies' },
+      },
+      'replies',
     ];
+
     const doc = await this.#service.getComment(req.params.id, { populate });
 
     if (!doc || doc.status !== 'posted') {

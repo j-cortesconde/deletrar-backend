@@ -14,6 +14,7 @@ router
   .get('/post/:postId', commentController.getCommentsByPostId)
   .get('/collection/:collectionId', commentController.getCommentsByCollectionId)
   .get('/comment/:commentId', commentController.getCommentsByRepliedCommentId)
+  .get('/thread/:commentId', commentController.getCommentThread)
   .get('/id/:id', commentController.getCommentById)
   .post('/', commentController.createComment);
 

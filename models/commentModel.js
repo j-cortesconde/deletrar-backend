@@ -20,6 +20,12 @@ const commentSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Collection',
     },
+    replyingToArray: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Comment',
+      },
+    ],
     replyingTo: {
       type: mongoose.Schema.ObjectId,
       ref: 'Comment',
@@ -50,18 +56,19 @@ commentSchema.pre(/^find/, function (next) {
   next();
 });
 
-commentSchema.virtual('reply', {
-  ref: 'Comment',
-  localField: '_id',
-  foreignField: 'replyingTo',
-  justOne: true,
-});
-
 commentSchema.virtual('replies', {
   ref: 'Comment',
   localField: '_id',
   foreignField: 'replyingTo',
   count: true,
+});
+
+// TODO: See if can add a similar yet better functionality (like starred reply)
+commentSchema.virtual('reply', {
+  ref: 'Comment',
+  localField: '_id',
+  foreignField: 'replyingTo',
+  justOne: true,
 });
 
 const Comment = mongoose.model('Comment', commentSchema);
