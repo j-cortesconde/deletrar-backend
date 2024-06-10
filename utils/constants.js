@@ -14,4 +14,8 @@ exports.AGGREGATION_LIMIT = 10;
 // IMPORTANT. This must only be changed in accordance to the change of the COMMENT_PAGE_AMOUNT constant in frontend
 exports.COMMENT_LIMIT = 10;
 
+// This is the limit for conversations displayed
+// IMPORTANT. This must only be changed in accordance to the change of its given constant(NONE YET) in frontend
+exports.CONVERSATION_LIMIT = 10;
+
 exports.FRONTEND_ADDRESS = 'http://localhost:5173';

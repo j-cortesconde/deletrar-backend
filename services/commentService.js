@@ -1,6 +1,5 @@
 const Comment = require('../models/commentModel');
 const { COMMENT_LIMIT } = require('../utils/constants');
-// const AggregationFeatures = require('../utils/aggregationFeatures');
 
 class CommentService {
   #Model = Comment;
