@@ -18,9 +18,16 @@ router.use(authController.isActive);
 
 router
   .get('/user/:username', conversationController.getConversationsByUsername)
+  .get(
+    '/with/:username',
+    conversationController.getConversationByAddresseeUsername,
+  )
   .get('/id/:conversationId', conversationController.getConversationById)
-  .patch('/sendMessage/:conversationId', conversationController.sendMessage)
-  .post('/', conversationController.createConversation);
+  .patch(
+    '/sendMessage/user/:addresseeUsername',
+    conversationController.sendMessage,
+  )
+  .post('/user/:addresseeUsername', conversationController.createConversation);
 
 // Make the following routes accessible only to admins:
 router.use(authController.restrictTo('admin'));

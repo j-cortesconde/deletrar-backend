@@ -30,9 +30,9 @@ class ConversationService {
     return this.#Model.findById(conversationId, null, optionsObject);
   }
 
-  updateConversation(conversationId, updateObject, updateOptions) {
-    return this.#Model.findByIdAndUpdate(
-      conversationId,
+  updateConversation(matchObject, updateObject, updateOptions) {
+    return this.#Model.findOneAndUpdate(
+      matchObject,
       updateObject,
       updateOptions,
     );
