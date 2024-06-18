@@ -43,6 +43,36 @@ class AuthController {
     });
   };
 
+  // TODO: Not handling cases in which the decoding fails for bad token
+  getTokenUser = async (token) => {
+    // 2) Verification token
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+    // 3) Check if user still exists
+    const select = '+active';
+    const includeInactive = true;
+    const currentUser = await this.#service.getUserById(decoded.id, {
+      select,
+      includeInactive,
+    });
+
+    if (!currentUser) {
+      return {
+        error: 'The user belonging to this token does no longer exist.',
+      };
+    }
+
+    // 4) Check if user changed password after the token was issued
+    if (this.#service.changedPasswordAfter(currentUser, decoded.iat)) {
+      return {
+        error: 'User recently changed password! Please log in again.',
+      };
+    }
+
+    // GRANT ACCESS TO PROTECTED ROUTE
+    return currentUser;
+  };
+
   // Highly complex method that handles foreign user's account request (to admins or users) and that contemplates the account already existing (in any role)
   requestInvite = catchAsync(async (req, res, next) => {
     const homepageURL = `${FRONTEND_ADDRESS}/home`;
@@ -311,7 +341,7 @@ class AuthController {
 
   // Checks the user is logged in and if pw hasn't changed sin jwt emission. If so, adds it to req.user, if not, adds the error the protect method should return. In any case it nexts.
   // Adds the user document from the User model to  req.user
-  getLoggedInUser = catchAsync(async (req, res, next) => {
+  getLoggedInUser = async (req, res, next) => {
     // 1) Getting token and check of it's there
     let token;
     if (
@@ -330,36 +360,10 @@ class AuthController {
       return next();
     }
 
-    // 2) Verification token
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-
-    // 3) Check if user still exists
-    const select = '+active';
-    const includeInactive = true;
-    const currentUser = await this.#service.getUserById(decoded.id, {
-      select,
-      includeInactive,
-    });
-
-    if (!currentUser) {
-      req.user = {
-        error: 'The user belonging to this token does no longer exist.',
-      };
-      return next();
-    }
-
-    // 4) Check if user changed password after the token was issued
-    if (this.#service.changedPasswordAfter(currentUser, decoded.iat)) {
-      req.user = {
-        error: 'User recently changed password! Please log in again.',
-      };
-      return next();
-    }
-
-    // GRANT ACCESS TO PROTECTED ROUTE
-    req.user = currentUser;
+    // Calls a private method that gets and returns the user for that given token (or returns an object with an error key if no valid users were found so that the 'protect' method stops it)
+    req.user = await this.getTokenUser(token);
     next();
-  });
+  };
 
   // IMPORTANT: This MW  must work in tandem with the getLoggedInUser MW
   // If the user is logged in, it gets it from getLoggedInUser in req.user. If user isnt logged in (or their login is invalid), gets instead an error message in req.user.error. In the first case it nexts, in the second case it returns the error.

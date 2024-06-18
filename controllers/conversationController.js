@@ -4,6 +4,18 @@ const ConversationService = require('../services/conversationService');
 class ConversationController {
   #service = new ConversationService();
 
+  isUserInConversation = async (username, conversationId) => {
+    const conversation =
+      await this.#service.getConversationById(conversationId);
+
+    if (!conversation) {
+      throw new Error('Conversation not found');
+    }
+
+    // Check if the username exists in the participants array
+    return conversation.participants.includes(username);
+  };
+
   // Function that checks if theres a conversation. If it already exists, returns it, else it creates and returns a new conversation after recieving a request body with keys [addressee, message]
   createConversation = async (req, res, next) => {
     const doc = await this.#service.getConversation({
@@ -111,6 +123,7 @@ class ConversationController {
   };
 
   // TODO: Add functionality that will check req.user is participant
+  // TODO: Check if this method is even being used
   getConversationById = async (req, res, next) => {
     const doc = await this.#service.getConversationById(
       req.params.conversationId,

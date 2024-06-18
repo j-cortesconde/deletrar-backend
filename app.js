@@ -7,6 +7,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
+const { createServer } = require('http');
 
 const indexRouter = require(`./routes/index`);
 
@@ -28,4 +29,6 @@ app.all('*', (req, res, next) => {
   res.send('Not today boy');
 });
 
-module.exports = app;
+const httpServer = createServer(app);
+
+module.exports = httpServer;
