@@ -8,10 +8,19 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 const { createServer } = require('http');
+const socketIo = require('socket.io');
 
 const indexRouter = require(`./routes/index`);
+const IoController = require('./controllers/ioController');
 
 const app = express();
+const httpServer = createServer(app);
+const io = socketIo(httpServer, {
+  cors: {
+    origin: 'http://localhost:5173',
+  },
+});
+const ioController = new IoController(io);
 
 // Development logging
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
@@ -23,12 +32,13 @@ app.use(cors());
 
 app.use('/api/v1', indexRouter);
 
+io.use(ioController.protect);
+io.on('connection', ioController.handleConnection);
+
 //FIXME:This must be fixed
 app.all('*', (req, res, next) => {
   console.log('Error');
   res.send('Not today boy');
 });
-
-const httpServer = createServer(app);
 
 module.exports = httpServer;
