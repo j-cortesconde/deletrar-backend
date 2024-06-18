@@ -13,7 +13,9 @@ class ConversationController {
     }
 
     // Check if the username exists in the participants array
-    return conversation.participants.includes(username);
+    return conversation.participants.some(
+      (participant) => participant.username === username,
+    );
   };
 
   // Function that checks if theres a conversation. If it already exists, returns it, else it creates and returns a new conversation after recieving a request body with keys [addressee, message]
