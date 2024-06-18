@@ -81,20 +81,20 @@ class ConversationController {
     });
   };
 
-  getConversationsByUsername = async (req, res, next) => {
+  getOwnConversations = async (req, res, next) => {
     const matchObject = {
       participants: req.user.username,
     };
 
-    const populate = 'lastMessage';
     // TODO: Punto de falla
-    // const sort = { lastMessage: { timestamp: -1 } };
+    // const sort = { 'lastMessage.timestamp': -1 };
 
     const totalDocs = await this.#service.countConversations(matchObject);
 
     const paginatedDocs = await this.#service.getConversations(
       matchObject,
-      { populate },
+      null,
+      // { sort },
       req.query,
     );
 
@@ -110,6 +110,7 @@ class ConversationController {
     });
   };
 
+  // TODO: Add functionality that will check req.user is participant
   getConversationById = async (req, res, next) => {
     const doc = await this.#service.getConversationById(
       req.params.conversationId,

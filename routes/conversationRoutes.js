@@ -17,9 +17,9 @@ router.use(authController.isInitialized);
 router.use(authController.isActive);
 
 router
-  .get('/user/:username', conversationController.getConversationsByUsername)
+  .get('/getOwn', conversationController.getOwnConversations)
   .get(
-    '/with/:username',
+    '/with/:addresseeUsername',
     conversationController.getConversationByAddresseeUsername,
   )
   .get('/id/:conversationId', conversationController.getConversationById)
