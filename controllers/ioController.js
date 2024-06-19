@@ -53,9 +53,9 @@ class IoController {
       this.#handleLeaveConversation(socket, conversationId);
     });
 
-    // socket.on('sendMessage', async (conversationId, messageContent) => {
-    //   await this.#handleSendMessage(socket, conversationId, messageContent);
-    // });
+    socket.on('sendMessage', async (conversationId, addresseeUsername) => {
+      await this.#handleSendMessage(socket, conversationId, addresseeUsername);
+    });
 
     socket.on('disconnect', () => {
       console.log('Client disconnected');
@@ -91,6 +91,38 @@ class IoController {
     console.log(
       `User ${socket.user.username} left conversation ${conversationId}`,
     );
+  };
+
+  #handleSendMessage = async (socket, conversationId, addresseeUsername) => {
+    console.log('El SM esta siendo manejado');
+    // TODO: These two first steps might be redundant
+    // Check if the user is a participant in the conversation
+    const isParticipant =
+      await this.#conversationController.isUserInConversation(
+        socket.user.username,
+        conversationId,
+      );
+    console.log('Es?', isParticipant);
+
+    // If not, return an error message
+    if (!isParticipant) {
+      return socket.emit('error', {
+        message: 'You are not allowed to join this conversation',
+      });
+    }
+
+    // Communicate through the conversation that a message has been sent
+    if (conversationId) {
+      console.log('Conversando');
+      socket.to(conversationId).emit('newConversationMessage');
+    }
+
+    // Communicate to the addresse that a message has been sent
+    const addresseeSocket = this.#activeSockets.get(addresseeUsername);
+    if (addresseeSocket) {
+      console.log('Adresando');
+      addresseeSocket.emit('newUserMessage');
+    }
   };
 }
 
