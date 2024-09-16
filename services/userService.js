@@ -4,14 +4,14 @@ const APIFeatures = require('../utils/apiFeatures');
 const { AGGREGATION_LIMIT } = require('../utils/constants');
 
 class UserService {
-  #Model = User;
+  #User = User;
 
   createUser(userObject) {
-    return this.#Model.create(userObject);
+    return this.#User.create(userObject);
   }
 
   getAllUsers(reqQuery, selectOptions) {
-    const features = new APIFeatures(this.#Model.find(), reqQuery)
+    const features = new APIFeatures(this.#User.find(), reqQuery)
       .filter()
       .sort()
       .paginate();
@@ -26,15 +26,15 @@ class UserService {
   }
 
   getUserById(userId, optionsObject) {
-    return this.#Model.findById(userId, null, optionsObject);
+    return this.#User.findById(userId, null, optionsObject);
   }
 
   getUser(matchObject, optionsObject) {
-    return this.#Model.findOne(matchObject, null, optionsObject);
+    return this.#User.findOne(matchObject, null, optionsObject);
   }
 
   updateUser(matchObject, updateObject, updateOptions) {
-    return this.#Model.findOneAndUpdate(
+    return this.#User.findOneAndUpdate(
       matchObject,
       updateObject,
       updateOptions,
@@ -42,7 +42,7 @@ class UserService {
   }
 
   deleteUser(userId) {
-    return this.#Model.findByIdAndDelete(userId);
+    return this.#User.findByIdAndDelete(userId);
   }
 
   isPasswordCorrect(user, submittedPassword) {
@@ -54,7 +54,7 @@ class UserService {
   }
 
   findOneUser(query, optionsObject) {
-    return this.#Model.findOne(query, null, optionsObject);
+    return this.#User.findOne(query, null, optionsObject);
   }
 
   setInvitee(user) {
@@ -82,7 +82,7 @@ class UserService {
   }
 
   searchUsers(searchTerm) {
-    return this.#Model.aggregate([
+    return this.#User.aggregate([
       {
         $search: {
           index: 'users',
@@ -107,7 +107,7 @@ class UserService {
     const userLimit = Number(reqQuery.limit) || AGGREGATION_LIMIT;
     const limit = userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
 
-    return this.#Model.aggregate([
+    return this.#User.aggregate([
       // Find the user by their username
       { $match: { username } },
       // Project only the following array field so the others don't get unwund
@@ -186,7 +186,7 @@ class UserService {
       sortBy[sortArray[0]] = sortArray[1] === 'asc' ? 1 : -1;
     }
 
-    return this.#Model.aggregate([
+    return this.#User.aggregate([
       // Find the user by their username
       { $match: { username } },
       // Project only the savedPosts array field so the others don't get unwund
@@ -283,7 +283,7 @@ class UserService {
       sortBy[sortArray[0]] = sortArray[1] === 'asc' ? 1 : -1;
     }
 
-    return this.#Model.aggregate([
+    return this.#User.aggregate([
       // Find the user by their username
       { $match: { username } },
       // Project only the savedCollections array field so the others don't get unwund

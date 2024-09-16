@@ -4,7 +4,7 @@ const filterObj = require('../utils/filterObj');
 const CommentService = require('../services/commentService');
 
 class CommentController {
-  #service = new CommentService();
+  #CommentService = new CommentService();
 
   // Function that creates comments filtering out of the creating object the fields the user isnt allowed to enter
   createComment = async (req, res, next) => {
@@ -21,7 +21,7 @@ class CommentController {
     filteredBody.author = req.user?.username || null;
     filteredBody.createdAt = Date.now();
 
-    const doc = await this.#service.createComment(filteredBody);
+    const doc = await this.#CommentService.createComment(filteredBody);
 
     res.status(201).json({
       status: 'success',
@@ -46,7 +46,9 @@ class CommentController {
       },
     ];
 
-    const oldDoc = await this.#service.getComment(req.params.id, { populate });
+    const oldDoc = await this.#CommentService.getComment(req.params.id, {
+      populate,
+    });
 
     if (!oldDoc) {
       return next(new AppError('No comment found with that ID', 404));
@@ -69,11 +71,15 @@ class CommentController {
       );
     }
 
-    const doc = await this.#service.updateComment(req.params.id, filteredBody, {
-      new: true,
-      runValidators: true,
-      populate,
-    });
+    const doc = await this.#CommentService.updateComment(
+      req.params.id,
+      filteredBody,
+      {
+        new: true,
+        runValidators: true,
+        populate,
+      },
+    );
 
     res.status(200).json({
       status: 'success',
@@ -99,9 +105,9 @@ class CommentController {
     ];
     const sort = { createdAt: -1 };
 
-    const totalDocs = await this.#service.countComments(matchObject);
+    const totalDocs = await this.#CommentService.countComments(matchObject);
 
-    const paginatedDocs = await this.#service.getComments(
+    const paginatedDocs = await this.#CommentService.getComments(
       matchObject,
       { populate, sort },
       req.query,
@@ -138,9 +144,9 @@ class CommentController {
     ];
     const sort = { createdAt: -1 };
 
-    const totalDocs = await this.#service.countComments(matchObject);
+    const totalDocs = await this.#CommentService.countComments(matchObject);
 
-    const paginatedDocs = await this.#service.getComments(
+    const paginatedDocs = await this.#CommentService.getComments(
       matchObject,
       { populate, sort },
       req.query,
@@ -172,9 +178,9 @@ class CommentController {
     const populate = 'replies';
     const sort = { createdAt: -1 };
 
-    const totalDocs = await this.#service.countComments(matchObject);
+    const totalDocs = await this.#CommentService.countComments(matchObject);
 
-    const paginatedDocs = await this.#service.getComments(
+    const paginatedDocs = await this.#CommentService.getComments(
       matchObject,
       { populate, sort },
       req.query,
@@ -195,7 +201,7 @@ class CommentController {
   getCommentThread = async (req, res, next) => {
     const populate = { path: 'replyingToArray', populate: 'replies' };
 
-    const doc = await this.#service.getComment(req.params.commentId, {
+    const doc = await this.#CommentService.getComment(req.params.commentId, {
       populate,
     });
 
@@ -250,7 +256,9 @@ class CommentController {
       'replies',
     ];
 
-    const doc = await this.#service.getComment(req.params.id, { populate });
+    const doc = await this.#CommentService.getComment(req.params.id, {
+      populate,
+    });
 
     if (!doc || doc.status !== 'posted') {
       return res.status(404).json({
@@ -266,7 +274,7 @@ class CommentController {
   };
 
   adminDeleteComment = async (req, res, next) => {
-    const doc = await this.#service.deleteComment(req.params.id);
+    const doc = await this.#CommentService.deleteComment(req.params.id);
 
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));

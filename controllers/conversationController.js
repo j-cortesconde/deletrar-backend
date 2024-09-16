@@ -2,11 +2,11 @@ const AppError = require('../utils/appError');
 const ConversationService = require('../services/conversationService');
 
 class ConversationController {
-  #service = new ConversationService();
+  #ConversationService = new ConversationService();
 
   isUserInConversation = async (username, conversationId) => {
     const conversation =
-      await this.#service.getConversationById(conversationId);
+      await this.#ConversationService.getConversationById(conversationId);
 
     if (!conversation) {
       throw new Error('Conversation not found');
@@ -20,7 +20,7 @@ class ConversationController {
 
   // Function that checks if theres a conversation. If it already exists, returns it, else it creates and returns a new conversation after recieving a request body with keys [addressee, message]
   createConversation = async (req, res, next) => {
-    const doc = await this.#service.getConversation({
+    const doc = await this.#ConversationService.getConversation({
       participants: { $all: [req.user.username, req.params.addresseeUsername] },
     });
 
@@ -40,7 +40,8 @@ class ConversationController {
         ],
       };
 
-      const newDoc = await this.#service.createConversation(newConversation);
+      const newDoc =
+        await this.#ConversationService.createConversation(newConversation);
 
       const response = {
         conversation: newDoc,
@@ -61,7 +62,7 @@ class ConversationController {
       messenger: req.user.username,
     };
 
-    const oldDoc = await this.#service.getConversation({
+    const oldDoc = await this.#ConversationService.getConversation({
       participants: { $all: [req.user.username, req.params.addresseeUsername] },
     });
 
@@ -69,7 +70,7 @@ class ConversationController {
       return this.createConversation(req, res, next);
     }
 
-    const doc = await this.#service.updateConversation(
+    const doc = await this.#ConversationService.updateConversation(
       {
         participants: {
           $all: [req.user.username, req.params.addresseeUsername],
@@ -103,9 +104,10 @@ class ConversationController {
     // TODO: Punto de falla
     // const sort = { 'lastMessage.timestamp': -1 };
 
-    const totalDocs = await this.#service.countConversations(matchObject);
+    const totalDocs =
+      await this.#ConversationService.countConversations(matchObject);
 
-    const paginatedDocs = await this.#service.getConversations(
+    const paginatedDocs = await this.#ConversationService.getConversations(
       matchObject,
       null,
       // { sort },
@@ -127,7 +129,7 @@ class ConversationController {
   // TODO: Add functionality that will check req.user is participant
   // TODO: Check if this method is even being used
   getConversationById = async (req, res, next) => {
-    const doc = await this.#service.getConversationById(
+    const doc = await this.#ConversationService.getConversationById(
       req.params.conversationId,
     );
 
@@ -145,7 +147,7 @@ class ConversationController {
   };
 
   getConversationByAddresseeUsername = async (req, res, next) => {
-    const doc = await this.#service.getConversation({
+    const doc = await this.#ConversationService.getConversation({
       participants: { $all: [req.user.username, req.params.addresseeUsername] },
     });
 
@@ -163,7 +165,7 @@ class ConversationController {
   };
 
   adminDeleteConversation = async (req, res, next) => {
-    const doc = await this.#service.deleteConversation(
+    const doc = await this.#ConversationService.deleteConversation(
       req.params.conversationId,
     );
 

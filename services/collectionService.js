@@ -3,14 +3,14 @@ const AggregationFeatures = require('../utils/aggregationFeatures');
 const APIFeatures = require('../utils/apiFeatures');
 
 class CollectionService {
-  #Model = Collection;
+  #Collection = Collection;
 
   createCollection(collectionObject) {
-    return this.#Model.create(collectionObject);
+    return this.#Collection.create(collectionObject);
   }
 
   getAllCollections(reqQuery, selectOptions) {
-    const features = new APIFeatures(this.#Model.find(), reqQuery)
+    const features = new APIFeatures(this.#Collection.find(), reqQuery)
       .filter()
       .sort()
       .paginate();
@@ -52,15 +52,15 @@ class CollectionService {
       .sort()
       .paginate();
 
-    return this.#Model.aggregate(features.pipeline);
+    return this.#Collection.aggregate(features.pipeline);
   }
 
   getCollection(collectionId, optionsObject) {
-    return this.#Model.findById(collectionId, null, optionsObject);
+    return this.#Collection.findById(collectionId, null, optionsObject);
   }
 
   updateCollection(collectionId, updateObject, updateOptions) {
-    return this.#Model.findByIdAndUpdate(
+    return this.#Collection.findByIdAndUpdate(
       collectionId,
       updateObject,
       updateOptions,
@@ -68,13 +68,13 @@ class CollectionService {
   }
 
   deleteCollection(collectionId) {
-    return this.#Model.findByIdAndDelete(collectionId);
+    return this.#Collection.findByIdAndDelete(collectionId);
   }
 
   // TODO: Could add filtering for posted documents that are private in their settings (but public to specific users). This would have a new layer of difficulty (maybe in the Controller)
   // TODO: Could add pagination
   searchCollections(searchTerm) {
-    return this.#Model.aggregate([
+    return this.#Collection.aggregate([
       {
         $search: {
           index: 'collections',

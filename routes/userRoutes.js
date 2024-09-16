@@ -25,6 +25,7 @@ router
 // FIXME: Same for all /id/:id (and maybe in postRoute too)
 router
   .get('/', userController.getAllUsers)
+  .get('/me', userController.getMe)
   .get('/username/:username', userController.getUserByUsername)
   .get('/followers/:username', userController.getFollowers)
   .get('/following/:username', userController.getFollowing)
@@ -35,9 +36,7 @@ router
 // Protect all routes from now on:
 router.use(authController.protect);
 
-router
-  .patch('/initializeMe', userController.initializeMe)
-  .get('/me', userController.getMe);
+router.patch('/initializeMe', userController.initializeMe);
 
 // Make sure user account is initialized (isnt invitee) from now on:
 router.use(authController.isInitialized);

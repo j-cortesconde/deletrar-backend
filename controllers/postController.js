@@ -8,7 +8,7 @@ const uploadImage = require('../utils/uploadImage');
 const PostService = require('../services/postService');
 
 class PostController {
-  #service = new PostService();
+  #PostService = new PostService();
 
   // If an 'image' type file is sent in the request as 'coverImage' field it gets uploaded to the memoryStorage
   uploadPostImage = uploadImage.single('coverImage');
@@ -45,7 +45,7 @@ class PostController {
     if (filteredBody.status === 'posted') filteredBody.postedAt = Date.now();
     if (req.file) filteredBody.coverImage = req.file.filename;
 
-    const doc = await this.#service.createPost(filteredBody);
+    const doc = await this.#PostService.createPost(filteredBody);
 
     res.status(201).json({
       status: 'success',
@@ -64,7 +64,9 @@ class PostController {
       },
     ];
 
-    const oldDoc = await this.#service.getPost(req.params.id, { populate });
+    const oldDoc = await this.#PostService.getPost(req.params.id, {
+      populate,
+    });
 
     if (!oldDoc) {
       return next(new AppError('No post found with that ID', 404));
@@ -104,11 +106,15 @@ class PostController {
     if (req.file) filteredBody.coverImage = req.file.filename;
     filteredBody.updatedAt = Date.now();
 
-    const doc = await this.#service.updatePost(req.params.id, filteredBody, {
-      new: true,
-      runValidators: true,
-      populate,
-    });
+    const doc = await this.#PostService.updatePost(
+      req.params.id,
+      filteredBody,
+      {
+        new: true,
+        runValidators: true,
+        populate,
+      },
+    );
 
     res.status(200).json({
       status: 'success',
@@ -127,7 +133,7 @@ class PostController {
       },
     ];
 
-    const doc = await this.#service.getPost(req.params.id, { populate });
+    const doc = await this.#PostService.getPost(req.params.id, { populate });
 
     if (!doc) {
       return next(new AppError('No post found with that ID', 404));
@@ -174,7 +180,7 @@ class PostController {
   getAllPosts = async (req, res, next) => {
     req.query.status = 'posted';
 
-    const docs = await this.#service.getAllPosts(req.query, '-settings');
+    const docs = await this.#PostService.getAllPosts(req.query, '-settings');
 
     // SEND RESPONSE
     res.status(200).json({
@@ -186,7 +192,7 @@ class PostController {
 
   // Only returns status="posted" posts
   getPostsByAuthorUsername = async (req, res, next) => {
-    const data = await this.#service.getPosts(
+    const data = await this.#PostService.getPosts(
       { author: req.params.username, status: 'posted' },
       req.query,
     );
@@ -205,7 +211,7 @@ class PostController {
 
   // Returns posts where status isn't "posted"
   getOwnHidenPosts = async (req, res, next) => {
-    const data = await this.#service.getPosts(
+    const data = await this.#PostService.getPosts(
       { author: req.user.username, status: { $ne: 'posted' } },
       req.query,
     );
@@ -232,7 +238,7 @@ class PostController {
         foreignField: 'username',
       },
     ];
-    const doc = await this.#service.getPost(req.params.id, { populate });
+    const doc = await this.#PostService.getPost(req.params.id, { populate });
 
     if (!doc) {
       return res.status(404).json({
@@ -255,7 +261,7 @@ class PostController {
   };
 
   adminDeletePost = async (req, res, next) => {
-    const doc = await this.#service.deletePost(req.params.id);
+    const doc = await this.#PostService.deletePost(req.params.id);
 
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
@@ -268,7 +274,7 @@ class PostController {
   };
 
   searchPosts = async (req, res, next) => {
-    const docs = await this.#service.searchPosts(req.params.searchTerm);
+    const docs = await this.#PostService.searchPosts(req.params.searchTerm);
 
     res.status(200).json({
       status: 'success',

@@ -1,3 +1,6 @@
+// TODO: Remove 'read' functionality. I no longer care for it.
+// TODO: See how to handle very long conversations
+// TODO: Fix conversation sorting when getting the list of a user's conversations
 const mongoose = require('mongoose');
 const messageSchema = require('./messageModel');
 

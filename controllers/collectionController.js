@@ -8,7 +8,7 @@ const uploadImage = require('../utils/uploadImage');
 const CollectionService = require('../services/collectionService');
 
 class CollectionController {
-  #service = new CollectionService();
+  #CollectionService = new CollectionService();
 
   // If an 'image' type file is sent in the request as 'coverImage' field it gets uploaded to the memoryStorage
   uploadCollectionImage = uploadImage.single('coverImage');
@@ -45,7 +45,7 @@ class CollectionController {
     if (filteredBody.status === 'posted') filteredBody.postedAt = Date.now();
     if (req.file) filteredBody.coverImage = req.file.filename;
 
-    const doc = await this.#service.createCollection(filteredBody);
+    const doc = await this.#CollectionService.createCollection(filteredBody);
 
     res.status(201).json({
       status: 'success',
@@ -75,7 +75,7 @@ class CollectionController {
       },
     ];
 
-    const oldDoc = await this.#service.getCollection(req.params.id, {
+    const oldDoc = await this.#CollectionService.getCollection(req.params.id, {
       populate,
     });
 
@@ -117,7 +117,7 @@ class CollectionController {
     if (req.file) filteredBody.coverImage = req.file.filename;
     filteredBody.updatedAt = Date.now();
 
-    const doc = await this.#service.updateCollection(
+    const doc = await this.#CollectionService.updateCollection(
       req.params.id,
       filteredBody,
       {
@@ -137,7 +137,10 @@ class CollectionController {
   getAllCollections = async (req, res, next) => {
     req.query.status = 'posted';
 
-    const docs = await this.#service.getAllCollections(req.query, '-settings');
+    const docs = await this.#CollectionService.getAllCollections(
+      req.query,
+      '-settings',
+    );
 
     // SEND RESPONSE
     res.status(200).json({
@@ -149,7 +152,7 @@ class CollectionController {
 
   // Only returns status="posted" collections
   getCollectionsByCollectorUsername = async (req, res, next) => {
-    const data = await this.#service.getCollections(
+    const data = await this.#CollectionService.getCollections(
       { collector: req.params.username, status: 'posted' },
       req.query,
     );
@@ -168,7 +171,7 @@ class CollectionController {
 
   // Returns collections where status isn't "posted"
   getOwnHiddenCollections = async (req, res, next) => {
-    const data = await this.#service.getCollections(
+    const data = await this.#CollectionService.getCollections(
       { collector: req.user.username, status: { $ne: 'posted' } },
       req.query,
     );
@@ -206,7 +209,9 @@ class CollectionController {
         },
       },
     ];
-    const doc = await this.#service.getCollection(req.params.id, { populate });
+    const doc = await this.#CollectionService.getCollection(req.params.id, {
+      populate,
+    });
 
     if (!doc) {
       return res.status(404).json({
@@ -229,7 +234,7 @@ class CollectionController {
   };
 
   adminDeleteCollection = async (req, res, next) => {
-    const doc = await this.#service.deleteCollection(req.params.id);
+    const doc = await this.#CollectionService.deleteCollection(req.params.id);
 
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
@@ -242,7 +247,9 @@ class CollectionController {
   };
 
   searchCollections = async (req, res, next) => {
-    const docs = await this.#service.searchCollections(req.params.searchTerm);
+    const docs = await this.#CollectionService.searchCollections(
+      req.params.searchTerm,
+    );
 
     res.status(200).json({
       status: 'success',
@@ -272,7 +279,7 @@ class CollectionController {
       },
     ];
 
-    const doc = await this.#service.updateCollection(
+    const doc = await this.#CollectionService.updateCollection(
       req.params.id,
       {
         $push: { posts: req.body.postId },
@@ -311,7 +318,7 @@ class CollectionController {
       },
     ];
 
-    const doc = await this.#service.updateCollection(
+    const doc = await this.#CollectionService.updateCollection(
       req.params.id,
       { $pull: { posts: req.body.postId } },
       {
@@ -348,7 +355,7 @@ class CollectionController {
       },
     ];
 
-    await this.#service.updateCollection(
+    await this.#CollectionService.updateCollection(
       req.params.id,
       {
         $pull: { posts: req.body.postId },
@@ -359,7 +366,7 @@ class CollectionController {
       },
     );
 
-    const doc = await this.#service.updateCollection(
+    const doc = await this.#CollectionService.updateCollection(
       req.params.id,
       {
         $push: {

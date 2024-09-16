@@ -3,14 +3,14 @@ const AggregationFeatures = require('../utils/aggregationFeatures');
 const APIFeatures = require('../utils/apiFeatures');
 
 class PostService {
-  #Model = Post;
+  #Post = Post;
 
   createPost(postObject) {
-    return this.#Model.create(postObject);
+    return this.#Post.create(postObject);
   }
 
   getAllPosts(reqQuery, selectOptions) {
-    const features = new APIFeatures(this.#Model.find(), reqQuery)
+    const features = new APIFeatures(this.#Post.find(), reqQuery)
       .filter()
       .sort()
       .paginate();
@@ -49,25 +49,25 @@ class PostService {
       .sort()
       .paginate();
 
-    return this.#Model.aggregate(features.pipeline);
+    return this.#Post.aggregate(features.pipeline);
   }
 
   getPost(postId, optionsObject) {
-    return this.#Model.findById(postId, null, optionsObject);
+    return this.#Post.findById(postId, null, optionsObject);
   }
 
   updatePost(postId, updateObject, updateOptions) {
-    return this.#Model.findByIdAndUpdate(postId, updateObject, updateOptions);
+    return this.#Post.findByIdAndUpdate(postId, updateObject, updateOptions);
   }
 
   deletePost(postId) {
-    return this.#Model.findByIdAndDelete(postId);
+    return this.#Post.findByIdAndDelete(postId);
   }
 
   // TODO: Could add filtering for posted documents that are private in their settings (but public to specific users). This would have a new layer of difficulty (maybe in the Controller)
   // TODO: Could add pagination
   searchPosts(searchTerm) {
-    return this.#Model.aggregate([
+    return this.#Post.aggregate([
       {
         $search: {
           index: 'posts',

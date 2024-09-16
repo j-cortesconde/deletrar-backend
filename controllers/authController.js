@@ -12,7 +12,7 @@ const UserService = require('../services/userService');
 const { ADMIN, FRONTEND_ADDRESS } = require('../utils/constants');
 
 class AuthController {
-  #service = new UserService();
+  #UserService = new UserService();
 
   #signToken = (id) =>
     jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -44,33 +44,48 @@ class AuthController {
   };
 
   // TODO: Not handling cases in which the decoding fails for bad token
-  getTokenUser = async (token) => {
-    // 2) Verification token
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  getTokenUser = async (req, res, token) => {
+    try {
+      // 2) Verification token
+      const decoded = await promisify(jwt.verify)(
+        token,
+        process.env.JWT_SECRET,
+      );
 
-    // 3) Check if user still exists
-    const select = '+active';
-    const includeInactive = true;
-    const currentUser = await this.#service.getUserById(decoded.id, {
-      select,
-      includeInactive,
-    });
+      // 3) Check if user still exists
+      const select = '+active';
+      const includeInactive = true;
+      const currentUser = await this.#UserService.getUserById(decoded.id, {
+        select,
+        includeInactive,
+      });
 
-    if (!currentUser) {
+      if (!currentUser) {
+        return {
+          error: 'The user belonging to this token does no longer exist.',
+        };
+      }
+
+      // 4) Check if user changed password after the token was issued
+      if (this.#UserService.changedPasswordAfter(currentUser, decoded.iat)) {
+        return {
+          error: 'User recently changed password! Please log in again.',
+        };
+      }
+
+      // GRANT ACCESS TO PROTECTED ROUTE
+      return currentUser;
+    } catch (err) {
+      if (err?.expiredAt) {
+        this.logout(req, res);
+        return {
+          error: 'Login has expired. Please log in again.',
+        };
+      }
       return {
-        error: 'The user belonging to this token does no longer exist.',
+        error: 'An error has ocurred. Please log in again.',
       };
     }
-
-    // 4) Check if user changed password after the token was issued
-    if (this.#service.changedPasswordAfter(currentUser, decoded.iat)) {
-      return {
-        error: 'User recently changed password! Please log in again.',
-      };
-    }
-
-    // GRANT ACCESS TO PROTECTED ROUTE
-    return currentUser;
   };
 
   // Highly complex method that handles foreign user's account request (to admins or users) and that contemplates the account already existing (in any role)
@@ -91,7 +106,7 @@ class AuthController {
       );
 
     // B) Check if user already exists. If so, mail them informing them of their account status
-    const existingRequestorUser = await this.#service.findOneUser({
+    const existingRequestorUser = await this.#UserService.findOneUser({
       email: req.body.email,
     });
     if (existingRequestorUser) {
@@ -135,7 +150,7 @@ class AuthController {
 
     // C) If the account invitation was requested to a user
     if (req.body.toWhom.isUser) {
-      const requestedUser = await this.#service.findOneUser({
+      const requestedUser = await this.#UserService.findOneUser({
         username: req.body.toWhom.username,
       });
 
@@ -145,7 +160,7 @@ class AuthController {
           // Create a 'requestor' type user
           //FIXME: Change to random password
           const password = `${req.body.email}${Date.now()}`;
-          const newUser = await this.#service.createUser({
+          const newUser = await this.#UserService.createUser({
             name: req.body.name,
             email: req.body.email,
             role: 'requestor',
@@ -194,7 +209,7 @@ class AuthController {
         // Create a 'requestor' type user
         //FIXME: Change to random password
         const password = `${req.body.email}${Date.now()}`;
-        const newUser = await this.#service.createUser({
+        const newUser = await this.#UserService.createUser({
           name: req.body.name,
           email: req.body.email,
           role: 'requestor',
@@ -235,7 +250,7 @@ class AuthController {
   // Inviting a friend you only pass in their name and email. System creates random password and user is forced to reset it. Handles cases where user already has account (or has already received an invite)
   invite = catchAsync(async (req, res, next) => {
     // 1) Checks if user already exists.
-    let user = await this.#service.findOneUser(
+    let user = await this.#UserService.findOneUser(
       { email: req.body.email },
       { select: '+active', includeInactive: true },
     );
@@ -266,14 +281,14 @@ class AuthController {
     }
     // IV- If exists as requestor, turns it to an invitee. Else, continues.
     if (user?.role === 'requestor') {
-      await this.#service.setInvitee(user);
+      await this.#UserService.setInvitee(user);
     }
 
     // V) If doesn't already exist, create one with a random password and a throwaway username (the user's email address)
     if (!user) {
       //FIXME: Change to random password
       const password = `${req.body.email}${Date.now()}`;
-      user = await this.#service.createUser({
+      user = await this.#UserService.createUser({
         name: req.body.name,
         email: req.body.email,
         username: req.body.email,
@@ -283,7 +298,7 @@ class AuthController {
     }
 
     // 2) Generate and get a random reset token
-    const resetToken = await this.#service.createPasswordResetToken(user);
+    const resetToken = await this.#UserService.createPasswordResetToken(user);
 
     // 3) Sends a welcome email to the user's email (including the pw reset token link)
     try {
@@ -295,7 +310,7 @@ class AuthController {
         message: 'El usuario recibirá una invitación en su correo electrónico.',
       });
     } catch (err) {
-      await this.#service.clearResetToken(user);
+      await this.#UserService.clearResetToken(user);
 
       return next(
         new AppError(
@@ -318,12 +333,12 @@ class AuthController {
     const select =
       'name username email photo description createdAt role settings active';
 
-    const user = await this.#service.findOneUser(
+    const user = await this.#UserService.findOneUser(
       { email },
       { select, includeInactive: true },
     );
     // 3) Check password is correct
-    if (!(await this.#service.isPasswordCorrect(user, password))) {
+    if (!(await this.#UserService.isPasswordCorrect(user, password))) {
       return next(new AppError('Incorrect email or password', 401));
     }
 
@@ -361,7 +376,7 @@ class AuthController {
     }
 
     // Calls a private method that gets and returns the user for that given token (or returns an object with an error key if no valid users were found so that the 'protect' method stops it)
-    req.user = await this.getTokenUser(token);
+    req.user = await this.getTokenUser(req, res, token);
     next();
   };
 
@@ -426,7 +441,7 @@ class AuthController {
         );
 
         // 2) Check if user still exists
-        const currentUser = await this.#service.getUserById(decoded.id);
+        const currentUser = await this.#UserService.getUserById(decoded.id);
         if (!currentUser) {
           return next();
         }
@@ -466,7 +481,7 @@ class AuthController {
   // User posts mail in req body, if belong to db user, gets a reset link on mail
   forgotPassword = catchAsync(async (req, res, next) => {
     // 1) Get user based on POSTed email
-    const user = await this.#service.findOneUser({ email: req.body.email });
+    const user = await this.#UserService.findOneUser({ email: req.body.email });
 
     if (!user) {
       return res.status(404).json({
@@ -478,7 +493,7 @@ class AuthController {
     }
 
     // 2) Generate the random reset token
-    const resetToken = await this.#service.createPasswordResetToken(user);
+    const resetToken = await this.#UserService.createPasswordResetToken(user);
 
     // 3) Send it to user's email
     try {
@@ -491,7 +506,7 @@ class AuthController {
           'Se enviaron instrucciones para reiniciar tu contraseña a tu correo electrónico.',
       });
     } catch (err) {
-      await this.#service.clearPasswordResetToken(user);
+      await this.#UserService.clearPasswordResetToken(user);
 
       return next(
         new AppError(
@@ -510,7 +525,7 @@ class AuthController {
       .update(req.params.token)
       .digest('hex');
 
-    const user = await this.#service.findOneUser({
+    const user = await this.#UserService.findOneUser({
       passwordResetToken: hashedToken,
       passwordResetExpires: { $gt: Date.now() },
     });
@@ -526,8 +541,8 @@ class AuthController {
     }
 
     const { password, passwordConfirm } = req.body;
-    await this.#service.setPassword(user, { password, passwordConfirm });
-    await this.#service.clearPasswordResetToken(user);
+    await this.#UserService.setPassword(user, { password, passwordConfirm });
+    await this.#UserService.clearPasswordResetToken(user);
     // 3) changedPasswordAt property for the user gets auto updated as per Model's pre-save MW
     // 4) Log the user in, send JWT
     this.#createSendToken(user, 200, res);
@@ -536,11 +551,14 @@ class AuthController {
   // For logged in users. If the currentPw they pass in in body is correct, updates it from body too (pw & pwconfirm)
   updatePassword = catchAsync(async (req, res, next) => {
     // 1) Get user from collection
-    const user = await this.#service.getUserById(req.user.id);
+    const user = await this.#UserService.getUserById(req.user.id);
 
     // 2) Check if POSTed current password is correct
     if (
-      !(await this.#service.isPasswordCorrect(user, req.body.passwordCurrent))
+      !(await this.#UserService.isPasswordCorrect(
+        user,
+        req.body.passwordCurrent,
+      ))
     ) {
       return next(
         new AppError(
@@ -552,8 +570,8 @@ class AuthController {
 
     // 3) If so, update password
     const { password, passwordConfirm } = req.body;
-    await this.#service.setPassword(user, { password, passwordConfirm });
-    await this.#service.clearPasswordResetToken(user);
+    await this.#UserService.setPassword(user, { password, passwordConfirm });
+    await this.#UserService.clearPasswordResetToken(user);
     // User.findByIdAndUpdate will NOT work as intended!
 
     // 4) Log user in, send JWT
