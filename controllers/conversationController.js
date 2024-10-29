@@ -78,6 +78,8 @@ class ConversationController {
       },
       {
         $push: { messages: newMessage },
+        read: false,
+        lastMessageTimestamp: new Date().toISOString(),
       },
       {
         new: true,
@@ -101,16 +103,14 @@ class ConversationController {
       participants: req.user.username,
     };
 
-    // TODO: Punto de falla
-    // const sort = { 'lastMessage.timestamp': -1 };
+    const sort = { lastMessageTimestamp: -1 };
 
     const totalDocs =
       await this.#ConversationService.countConversations(matchObject);
 
     const paginatedDocs = await this.#ConversationService.getConversations(
       matchObject,
-      null,
-      // { sort },
+      { sort },
       req.query,
     );
 
@@ -156,6 +156,16 @@ class ConversationController {
         status: 'fail',
         message: 'No se encontró ninguna conversación con ese ID.',
       });
+    }
+
+    // Makes so if the reader isn't who sent the last message then the conversation will be marked as read:true
+    if (doc.lastMessage?.messenger !== req.user.username) {
+      await this.#ConversationService.updateConversation(
+        {
+          _id: doc._id,
+        },
+        { read: true },
+      );
     }
 
     res.status(200).json({

@@ -18,6 +18,14 @@ const conversationSchema = new mongoose.Schema(
       default: true,
       select: false,
     },
+    read: {
+      type: Boolean,
+      default: false,
+    },
+    lastMessageTimestamp: {
+      type: Date,
+      default: Date.now,
+    },
     // TODO: No settings yet, but could be user specific settings
   },
   {
