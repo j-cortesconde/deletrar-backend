@@ -181,7 +181,7 @@ class CommentService {
                 author: 1,
                 replyingToArray: 1,
                 replyingTo: 1,
-                createdAt: 1,
+                postedAt: 1,
               },
             },
             {
@@ -224,7 +224,7 @@ class CommentService {
           content: 1,
           author: 1,
           replyingToArray: 1,
-          createdAt: 1,
+          postedAt: 1,
           targetPost: 1,
           targetCollection: 1,
           replyingTo: 1,

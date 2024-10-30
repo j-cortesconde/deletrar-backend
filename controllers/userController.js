@@ -571,6 +571,7 @@ class UserController {
     });
   };
 
+  // TODO: Estoy agregando Posts y Collections por fecha de publicación, no por fecha de actualización. Agregar esto es posible funcionalidad futura (no MVP). Tampoco estoy agregando replies a comments de gente que sigo: funcionalidad futura al cuadrado (no MVP al cudadrado)
   getUserFeed = async (req, res) => {
     // Get the list of followed users
     const rawFollowing = await this.#UserService.getFullFollowingIds(
@@ -602,24 +603,39 @@ class UserController {
         author: { $in: following },
         status: 'posted',
       },
-      { sortBy: 'createdAt-desc' },
+      { sortBy: 'postedAt-desc' },
     );
     const comments = {
       totalCount: rawComments[0].totalCount[0].totalCount,
       limitedDocuments: rawComments[0].limitedDocuments,
     };
 
+    // Add counts for the response (totalCount for the total amount of documents in collection and actualCount for total amount of documents in the response)
+    const totalCount = {
+      comments: comments.totalCount,
+      collections: collections.totalCount,
+      posts: posts.totalCount,
+    };
+    const actualCount = {
+      posts: posts.limitedDocuments.length,
+      collections: collections.limitedDocuments.length,
+      comments: comments.limitedDocuments.length,
+    };
+
+    // Combine all results and sort by `postedAt`
+    const limitedDocuments = [
+      ...posts.limitedDocuments,
+      ...collections.limitedDocuments,
+      ...comments.limitedDocuments,
+    ].sort((a, b) => b.postedAt - a.postedAt);
+
     res.status(200).json({
       status: 'success',
-      data: { posts, collections, comments },
+      data: {
+        count: { totalCount, actualCount },
+        limitedDocuments,
+      },
     });
-
-    //   // Combine all results and sort by `createdAt`
-    //   const feedItems = [...posts, ...collections, ...comments].sort(
-    //     (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-    //   );
-
-    //   return feedItems;
   };
 }
 
