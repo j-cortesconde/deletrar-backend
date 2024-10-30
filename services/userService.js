@@ -10,8 +10,8 @@ class UserService {
     return this.#Model.create(userObject);
   }
 
-  getAllUsers(reqQuery, selectOptions) {
-    const features = new APIFeatures(this.#Model.find(), reqQuery)
+  getUsers(matchObject, reqQuery, selectOptions) {
+    const features = new APIFeatures(this.#Model.find(matchObject), reqQuery)
       .filter()
       .sort()
       .paginate();
@@ -169,6 +169,59 @@ class UserService {
           totalAmount: 1,
           [getFieldName]: {
             $slice: [`$${getFieldName}`, (page - 1) * limit, limit],
+          },
+        },
+      },
+    ]);
+  }
+
+  // Costly method used for getting the feed
+  getFullFollowingIds(username) {
+    return this.#Model.aggregate([
+      // Find the user by their username
+      { $match: { username } },
+      // Project only the following array field so the others don't get unwund
+      { $project: { following: 1 } },
+      // Unwind the following array to prepare for $lookup
+      { $unwind: `$following` },
+      // Lookup user documents based on the following array
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'following',
+          foreignField: 'username',
+          as: 'following',
+        },
+      },
+      // Project the fields for the following user documents
+      {
+        $project: {
+          following: {
+            $map: {
+              input: `$following`,
+              as: 'user',
+              in: '$$user.username',
+            },
+          },
+        },
+      },
+      // Group to collect all _id values into a single array
+      {
+        $group: {
+          _id: null,
+          following: { $push: `$following` },
+        },
+      },
+      // Flatten the array of following users
+      {
+        $project: {
+          _id: 0,
+          following: {
+            $reduce: {
+              input: `$following`,
+              initialValue: [],
+              in: { $concatArrays: ['$$value', '$$this'] },
+            },
           },
         },
       },

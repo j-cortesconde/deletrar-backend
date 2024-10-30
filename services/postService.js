@@ -43,6 +43,16 @@ class PostService {
           author: 1,
         },
       },
+      // TODO: Ver si algo que usaba esto se rompió. Sólo agregué este lookup de abajo. Antes terminaba con el project tal cual está ahora
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'author',
+          foreignField: 'username',
+          pipeline: [{ $project: { _id: 1, username: 1, name: 1, photo: 1 } }],
+          as: 'author',
+        },
+      },
     ];
 
     const features = new AggregationFeatures(basePipeline, reqQuery)
@@ -111,6 +121,11 @@ class PostService {
         $limit: 10, // Limit results to 10 documents
       },
     ]);
+  }
+
+  getFeedPosts(matchObject, sortObject) {
+    console.log(matchObject);
+    return this.#Model.find(matchObject).sort(sortObject);
   }
 }
 

@@ -5,9 +5,18 @@ const filterObj = require('../utils/filterObj');
 const AppError = require('../utils/appError');
 const uploadImage = require('../utils/uploadImage');
 const UserService = require('../services/userService');
+const PostService = require('../services/postService');
+const CollectionService = require('../services/collectionService');
+const CommentService = require('../services/commentService');
 
 class UserController {
-  #service = new UserService();
+  #UserService = new UserService();
+
+  #PostService = new PostService();
+
+  #CollectionService = new CollectionService();
+
+  #CommentService = new CommentService();
 
   // Makes sure the user submitted a currentPassword and checks it's correct
   #checkPassword = async (req) => {
@@ -18,10 +27,13 @@ class UserController {
         401,
       );
 
-    const user = await this.#service.getUserById(req.user.id);
+    const user = await this.#UserService.getUserById(req.user.id);
 
     if (
-      !(await this.#service.isPasswordCorrect(user, req.body.currentPassword))
+      !(await this.#UserService.isPasswordCorrect(
+        user,
+        req.body.currentPassword,
+      ))
     ) {
       // 1.3) Check if POSTed currentPassword is correct. If so, continues, else it errors
       throw new AppError('The password you entered is wrong.', 401);
@@ -54,7 +66,7 @@ class UserController {
     const select =
       'name username email photo description createdAt role settings active';
 
-    const doc = await this.#service.getUserById(req.user.id, {
+    const doc = await this.#UserService.getUserById(req.user.id, {
       select,
       includeInactive: true,
     });
@@ -101,7 +113,7 @@ class UserController {
     if (req.file) filteredBody.photo = req.file.filename;
 
     // 3) Update user document
-    const updatedUser = await this.#service.updateUser(
+    const updatedUser = await this.#UserService.updateUser(
       { _id: req.user.id },
       filteredBody,
       {
@@ -138,7 +150,7 @@ class UserController {
     const select =
       'name username email photo description createdAt role settings active';
 
-    const updatedUser = await this.#service.updateUser(
+    const updatedUser = await this.#UserService.updateUser(
       { _id: req.user.id },
       filteredBody,
       { select, new: true, runValidators: true },
@@ -158,7 +170,7 @@ class UserController {
       return next(error);
     }
 
-    await this.#service.updateUser({ _id: req.user.id }, { active: false });
+    await this.#UserService.updateUser({ _id: req.user.id }, { active: false });
 
     res.status(204).json({
       status: 'success',
@@ -171,7 +183,7 @@ class UserController {
     const select =
       'name username email photo description createdAt role settings active';
 
-    const user = await this.#service.updateUser(
+    const user = await this.#UserService.updateUser(
       { _id: req.user.id },
       { active: true },
       { select, new: true, includeInactive: true },
@@ -184,7 +196,8 @@ class UserController {
   };
 
   getAllUsers = async (req, res, next) => {
-    const doc = await this.#service.getAllUsers(
+    const doc = await this.#UserService.getUsers(
+      {},
       req.query,
       'name username email photo description createdAt',
     );
@@ -200,7 +213,7 @@ class UserController {
   getUserByUsername = async (req, res, next) => {
     const select =
       'name username email photo description followerAmount createdAt';
-    const doc = await this.#service.getUser(
+    const doc = await this.#UserService.getUser(
       { username: req.params.username },
       {
         select,
@@ -218,7 +231,7 @@ class UserController {
   };
 
   createUser = async (req, res, next) => {
-    const doc = await this.#service.createUser(req.body);
+    const doc = await this.#UserService.createUser(req.body);
 
     res.status(201).json({
       status: 'success',
@@ -228,7 +241,7 @@ class UserController {
 
   // Shouldn't be used for password updating.
   updateUser = async (req, res, next) => {
-    const doc = await this.#service.updateUser(
+    const doc = await this.#UserService.updateUser(
       { username: req.params.username },
       req.body,
       {
@@ -248,7 +261,7 @@ class UserController {
   };
 
   deleteUser = async (req, res, next) => {
-    const doc = await this.#service.deleteUser(req.params.username);
+    const doc = await this.#UserService.deleteUser(req.params.username);
 
     if (!doc) {
       return next(new AppError('No document found with that username', 404));
@@ -261,7 +274,7 @@ class UserController {
   };
 
   followUser = async (req, res, next) => {
-    await this.#service.updateUser(
+    await this.#UserService.updateUser(
       { _id: req.user.id },
       {
         $push: {
@@ -274,7 +287,7 @@ class UserController {
       },
     );
 
-    const otherUser = await this.#service.updateUser(
+    const otherUser = await this.#UserService.updateUser(
       { username: req.params.otherUsername },
       {
         $push: { followers: { $each: [req.user.username], $position: 0 } },
@@ -293,7 +306,7 @@ class UserController {
   };
 
   unfollowUser = async (req, res, next) => {
-    await this.#service.updateUser(
+    await this.#UserService.updateUser(
       { _id: req.user.id },
       { $pull: { following: req.params.otherUsername } },
       {
@@ -302,7 +315,7 @@ class UserController {
       },
     );
 
-    const otherUser = await this.#service.updateUser(
+    const otherUser = await this.#UserService.updateUser(
       { username: req.params.otherUsername },
       { $pull: { followers: req.user.username }, $inc: { followerAmount: -1 } },
       {
@@ -318,7 +331,7 @@ class UserController {
   };
 
   searchUsers = async (req, res, next) => {
-    const docs = await this.#service.searchUsers(req.params.searchTerm);
+    const docs = await this.#UserService.searchUsers(req.params.searchTerm);
 
     res.status(200).json({
       status: 'success',
@@ -331,7 +344,7 @@ class UserController {
   // TODO: The following/follower model isnt ideal. The way it is now, there is a way to order by oldest/latest followed user (the users one follows) but not by oldest/latest following user (the users that follow one). Better solution is out there
   // TODO: Expanding on this. If you add a followers array field to the user schema and each time a user follows another one the followed username gets unshifted into the following array field of the follower document and the follower username gets unshifted into the followers array field of the followed user, then both the following and the followers arrays become ordered from latest first to oldest last. If this is done so, the getFollowers service should be changed for something that resembles the current state of the getFollowing one (a common service could even be created that just gets passed in the name of the field queried, following/followers)
   getFollowers = async (req, res, next) => {
-    const data = await this.#service.getFollowingOrFollowers(
+    const data = await this.#UserService.getFollowingOrFollowers(
       'followers',
       req.params.username,
       req.query,
@@ -350,7 +363,7 @@ class UserController {
   };
 
   getFollowing = async (req, res, next) => {
-    const data = await this.#service.getFollowingOrFollowers(
+    const data = await this.#UserService.getFollowingOrFollowers(
       'following',
       req.params.username,
       req.query,
@@ -371,7 +384,7 @@ class UserController {
   isFollower = async (req, res, next) => {
     const select = 'username';
 
-    const doc = await this.#service.getUser(
+    const doc = await this.#UserService.getUser(
       {
         _id: req.user.id,
         followers: req.params.otherUsername,
@@ -390,7 +403,7 @@ class UserController {
   amFollowing = async (req, res, next) => {
     const select = 'username';
 
-    const doc = await this.#service.getUser(
+    const doc = await this.#UserService.getUser(
       {
         _id: req.user.id,
         following: req.params.otherUsername,
@@ -407,7 +420,7 @@ class UserController {
   };
 
   savePost = async (req, res, next) => {
-    const doc = await this.#service.updateUser(
+    const doc = await this.#UserService.updateUser(
       { _id: req.user.id },
       {
         $push: {
@@ -428,7 +441,7 @@ class UserController {
   };
 
   unsavePost = async (req, res, next) => {
-    const doc = await this.#service.updateUser(
+    const doc = await this.#UserService.updateUser(
       { _id: req.user.id },
       { $pull: { savedPosts: req.params.postId } },
       {
@@ -446,7 +459,7 @@ class UserController {
   haveSavedPost = async (req, res, next) => {
     const select = 'username';
 
-    const doc = await this.#service.getUser(
+    const doc = await this.#UserService.getUser(
       {
         _id: req.user.id,
         savedPosts: req.params.postId,
@@ -463,7 +476,7 @@ class UserController {
   };
 
   getSavedPosts = async (req, res, next) => {
-    const data = await this.#service.getSavedPosts(
+    const data = await this.#UserService.getSavedPosts(
       req.params.username,
       req.query,
     );
@@ -483,7 +496,7 @@ class UserController {
   };
 
   saveCollection = async (req, res, next) => {
-    const doc = await this.#service.updateUser(
+    const doc = await this.#UserService.updateUser(
       { _id: req.user.id },
       {
         $push: {
@@ -504,7 +517,7 @@ class UserController {
   };
 
   unsaveCollection = async (req, res, next) => {
-    const doc = await this.#service.updateUser(
+    const doc = await this.#UserService.updateUser(
       { _id: req.user.id },
       { $pull: { savedCollections: req.params.collectionId } },
       {
@@ -522,7 +535,7 @@ class UserController {
   haveSavedCollection = async (req, res, next) => {
     const select = 'username';
 
-    const doc = await this.#service.getUser(
+    const doc = await this.#UserService.getUser(
       {
         _id: req.user.id,
         savedCollections: req.params.collectionId,
@@ -539,7 +552,7 @@ class UserController {
   };
 
   getSavedCollections = async (req, res, next) => {
-    const data = await this.#service.getSavedCollections(
+    const data = await this.#UserService.getSavedCollections(
       req.params.username,
       req.query,
     );
@@ -556,6 +569,57 @@ class UserController {
       status: 'success',
       data: response,
     });
+  };
+
+  getUserFeed = async (req, res) => {
+    // Get the list of followed users
+    const rawFollowing = await this.#UserService.getFullFollowingIds(
+      req.user.username,
+    );
+    const { following } = rawFollowing[0];
+
+    // Fetch recent posts and collections by followed users
+    const rawPosts = await this.#PostService.getPosts({
+      author: { $in: following },
+      status: 'posted',
+    });
+    const posts = {
+      totalCount: rawPosts[0].totalCount[0].totalCount,
+      limitedDocuments: rawPosts[0].limitedDocuments,
+    };
+
+    const rawCollections = await this.#CollectionService.getCollections({
+      collector: { $in: following },
+      status: 'posted',
+    });
+    const collections = {
+      totalCount: rawCollections[0].totalCount[0].totalCount,
+      limitedDocuments: rawCollections[0].limitedDocuments,
+    };
+
+    const rawComments = await this.#CommentService.getCommentsAggregation(
+      {
+        author: { $in: following },
+        status: 'posted',
+      },
+      { sortBy: 'createdAt-desc' },
+    );
+    const comments = {
+      totalCount: rawComments[0].totalCount[0].totalCount,
+      limitedDocuments: rawComments[0].limitedDocuments,
+    };
+
+    res.status(200).json({
+      status: 'success',
+      data: { posts, collections, comments },
+    });
+
+    //   // Combine all results and sort by `createdAt`
+    //   const feedItems = [...posts, ...collections, ...comments].sort(
+    //     (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+    //   );
+
+    //   return feedItems;
   };
 }
 

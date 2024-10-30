@@ -18,6 +18,16 @@ class CommentController {
       'status',
     );
 
+    // No debería suceder nunca, pero encontré algunos comments sin targetCollection ni targetPost. No sé cuándo ni cómo habrá sucedido, pero no voy a investigarlo ahora. Lo dejo como un TODO: para cuando salte este error
+    if (!filteredBody.targetCollection && !filteredBody.targetPost) {
+      return next(
+        new AppError(
+          'Comment must have either a targetPost or a targetCollection. Please contact admin',
+          400,
+        ),
+      );
+    }
+
     filteredBody.author = req.user?.username || null;
     filteredBody.createdAt = Date.now();
 

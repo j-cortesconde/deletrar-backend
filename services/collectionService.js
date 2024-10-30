@@ -46,6 +46,47 @@ class CollectionService {
           posts: 1,
         },
       },
+      // TODO: Ver si algo que usaba esto se rompió. Sólo agregué estos tres lookups de abajo. Antes terminaba con el project tal cual está ahora
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'collector',
+          foreignField: 'username',
+          pipeline: [{ $project: { _id: 1, username: 1, name: 1, photo: 1 } }],
+          as: 'collector',
+        },
+      },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'posts',
+          foreignField: '_id',
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                author: 1,
+                title: 1,
+                summary: 1,
+                postedAt: 1,
+                coverImage: 1,
+              },
+            },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'author',
+                foreignField: 'username',
+                pipeline: [
+                  { $project: { _id: 1, username: 1, name: 1, photo: 1 } },
+                ],
+                as: 'author',
+              },
+            },
+          ],
+          as: 'posts',
+        },
+      },
     ];
 
     const features = new AggregationFeatures(basePipeline, reqQuery)

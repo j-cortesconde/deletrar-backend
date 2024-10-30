@@ -48,6 +48,7 @@ router.patch('/reactivateMe', userController.reactivateMe);
 router.use(authController.isActive);
 
 router
+  .get('/feed', userController.getUserFeed)
   .get('/isFollower/:otherUsername', userController.isFollower)
   .get('/amFollowing/:otherUsername', userController.amFollowing)
   .get('/haveSaved/post/:postId', userController.haveSavedPost)
