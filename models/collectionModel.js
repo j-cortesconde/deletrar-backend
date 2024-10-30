@@ -53,6 +53,10 @@ const collectionSchema = new mongoose.Schema(
         default: true,
       },
     },
+    documentType: {
+      type: String,
+      default: 'collection',
+    },
   },
   {
     toJSON: { virtuals: true },

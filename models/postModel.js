@@ -43,6 +43,10 @@ const postSchema = new mongoose.Schema(
         default: true,
       },
     },
+    documentType: {
+      type: String,
+      default: 'post',
+    },
     currentVersion: {
       type: Number,
       default: 1,

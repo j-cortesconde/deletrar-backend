@@ -104,6 +104,10 @@ const userSchema = new mongoose.Schema(
       type: [String],
       select: false,
     },
+    documentType: {
+      type: String,
+      default: 'user',
+    },
   },
   {
     toJSON: { virtuals: true },

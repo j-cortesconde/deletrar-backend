@@ -15,6 +15,10 @@ const conversationSchema = new mongoose.Schema(
       default: true,
       select: false,
     },
+    documentType: {
+      type: String,
+      default: 'conversation',
+    },
     // TODO: No settings yet, but could be user specific settings
   },
   {

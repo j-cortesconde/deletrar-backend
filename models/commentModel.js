@@ -39,6 +39,10 @@ const commentSchema = new mongoose.Schema(
       default: 'posted',
       enum: ['posted', 'deleted'],
     },
+    documentType: {
+      type: String,
+      default: 'comment',
+    },
   },
   {
     toJSON: { virtuals: true },
