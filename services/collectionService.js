@@ -43,6 +43,7 @@ class CollectionService {
           status: 1,
           collector: 1,
           posts: 1,
+          documentType: 1,
         },
       },
       {
@@ -162,6 +163,7 @@ class CollectionService {
           summary: 1,
           coverImage: 1,
           status: 1,
+          documentType: 1,
           collector: {
             name: '$collectorInfo.name',
             _id: '$collectorInfo._id',

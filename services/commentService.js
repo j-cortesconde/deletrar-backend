@@ -228,6 +228,7 @@ class CommentService {
           targetPost: 1,
           targetCollection: 1,
           replyingTo: 1,
+          documentType: 1,
         },
       },
     ];

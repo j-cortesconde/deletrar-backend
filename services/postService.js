@@ -41,6 +41,7 @@ class PostService {
           coverImage: 1,
           status: 1,
           author: 1,
+          documentType: 1,
         },
       },
       {
@@ -119,6 +120,7 @@ class PostService {
           summary: 1,
           coverImage: 1,
           status: 1,
+          documentType: 1,
           author: {
             name: '$authorInfo.name',
             _id: '$authorInfo._id',
