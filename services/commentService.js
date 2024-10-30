@@ -56,6 +56,12 @@ class CommentService {
           as: 'author',
         },
       },
+      // The user document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          author: { $arrayElemAt: ['$author', 0] },
+        },
+      },
       // Lookup information for the targetPost
       {
         $lookup: {
@@ -92,8 +98,20 @@ class CommentService {
                 as: 'author',
               },
             },
+            // The user document is returned inside a one element array. This removes the array from between
+            {
+              $addFields: {
+                author: { $arrayElemAt: ['$author', 0] },
+              },
+            },
           ],
           as: 'targetPost',
+        },
+      },
+      // The post document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          targetPost: { $arrayElemAt: ['$targetPost', 0] },
         },
       },
       // Lookup information for the targetCollection
@@ -133,8 +151,20 @@ class CommentService {
                 as: 'collector',
               },
             },
+            // The user document is returned inside a one element array. This removes the array from between
+            {
+              $addFields: {
+                collector: { $arrayElemAt: ['$collector', 0] },
+              },
+            },
           ],
           as: 'targetCollection',
+        },
+      },
+      // The collection document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          targetCollection: { $arrayElemAt: ['$targetCollection', 0] },
         },
       },
       // Lookup information for the replyingTo comment
@@ -172,8 +202,20 @@ class CommentService {
                 as: 'author',
               },
             },
+            // The user document is returned inside a one element array. This removes the array from between
+            {
+              $addFields: {
+                author: { $arrayElemAt: ['$author', 0] },
+              },
+            },
           ],
           as: 'replyingTo',
+        },
+      },
+      // The comment document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          replyingTo: { $arrayElemAt: ['$replyingTo', 0] },
         },
       },
       {

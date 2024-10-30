@@ -54,6 +54,12 @@ class CollectionService {
           as: 'collector',
         },
       },
+      // The user document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          collector: { $arrayElemAt: ['$collector', 0] },
+        },
+      },
       {
         $lookup: {
           from: 'posts',
@@ -79,6 +85,12 @@ class CollectionService {
                   { $project: { _id: 1, username: 1, name: 1, photo: 1 } },
                 ],
                 as: 'author',
+              },
+            },
+            // The user document is returned inside a one element array. This removes the array from between
+            {
+              $addFields: {
+                author: { $arrayElemAt: ['$author', 0] },
               },
             },
           ],
