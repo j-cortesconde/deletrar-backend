@@ -30,7 +30,7 @@ const commentSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Comment',
     },
-    createdAt: {
+    postedAt: {
       type: Date,
       default: Date.now(),
     },

@@ -29,7 +29,7 @@ class CommentController {
     }
 
     filteredBody.author = req.user?.username || null;
-    filteredBody.createdAt = Date.now();
+    filteredBody.postedAt = Date.now();
 
     const doc = await this.#service.createComment(filteredBody);
 
@@ -107,7 +107,7 @@ class CommentController {
       { path: 'reply', populate: { path: 'replies' } },
       'replies',
     ];
-    const sort = { createdAt: -1 };
+    const sort = { postedAt: -1 };
 
     const totalDocs = await this.#service.countComments(matchObject);
 
@@ -146,7 +146,7 @@ class CommentController {
       { path: 'reply', populate: { path: 'replies' } },
       'replies',
     ];
-    const sort = { createdAt: -1 };
+    const sort = { postedAt: -1 };
 
     const totalDocs = await this.#service.countComments(matchObject);
 
@@ -180,7 +180,7 @@ class CommentController {
     };
 
     const populate = 'replies';
-    const sort = { createdAt: -1 };
+    const sort = { postedAt: 1 };
 
     const totalDocs = await this.#service.countComments(matchObject);
 
@@ -202,6 +202,7 @@ class CommentController {
     });
   };
 
+  //TODO: ¿Debería de alguna forma limitar la cantidad de comentarios? Algún día quizás. No MVP
   getCommentThread = async (req, res, next) => {
     const populate = { path: 'replyingToArray', populate: 'replies' };
 
