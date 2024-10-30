@@ -42,11 +42,9 @@ class CollectionService {
           coverImage: 1,
           status: 1,
           collector: 1,
-          // TODO: Perhaps this should be projection the lookup of post titles
           posts: 1,
         },
       },
-      // TODO: Ver si algo que usaba esto se rompió. Sólo agregué estos tres lookups de abajo. Antes terminaba con el project tal cual está ahora
       {
         $lookup: {
           from: 'users',

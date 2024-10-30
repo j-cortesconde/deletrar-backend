@@ -191,7 +191,7 @@ class CollectionController {
       {
         path: 'collector',
         model: 'User',
-        select: 'name username',
+        select: 'name username photo',
         foreignField: 'username',
       },
       {
@@ -201,7 +201,7 @@ class CollectionController {
         populate: {
           path: 'author',
           model: 'User',
-          select: 'name',
+          select: 'name username photo',
           foreignField: 'username',
         },
       },

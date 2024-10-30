@@ -229,14 +229,16 @@ class UserService {
   }
 
   getSavedPosts(username, reqQuery) {
-    const page = Number(reqQuery.page) || 1;
-    const userLimit = Number(reqQuery.limit) || AGGREGATION_LIMIT;
+    const page = Number(reqQuery?.page) || 1;
+    const userLimit = Number(reqQuery?.limit) || AGGREGATION_LIMIT;
     const limit = userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
     const sortBy = {};
 
-    if (reqQuery.sortBy) {
-      const sortArray = reqQuery.sortBy.split('-');
+    if (reqQuery?.sortBy) {
+      const sortArray = reqQuery?.sortBy.split('-');
       sortBy[sortArray[0]] = sortArray[1] === 'asc' ? 1 : -1;
+    } else {
+      sortBy.postedAt = -1;
     }
 
     return this.#Model.aggregate([
@@ -246,34 +248,54 @@ class UserService {
       { $project: { savedPosts: 1 } },
       // Unwind the savedPosts array to prepare for $lookup
       { $unwind: `$savedPosts` },
-      // Lookup user documents based on the savedPosts array
+      // Lookup post documents based on the savedPosts array
       {
         $lookup: {
           from: 'posts',
           localField: 'savedPosts',
           foreignField: '_id',
-          as: 'savedPosts',
-        },
-      },
-      // Project the fields for the savedPosts post documents
-      {
-        $project: {
-          savedPosts: {
-            $map: {
-              input: `$savedPosts`,
-              as: 'post',
-              in: {
-                _id: '$$post._id',
-                title: '$$post.title',
-                summary: '$$post.summary',
-                coverImage: '$$post.coverImage',
-                postedAt: '$$post.postedAt',
-                status: '$$post.status',
-                author: '$$post.author',
-                updatedAt: '$$post.updatedAt',
+          pipeline: [
+            // Project each savedPost post document
+            {
+              $project: {
+                _id: 1,
+                title: 1,
+                summary: 1,
+                coverImage: 1,
+                postedAt: 1,
+                status: 1,
+                author: 1,
+                updatedAt: 1,
               },
             },
-          },
+            // Lookup user documents from each post document's author
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'author',
+                foreignField: 'username',
+                as: 'author',
+                pipeline: [
+                  // Project each author user document
+                  {
+                    $project: {
+                      _id: 1,
+                      name: 1,
+                      username: 1,
+                      photo: 1,
+                    },
+                  },
+                ],
+              },
+            },
+            // The user document is returned inside a one element array. This removes the array from between
+            {
+              $addFields: {
+                author: { $arrayElemAt: ['$author', 0] },
+              },
+            },
+          ],
+          as: 'savedPosts',
         },
       },
       { $match: { 'savedPosts.status': 'posted' } },
@@ -334,6 +356,8 @@ class UserService {
     if (reqQuery.sortBy) {
       const sortArray = reqQuery.sortBy.split('-');
       sortBy[sortArray[0]] = sortArray[1] === 'asc' ? 1 : -1;
+    } else {
+      sortBy.postedAt = -1;
     }
 
     return this.#Model.aggregate([
@@ -349,29 +373,49 @@ class UserService {
           from: 'collections',
           localField: 'savedCollections',
           foreignField: '_id',
-          as: 'savedCollections',
-        },
-      },
-      // Project the fields for the savedCollections collection documents
-      {
-        $project: {
-          savedCollections: {
-            $map: {
-              input: `$savedCollections`,
-              as: 'collection',
-              in: {
-                _id: '$$collection._id',
-                title: '$$collection.title',
-                subtitle: '$$collection.subtitle',
-                summary: '$$collection.summary',
-                coverImage: '$$collection.coverImage',
-                postedAt: '$$collection.postedAt',
-                status: '$$collection.status',
-                collector: '$$collection.collector',
-                updatedAt: '$$collection.updatedAt',
+          pipeline: [
+            // Project each savedCollection collection document
+            {
+              $project: {
+                _id: 1,
+                title: 1,
+                subtitle: 1,
+                summary: 1,
+                coverImage: 1,
+                postedAt: 1,
+                status: 1,
+                collector: 1,
+                updatedAt: 1,
               },
             },
-          },
+            // Lookup user documents from each collection document's collector
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'collector',
+                foreignField: 'username',
+                as: 'collector',
+                pipeline: [
+                  // Project each collector user document
+                  {
+                    $project: {
+                      _id: 1,
+                      name: 1,
+                      username: 1,
+                      photo: 1,
+                    },
+                  },
+                ],
+              },
+            },
+            // The user document is returned inside a one element array. This removes the array from between
+            {
+              $addFields: {
+                collector: { $arrayElemAt: ['$collector', 0] },
+              },
+            },
+          ],
+          as: 'savedCollections',
         },
       },
       { $match: { 'savedCollections.status': 'posted' } },
