@@ -150,7 +150,11 @@ class CollectionService {
           summary: 1,
           coverImage: 1,
           status: 1,
-          collector: { name: '$collectorInfo.name', _id: '$collectorInfo._id' }, // Returns only the collector's name & id
+          collector: {
+            name: '$collectorInfo.name',
+            _id: '$collectorInfo._id',
+            username: '$collectorInfo.username',
+          }, // Returns only the collector's name & id
         },
       },
       {

@@ -114,7 +114,11 @@ class PostService {
           summary: 1,
           coverImage: 1,
           status: 1,
-          author: { name: '$authorInfo.name', _id: '$authorInfo._id' }, // Returns only the author's name & id
+          author: {
+            name: '$authorInfo.name',
+            _id: '$authorInfo._id',
+            username: '$authorInfo.username',
+          }, // Returns only the author's name & id
         },
       },
       {
