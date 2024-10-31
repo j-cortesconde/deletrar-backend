@@ -8,6 +8,7 @@ const UserService = require('../services/userService');
 const PostService = require('../services/postService');
 const CollectionService = require('../services/collectionService');
 const CommentService = require('../services/commentService');
+const SharedService = require('../services/sharedService');
 
 class UserController {
   #UserService = new UserService();
@@ -17,6 +18,8 @@ class UserController {
   #CollectionService = new CollectionService();
 
   #CommentService = new CommentService();
+
+  #SharedService = new SharedService();
 
   // Makes sure the user submitted a currentPassword and checks it's correct
   #checkPassword = async (req) => {
@@ -610,16 +613,30 @@ class UserController {
       limitedDocuments: rawComments[0].limitedDocuments,
     };
 
+    const rawShareds = await this.#SharedService.getSharedsAggregation(
+      {
+        author: { $in: following },
+        status: 'posted',
+      },
+      { sortBy: 'postedAt-desc' },
+    );
+    const shareds = {
+      totalCount: rawShareds[0].totalCount[0].totalCount,
+      limitedDocuments: rawShareds[0].limitedDocuments,
+    };
+
     // Add counts for the response (totalCount for the total amount of documents in collection and actualCount for total amount of documents in the response)
     const totalCount = {
       comments: comments.totalCount,
       collections: collections.totalCount,
       posts: posts.totalCount,
+      shareds: shareds.totalCount,
     };
     const actualCount = {
       posts: posts.limitedDocuments.length,
       collections: collections.limitedDocuments.length,
       comments: comments.limitedDocuments.length,
+      shareds: shareds.limitedDocuments.length,
     };
 
     // Combine all results and sort by `postedAt`
@@ -627,6 +644,7 @@ class UserController {
       ...posts.limitedDocuments,
       ...collections.limitedDocuments,
       ...comments.limitedDocuments,
+      ...shareds.limitedDocuments,
     ].sort((a, b) => b.postedAt - a.postedAt);
 
     res.status(200).json({
