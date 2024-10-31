@@ -22,4 +22,7 @@ exports.SHARED_LIMIT = 30;
 // IMPORTANT. This must only be changed in accordance to the change of its given constant(NONE YET) in frontend
 exports.CONVERSATION_LIMIT = 10;
 
+// The username set for all anonymous users who are allowed to leave comments or interact in other ways with the app
+exports.ANONYMOUS_USERNAME = 'lectoranonimo';
+
 exports.FRONTEND_ADDRESS = 'http://localhost:5173';

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
 const CommentService = require('../services/commentService');
+const { ANONYMOUS_USERNAME } = require('../utils/constants');
 
 class CommentController {
   #service = new CommentService();
@@ -28,7 +29,7 @@ class CommentController {
       );
     }
 
-    filteredBody.author = req.user?.username || null;
+    filteredBody.author = req.user?.username || ANONYMOUS_USERNAME;
     filteredBody.postedAt = Date.now();
 
     const doc = await this.#service.createComment(filteredBody);
