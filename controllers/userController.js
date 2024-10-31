@@ -580,7 +580,7 @@ class UserController {
     const rawFollowing = await this.#UserService.getFullFollowingIds(
       req.user.username,
     );
-    const { following } = rawFollowing[0];
+    const following = rawFollowing?.[0].following;
 
     // Fetch recent posts and collections by followed users
     const rawPosts = await this.#PostService.getPosts({
@@ -588,8 +588,8 @@ class UserController {
       status: 'posted',
     });
     const posts = {
-      totalCount: rawPosts[0].totalCount[0].totalCount,
-      limitedDocuments: rawPosts[0].limitedDocuments,
+      totalCount: rawPosts?.[0]?.totalCount?.[0]?.totalCount,
+      limitedDocuments: rawPosts?.[0]?.limitedDocuments,
     };
 
     const rawCollections = await this.#CollectionService.getCollections({
@@ -597,46 +597,41 @@ class UserController {
       status: 'posted',
     });
     const collections = {
-      totalCount: rawCollections[0].totalCount[0].totalCount,
-      limitedDocuments: rawCollections[0].limitedDocuments,
+      totalCount: rawCollections?.[0]?.totalCount?.[0]?.totalCount,
+      limitedDocuments: rawCollections?.[0]?.limitedDocuments,
     };
 
-    const rawComments = await this.#CommentService.getCommentsAggregation(
-      {
-        author: { $in: following },
-        status: 'posted',
-      },
-      { sortBy: 'postedAt-desc' },
-    );
+    const rawComments = await this.#CommentService.getCommentsAggregation({
+      author: { $in: following },
+      status: 'posted',
+    });
     const comments = {
-      totalCount: rawComments[0].totalCount[0].totalCount,
-      limitedDocuments: rawComments[0].limitedDocuments,
+      totalCount: rawComments?.[0]?.totalCount?.[0]?.totalCount,
+      limitedDocuments: rawComments?.[0]?.limitedDocuments,
     };
 
-    const rawShareds = await this.#SharedService.getSharedsAggregation(
-      {
-        author: { $in: following },
-        status: 'posted',
-      },
-      { sortBy: 'postedAt-desc' },
-    );
+    const rawShareds = await this.#SharedService.getSharedsAggregation({
+      sharer: { $in: following },
+      status: 'posted',
+    });
+
     const shareds = {
-      totalCount: rawShareds[0].totalCount[0].totalCount,
-      limitedDocuments: rawShareds[0].limitedDocuments,
+      totalCount: rawShareds?.[0]?.totalCount?.[0]?.totalCount,
+      limitedDocuments: rawShareds?.[0]?.limitedDocuments,
     };
 
     // Add counts for the response (totalCount for the total amount of documents in collection and actualCount for total amount of documents in the response)
     const totalCount = {
-      comments: comments.totalCount,
-      collections: collections.totalCount,
-      posts: posts.totalCount,
-      shareds: shareds.totalCount,
+      comments: comments?.totalCount || 0,
+      collections: collections?.totalCount || 0,
+      posts: posts?.totalCount || 0,
+      shareds: shareds?.totalCount || 0,
     };
     const actualCount = {
-      posts: posts.limitedDocuments.length,
-      collections: collections.limitedDocuments.length,
-      comments: comments.limitedDocuments.length,
-      shareds: shareds.limitedDocuments.length,
+      posts: posts?.limitedDocuments.length,
+      collections: collections?.limitedDocuments.length,
+      comments: comments?.limitedDocuments.length,
+      shareds: shareds?.limitedDocuments.length,
     };
 
     // Combine all results and sort by `postedAt`
