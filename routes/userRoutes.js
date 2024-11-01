@@ -25,6 +25,7 @@ router
 // FIXME: Same for all /id/:id (and maybe in postRoute too)
 router
   .get('/', userController.getAllUsers)
+  .get('/feed', userController.getUserFeed)
   .get('/username/:username', userController.getUserByUsername)
   .get('/followers/:username', userController.getFollowers)
   .get('/following/:username', userController.getFollowing)
@@ -48,7 +49,6 @@ router.patch('/reactivateMe', userController.reactivateMe);
 router.use(authController.isActive);
 
 router
-  .get('/feed', userController.getUserFeed)
   .get('/isFollower/:otherUsername', userController.isFollower)
   .get('/amFollowing/:otherUsername', userController.amFollowing)
   .get('/haveSaved/post/:postId', userController.haveSavedPost)

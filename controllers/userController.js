@@ -575,12 +575,13 @@ class UserController {
   };
 
   // TODO: Estoy agregando Posts y Collections por fecha de publicación, no por fecha de actualización. Agregar esto es posible funcionalidad futura (no MVP). Tampoco estoy agregando replies a comments de gente que sigo: funcionalidad futura al cuadrado (no MVP al cudadrado)
+  // TODO: MVP, agregar funcionalidad para que traiga un feed universal para users sin loggear y sin following
   getUserFeed = async (req, res) => {
     // Get the list of followed users
     const rawFollowing = await this.#UserService.getFullFollowingIds(
       req.user.username,
     );
-    const following = rawFollowing?.[0].following;
+    const following = rawFollowing?.[0]?.following;
 
     // Fetch recent posts and collections by followed users
     const rawPosts = await this.#PostService.getPosts({
