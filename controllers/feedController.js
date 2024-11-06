@@ -16,9 +16,117 @@ class feedController {
 
   #SharedService = new SharedService();
 
+  #combineFeeds = (userFeed, genericFeed) => {
+    // If a genericFeed was passed, get the totalCount from there. Else, from the userFeed
+    const totalCount = {
+      posts: genericFeed?.totalCount?.posts || userFeed?.totalCount?.posts,
+      collections:
+        genericFeed?.totalCount?.collections ||
+        userFeed?.totalCount?.collections,
+      shareds:
+        genericFeed?.totalCount?.shareds || userFeed?.totalCount?.shareds,
+      comments:
+        genericFeed?.totalCount?.comments || userFeed?.totalCount?.comments,
+    };
+
+    // Combine all documents (which will result in duplications)
+    const combinedDocuments = [
+      ...(userFeed?.limitedDocuments ?? []),
+      ...(genericFeed?.limitedDocuments ?? []),
+    ].sort((a, b) => b.postedAt - a.postedAt);
+
+    // Use Map to de-duplicate
+    const documentsMap = new Map();
+
+    // Use doc._id.toString() as unique key. Must stringify because _id is a ObjectId object type
+    combinedDocuments.forEach((doc) => {
+      documentsMap.set(doc._id.toString(), doc);
+    });
+
+    const limitedDocuments = Array.from(documentsMap.values());
+
+    return {
+      totalCount,
+      limitedDocuments,
+      count: limitedDocuments.length,
+    };
+  };
+
+  // TODO: Falta agregar funcionalidad de paginación
+  getFeed = async (req, res) => {
+    let userFeed;
+    let genericFeed;
+
+    if (req.user?.username) {
+      userFeed = await this.#getUserFeed(req);
+    }
+
+    if (!req.user?.username || userFeed.limitedDocuments?.length < 20) {
+      genericFeed = await this.#getGenericFeed();
+    }
+
+    const data = this.#combineFeeds(userFeed, genericFeed);
+
+    res.status(200).json({
+      status: 'Success',
+      data,
+    });
+  };
+
+  #getGenericFeed = async () => {
+    const rawPosts = await this.#PostService.getPosts({
+      status: 'posted',
+    });
+    const posts = {
+      totalCount: rawPosts?.[0]?.totalCount?.[0]?.totalCount,
+      limitedDocuments: rawPosts?.[0]?.limitedDocuments,
+    };
+
+    const rawCollections = await this.#CollectionService.getCollections({
+      status: 'posted',
+    });
+    const collections = {
+      totalCount: rawCollections?.[0]?.totalCount?.[0]?.totalCount,
+      limitedDocuments: rawCollections?.[0]?.limitedDocuments,
+    };
+
+    const rawComments = await this.#CommentService.getCommentsAggregation({
+      status: 'posted',
+    });
+    const comments = {
+      totalCount: rawComments?.[0]?.totalCount?.[0]?.totalCount,
+      limitedDocuments: rawComments?.[0]?.limitedDocuments,
+    };
+
+    const rawShareds = await this.#SharedService.getSharedsAggregation({
+      status: 'posted',
+    });
+    const shareds = {
+      totalCount: rawShareds?.[0]?.totalCount?.[0]?.totalCount,
+      limitedDocuments: rawShareds?.[0]?.limitedDocuments,
+    };
+
+    // Add counts for the response (totalCount for the total amount of documents in collection and actualCount for total amount of documents in the response)
+    const totalCount = {
+      comments: comments?.totalCount || 0,
+      collections: collections?.totalCount || 0,
+      posts: posts?.totalCount || 0,
+      shareds: shareds?.totalCount || 0,
+    };
+
+    // Combine all results and sort by `postedAt`
+    const limitedDocuments = [
+      ...posts.limitedDocuments,
+      ...collections.limitedDocuments,
+      ...comments.limitedDocuments,
+      ...shareds.limitedDocuments,
+    ];
+
+    return { totalCount, limitedDocuments };
+  };
+
   // TODO: Estoy agregando Posts y Collections por fecha de publicación, no por fecha de actualización. Agregar esto es posible funcionalidad futura (no MVP). Tampoco estoy agregando replies a comments de gente que sigo: funcionalidad futura al cuadrado (no MVP al cudadrado)
-  // TODO: MVP, agregar funcionalidad para que traiga un feed universal para users sin loggear y sin following
-  getUserFeed = async (req, res) => {
+  #getUserFeed = async (req) => {
     // Get the list of followed users
     const rawFollowing = await this.#UserService.getFullFollowingIds(
       req.user.username,
@@ -70,12 +178,6 @@ class feedController {
       posts: posts?.totalCount || 0,
       shareds: shareds?.totalCount || 0,
     };
-    const actualCount = {
-      posts: posts?.limitedDocuments.length,
-      collections: collections?.limitedDocuments.length,
-      comments: comments?.limitedDocuments.length,
-      shareds: shareds?.limitedDocuments.length,
-    };
 
     // Combine all results and sort by `postedAt`
     const limitedDocuments = [
@@ -85,13 +187,7 @@ class feedController {
       ...shareds.limitedDocuments,
     ].sort((a, b) => b.postedAt - a.postedAt);
 
-    res.status(200).json({
-      status: 'success',
-      data: {
-        count: { totalCount, actualCount },
-        limitedDocuments,
-      },
-    });
+    return { totalCount, limitedDocuments };
   };
 }
 

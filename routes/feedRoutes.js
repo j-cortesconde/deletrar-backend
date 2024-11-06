@@ -9,6 +9,6 @@ const authController = new AuthController();
 
 router.use(authController.getLoggedInUser);
 
-router.get('/', feedController.getUserFeed);
+router.get('/', feedController.getFeed);
 
 module.exports = router;
