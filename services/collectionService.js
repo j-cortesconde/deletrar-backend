@@ -75,6 +75,7 @@ class CollectionService {
                 summary: 1,
                 postedAt: 1,
                 coverImage: 1,
+                status: 1,
               },
             },
             {

@@ -170,6 +170,7 @@ class SharedService {
                       coverImage: 1,
                       postedAt: 1,
                       author: 1,
+                      status: 1,
                     },
                   },
                   {
