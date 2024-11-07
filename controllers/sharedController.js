@@ -23,7 +23,7 @@ class SharedController {
     ) {
       return next(
         new AppError(
-          'Shared must have either a sharedPost or a sharedCollection. Please contact admin',
+          'Shared must have either a sharedPost a sharedCollection or a sharedComment. Please contact admin',
           400,
         ),
       );
