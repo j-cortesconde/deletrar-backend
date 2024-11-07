@@ -17,7 +17,7 @@ const sharedSchema = new mongoose.Schema(
     },
     postedAt: {
       type: Date,
-      default: Date.now(),
+      default: Date.now,
     },
     status: {
       type: String,

@@ -33,7 +33,7 @@ const collectionSchema = new mongoose.Schema(
     ],
     createdAt: {
       type: Date,
-      default: Date.now(),
+      default: Date.now,
     },
     postedAt: Date,
     updatedAt: Date,
