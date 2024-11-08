@@ -13,6 +13,7 @@ router.use(authController.getLoggedInUser);
 router
   //TODO: Should this route exist?
   .get('/', sharedController.getAllShareds)
+  .get('/user/:username', sharedController.getSharedsBySharer)
   .get('/post/:postId', sharedController.getSharedsByPostId)
   .get('/collection/:collectionId', sharedController.getSharedsByCollectionId)
   .get('/comment/:commentId', sharedController.getSharedsByCommentId)

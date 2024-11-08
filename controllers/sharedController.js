@@ -113,6 +113,23 @@ class SharedController {
   };
 
   // Only returns status="posted" shareds
+  getSharedsBySharer = async (req, res, next) => {
+    const docs = await this.#service.getSharedsAggregation({
+      sharer: req.params.username,
+      status: 'posted',
+    });
+
+    const totalCount = docs?.[0].totalCount[0].totalCount;
+    const limitedDocuments = docs?.[0].limitedDocuments;
+
+    // SEND RESPONSE
+    res.status(200).json({
+      status: 'success',
+      data: { totalCount, limitedDocuments },
+    });
+  };
+
+  // Only returns status="posted" shareds
   // TODO: Is not limiting ammount. Might want to, but not MVP
   // TODO: Add populate for collection and forth. MVP
   getSharedsByPostId = async (req, res, next) => {
