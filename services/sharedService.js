@@ -27,8 +27,12 @@ class SharedService {
     return this.#Model.findById(sharedId, null, optionsObject);
   }
 
-  updateShared(sharedId, updateObject, updateOptions) {
-    return this.#Model.findByIdAndUpdate(sharedId, updateObject, updateOptions);
+  updateShared(filterObject, updateObject, updateOptions) {
+    return this.#Model.findOneAndUpdate(
+      filterObject,
+      updateObject,
+      updateOptions,
+    );
   }
 
   deleteShared(sharedId) {

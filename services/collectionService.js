@@ -112,9 +112,9 @@ class CollectionService {
     return this.#Model.findById(collectionId, null, optionsObject);
   }
 
-  updateCollection(collectionId, updateObject, updateOptions) {
-    return this.#Model.findByIdAndUpdate(
-      collectionId,
+  updateCollection(matchObject, updateObject, updateOptions) {
+    return this.#Model.findOneAndUpdate(
+      matchObject,
       updateObject,
       updateOptions,
     );

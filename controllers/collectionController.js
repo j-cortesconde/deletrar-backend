@@ -118,7 +118,7 @@ class CollectionController {
     filteredBody.updatedAt = Date.now();
 
     const doc = await this.#service.updateCollection(
-      req.params.id,
+      { _id: req.params.id },
       filteredBody,
       {
         new: true,
@@ -273,7 +273,7 @@ class CollectionController {
     ];
 
     const doc = await this.#service.updateCollection(
-      req.params.id,
+      { _id: req.params.id },
       {
         $push: { posts: req.body.postId },
       },
@@ -312,7 +312,7 @@ class CollectionController {
     ];
 
     const doc = await this.#service.updateCollection(
-      req.params.id,
+      { _id: req.params.id },
       { $pull: { posts: req.body.postId } },
       {
         new: true,
@@ -349,7 +349,7 @@ class CollectionController {
     ];
 
     await this.#service.updateCollection(
-      req.params.id,
+      { _id: req.params.id },
       {
         $pull: { posts: req.body.postId },
       },
@@ -360,7 +360,7 @@ class CollectionController {
     );
 
     const doc = await this.#service.updateCollection(
-      req.params.id,
+      { _id: req.params.id },
       {
         $push: {
           posts: { $each: [req.body.postId], $position: req.body.position },

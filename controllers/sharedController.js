@@ -81,10 +81,14 @@ class SharedController {
       );
     }
 
-    const doc = await this.#service.updateShared(req.params.id, filteredBody, {
-      new: true,
-      runValidators: true,
-    });
+    const doc = await this.#service.updateShared(
+      { _id: req.params.id },
+      filteredBody,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
 
     res.status(200).json({
       status: 'success',

@@ -40,7 +40,7 @@ const collectionSchema = new mongoose.Schema(
     status: {
       type: String,
       default: 'editing',
-      enum: ['editing', 'posted', 'deleted'],
+      enum: ['editing', 'posted', 'deleted', 'inactive'],
     },
     collector: {
       type: String,

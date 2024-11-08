@@ -104,11 +104,15 @@ class PostController {
     if (req.file) filteredBody.coverImage = req.file.filename;
     filteredBody.updatedAt = Date.now();
 
-    const doc = await this.#service.updatePost(req.params.id, filteredBody, {
-      new: true,
-      runValidators: true,
-      populate,
-    });
+    const doc = await this.#service.updatePost(
+      { _id: req.params.id },
+      filteredBody,
+      {
+        new: true,
+        runValidators: true,
+        populate,
+      },
+    );
 
     res.status(200).json({
       status: 'success',

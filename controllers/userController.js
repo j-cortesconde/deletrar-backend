@@ -189,9 +189,48 @@ class UserController {
       { select, new: true, includeInactive: true },
     );
 
+    await this.#CollectionService.updateCollection(
+      { collector: req.user.username, status: 'inactive' },
+      { status: 'posted' },
+    );
+
+    await this.#PostService.updatePost(
+      { author: req.user.username, status: 'inactive' },
+      { status: 'posted' },
+    );
+
+    await this.#SharedService.updateShared(
+      { sharer: req.user.username, status: 'inactive' },
+      { status: 'posted' },
+    );
+
     res.status(200).json({
       status: 'success',
       data: user,
+    });
+  };
+
+  // Finds the document for the current logged in user and sets it 'active' property to true, effectively reenabling it.
+  deactivateMe = async (req, res, next) => {
+    await this.#UserService.updateUser({ _id: req.user.id }, { active: false });
+
+    await this.#CollectionService.updateCollection(
+      { collector: req.user.username, status: 'posted' },
+      { status: 'inactive' },
+    );
+
+    await this.#PostService.updatePost(
+      { author: req.user.username, status: 'posted' },
+      { status: 'inactive' },
+    );
+
+    await this.#SharedService.updateShared(
+      { sharer: req.user.username, status: 'posted' },
+      { status: 'inactive' },
+    );
+
+    res.status(200).json({
+      status: 'success',
     });
   };
 

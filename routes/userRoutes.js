@@ -66,12 +66,14 @@ router
 router
   .post('/invite', authController.invite)
   .patch('/updateMyPassword', authController.updatePassword)
-  .patch(
-    '/updateMe',
-    userController.uploadUserPhoto,
-    userController.resizeUserPhoto,
-    userController.updateMe,
-  )
+  .patch('/deactivateMe', userController.deactivateMe)
+  // Disabled til further notice
+  // .patch(
+  //   '/updateMe',
+  //   userController.uploadUserPhoto,
+  //   userController.resizeUserPhoto,
+  //   userController.updateMe,
+  // )
   .delete('/deleteMe', userController.deleteMe);
 
 // Make the following routes accessible only to admins:

@@ -72,8 +72,12 @@ class PostService {
     return this.#Model.findById(postId, null, optionsObject);
   }
 
-  updatePost(postId, updateObject, updateOptions) {
-    return this.#Model.findByIdAndUpdate(postId, updateObject, updateOptions);
+  updatePost(filterObject, updateObject, updateOptions) {
+    return this.#Model.findOneAndUpdate(
+      filterObject,
+      updateObject,
+      updateOptions,
+    );
   }
 
   deletePost(postId) {

@@ -22,7 +22,7 @@ const sharedSchema = new mongoose.Schema(
     status: {
       type: String,
       default: 'posted',
-      enum: ['posted', 'deleted'],
+      enum: ['posted', 'deleted', 'inactive'],
     },
     sharer: {
       type: String,
