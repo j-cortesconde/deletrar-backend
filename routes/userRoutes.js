@@ -25,7 +25,6 @@ router
 // FIXME: Same for all /id/:id (and maybe in postRoute too)
 router
   .get('/', userController.getAllUsers)
-  .get('/feed', userController.getUserFeed)
   .get('/username/:username', userController.getUserByUsername)
   .get('/followers/:username', userController.getFollowers)
   .get('/following/:username', userController.getFollowing)
