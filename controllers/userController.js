@@ -189,17 +189,17 @@ class UserController {
       { select, new: true, includeInactive: true },
     );
 
-    await this.#CollectionService.updateCollection(
+    await this.#CollectionService.updateCollections(
       { collector: req.user.username, status: 'inactive' },
       { status: 'posted' },
     );
 
-    await this.#PostService.updatePost(
+    await this.#PostService.updatePosts(
       { author: req.user.username, status: 'inactive' },
       { status: 'posted' },
     );
 
-    await this.#SharedService.updateShared(
+    await this.#SharedService.updateShareds(
       { sharer: req.user.username, status: 'inactive' },
       { status: 'posted' },
     );
@@ -214,17 +214,17 @@ class UserController {
   deactivateMe = async (req, res, next) => {
     await this.#UserService.updateUser({ _id: req.user.id }, { active: false });
 
-    await this.#CollectionService.updateCollection(
+    await this.#CollectionService.updateCollections(
       { collector: req.user.username, status: 'posted' },
       { status: 'inactive' },
     );
 
-    await this.#PostService.updatePost(
+    await this.#PostService.updatePosts(
       { author: req.user.username, status: 'posted' },
       { status: 'inactive' },
     );
 
-    await this.#SharedService.updateShared(
+    await this.#SharedService.updateShareds(
       { sharer: req.user.username, status: 'posted' },
       { status: 'inactive' },
     );

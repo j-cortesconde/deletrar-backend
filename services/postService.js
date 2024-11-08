@@ -80,6 +80,10 @@ class PostService {
     );
   }
 
+  updatePosts(filterObject, updateObject, updateOptions) {
+    return this.#Model.updateMany(filterObject, updateObject, updateOptions);
+  }
+
   deletePost(postId) {
     return this.#Model.findByIdAndDelete(postId);
   }

@@ -35,6 +35,10 @@ class SharedService {
     );
   }
 
+  updateShareds(filterObject, updateObject, updateOptions) {
+    return this.#Model.updateMany(filterObject, updateObject, updateOptions);
+  }
+
   deleteShared(sharedId) {
     return this.#Model.findByIdAndDelete(sharedId);
   }

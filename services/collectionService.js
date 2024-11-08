@@ -120,6 +120,10 @@ class CollectionService {
     );
   }
 
+  updateCollections(matchObject, updateObject, updateOptions) {
+    return this.#Model.updateMany(matchObject, updateObject, updateOptions);
+  }
+
   deleteCollection(collectionId) {
     return this.#Model.findByIdAndDelete(collectionId);
   }
