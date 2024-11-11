@@ -1,6 +1,6 @@
 const Comment = require('../models/commentModel');
 const AggregationFeatures = require('../utils/aggregationFeatures');
-const { COMMENT_LIMIT } = require('../utils/constants');
+const { COMMENT_LIMIT, AGGREGATION_LIMIT } = require('../utils/constants');
 
 class CommentService {
   #Model = Comment;
@@ -39,7 +39,7 @@ class CommentService {
     return this.#Model.findByIdAndDelete(commentId);
   }
 
-  getCommentsAggregation(matchObject, reqQuery) {
+  async getCommentsAggregation(matchObject, reqQuery) {
     const basePipeline = [
       {
         $match: {
@@ -237,7 +237,27 @@ class CommentService {
       .sort()
       .paginate();
 
-    return this.#Model.aggregate(features.pipeline);
+    const result = await this.#Model.aggregate(features.pipeline);
+
+    // This was added so you can have hasNextPage & nextPage for infinite pagination (feed scrolling on frontEnd)
+    const totalCount = result?.[0]?.totalCount?.[0]?.totalCount;
+    const limitedDocuments = result?.[0]?.limitedDocuments;
+
+    const page = Number(reqQuery?.page) || 1;
+    const userLimit = Number(reqQuery?.limit) || AGGREGATION_LIMIT;
+    const actualLimit =
+      userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
+    const skip = (page - 1) * actualLimit;
+
+    const hasNextPage = skip + limitedDocuments.length < totalCount;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    return {
+      limitedDocuments,
+      totalCount,
+      hasNextPage,
+      nextPage,
+    };
   }
 }
 

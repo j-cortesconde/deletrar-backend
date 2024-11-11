@@ -90,13 +90,12 @@ class feedController {
       limitedDocuments: rawCollections?.[0]?.limitedDocuments,
     };
 
-    const rawComments = await this.#CommentService.getCommentsAggregation({
-      status: 'posted',
-    });
-    const comments = {
-      totalCount: rawComments?.[0]?.totalCount?.[0]?.totalCount,
-      limitedDocuments: rawComments?.[0]?.limitedDocuments,
-    };
+    const comments = await this.#CommentService.getCommentsAggregation(
+      {
+        status: 'posted',
+      },
+      req.query,
+    );
 
     const shareds = await this.#SharedService.getSharedsAggregation(
       {
@@ -151,14 +150,13 @@ class feedController {
       limitedDocuments: rawCollections?.[0]?.limitedDocuments,
     };
 
-    const rawComments = await this.#CommentService.getCommentsAggregation({
-      author: { $in: following },
-      status: 'posted',
-    });
-    const comments = {
-      totalCount: rawComments?.[0]?.totalCount?.[0]?.totalCount,
-      limitedDocuments: rawComments?.[0]?.limitedDocuments,
-    };
+    const comments = await this.#CommentService.getCommentsAggregation(
+      {
+        author: { $in: following },
+        status: 'posted',
+      },
+      req.query,
+    );
 
     const shareds = await this.#SharedService.getSharedsAggregation(
       {
