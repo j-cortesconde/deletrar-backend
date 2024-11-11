@@ -18,15 +18,15 @@ class feedController {
 
   #combineFeeds = (userFeed, genericFeed) => {
     // If a genericFeed was passed, get the totalCount from there. Else, from the userFeed
-    const totalCount = {
-      posts: genericFeed?.totalCount?.posts || userFeed?.totalCount?.posts,
+    const totalCounts = {
+      posts: genericFeed?.totalCounts?.posts || userFeed?.totalCounts?.posts,
       collections:
-        genericFeed?.totalCount?.collections ||
-        userFeed?.totalCount?.collections,
+        genericFeed?.totalCounts?.collections ||
+        userFeed?.totalCounts?.collections,
       shareds:
-        genericFeed?.totalCount?.shareds || userFeed?.totalCount?.shareds,
+        genericFeed?.totalCounts?.shareds || userFeed?.totalCounts?.shareds,
       comments:
-        genericFeed?.totalCount?.comments || userFeed?.totalCount?.comments,
+        genericFeed?.totalCounts?.comments || userFeed?.totalCounts?.comments,
     };
 
     // Combine all documents (which will result in duplications)
@@ -45,14 +45,19 @@ class feedController {
 
     const limitedDocuments = Array.from(documentsMap.values());
 
+    const hasNextPage = userFeed?.hasNextPage || genericFeed?.hasNextPage;
+
+    const nextPage = userFeed?.nextPage || genericFeed?.nextPage;
+
     return {
-      totalCount,
+      totalCounts,
       limitedDocuments,
+      hasNextPage,
+      nextPage,
       count: limitedDocuments.length,
     };
   };
 
-  // TODO: Falta agregar funcionalidad de paginación
   getFeed = async (req, res) => {
     let userFeed;
     let genericFeed;
@@ -74,51 +79,59 @@ class feedController {
   };
 
   #getGenericFeed = async (req) => {
-    const posts = await this.#PostService.getPosts(
-      {
-        status: 'posted',
-      },
-      req.query,
-    );
+    const [posts, collections, comments, shareds] = await Promise.all([
+      this.#PostService.getPosts(
+        {
+          status: 'posted',
+        },
+        req.query,
+      ),
+      this.#CollectionService.getCollections(
+        {
+          status: 'posted',
+        },
+        req.query,
+      ),
+      this.#CommentService.getCommentsAggregation(
+        {
+          status: 'posted',
+        },
+        req.query,
+      ),
+      this.#SharedService.getSharedsAggregation(
+        {
+          status: 'posted',
+        },
+        req.query,
+      ),
+    ]);
 
-    const collections = await this.#CollectionService.getCollections(
-      {
-        status: 'posted',
-      },
-      req.query,
-    );
+    // Combine all results and sort by 'postedAt'
+    const limitedDocuments = [
+      ...posts.limitedDocuments,
+      ...collections.limitedDocuments,
+      ...comments.limitedDocuments,
+      ...shareds.limitedDocuments,
+    ].sort((a, b) => b.postedAt - a.postedAt);
 
-    const comments = await this.#CommentService.getCommentsAggregation(
-      {
-        status: 'posted',
-      },
-      req.query,
-    );
-
-    const shareds = await this.#SharedService.getSharedsAggregation(
-      {
-        status: 'posted',
-      },
-      req.query,
-    );
-
-    // Add counts for the response (totalCount for the total amount of documents in collection and actualCount for total amount of documents in the response)
-    const totalCount = {
+    // Add counts for the response (totalCount for the total amount of documents in collection)
+    const totalCounts = {
       comments: comments?.totalCount || 0,
       collections: collections?.totalCount || 0,
       posts: posts?.totalCount || 0,
       shareds: shareds?.totalCount || 0,
     };
 
-    // Combine all results and sort by `postedAt`
-    const limitedDocuments = [
-      ...posts.limitedDocuments,
-      ...collections.limitedDocuments,
-      ...comments.limitedDocuments,
-      ...shareds.limitedDocuments,
-    ];
+    // Determine if there's a next page
+    const hasNextPage =
+      posts.hasNextPage ||
+      collections.hasNextPage ||
+      comments.hasNextPage ||
+      shareds.hasNextPage;
 
-    return { totalCount, limitedDocuments };
+    const nextPage = hasNextPage ? (req.query?.page || 1) + 1 : null;
+
+    return { totalCounts, limitedDocuments, hasNextPage, nextPage };
   };
 
   // TODO: Estoy agregando Posts y Collections por fecha de publicación, no por fecha de actualización. Agregar esto es posible funcionalidad futura (no MVP). Tampoco estoy agregando replies a comments de gente que sigo: funcionalidad futura al cuadrado (no MVP al cudadrado)
@@ -129,46 +142,37 @@ class feedController {
     );
     const following = rawFollowing?.[0]?.following;
 
-    // Fetch recent posts and collections by followed users
-    const posts = await this.#PostService.getPosts(
-      {
-        author: { $in: following },
-        status: 'posted',
-      },
-      req.query,
-    );
-
-    const collections = await this.#CollectionService.getCollections(
-      {
-        collector: { $in: following },
-        status: 'posted',
-      },
-      req.query,
-    );
-
-    const comments = await this.#CommentService.getCommentsAggregation(
-      {
-        author: { $in: following },
-        status: 'posted',
-      },
-      req.query,
-    );
-
-    const shareds = await this.#SharedService.getSharedsAggregation(
-      {
-        sharer: { $in: following },
-        status: 'posted',
-      },
-      req.query,
-    );
-
-    // Add counts for the response (totalCount for the total amount of documents in collection and actualCount for total amount of documents in the response)
-    const totalCount = {
-      comments: comments?.totalCount || 0,
-      collections: collections?.totalCount || 0,
-      posts: posts?.totalCount || 0,
-      shareds: shareds?.totalCount || 0,
-    };
+    // Fetch recent posts, collections and comments by followed users
+    const [posts, collections, comments, shareds] = await Promise.all([
+      this.#PostService.getPosts(
+        {
+          author: { $in: following },
+          status: 'posted',
+        },
+        req.query,
+      ),
+      this.#CollectionService.getCollections(
+        {
+          collector: { $in: following },
+          status: 'posted',
+        },
+        req.query,
+      ),
+      this.#CommentService.getCommentsAggregation(
+        {
+          author: { $in: following },
+          status: 'posted',
+        },
+        req.query,
+      ),
+      this.#SharedService.getSharedsAggregation(
+        {
+          sharer: { $in: following },
+          status: 'posted',
+        },
+        req.query,
+      ),
+    ]);
 
     // Combine all results and sort by `postedAt`
     const limitedDocuments = [
@@ -178,7 +182,24 @@ class feedController {
       ...shareds.limitedDocuments,
     ].sort((a, b) => b.postedAt - a.postedAt);
 
-    return { totalCount, limitedDocuments };
+    // Add counts for the response (totalCount for the total amount of documents in collection and actualCount for total amount of documents in the response)
+    const totalCounts = {
+      comments: comments?.totalCount || 0,
+      collections: collections?.totalCount || 0,
+      posts: posts?.totalCount || 0,
+      shareds: shareds?.totalCount || 0,
+    };
+
+    // Determine if there's a next page
+    const hasNextPage =
+      posts.hasNextPage ||
+      collections.hasNextPage ||
+      comments.hasNextPage ||
+      shareds.hasNextPage;
+
+    const nextPage = hasNextPage ? (req.query?.page || 1) + 1 : null;
+
+    return { totalCounts, limitedDocuments, hasNextPage, nextPage };
   };
 }
 
