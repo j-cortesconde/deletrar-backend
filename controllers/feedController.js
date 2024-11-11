@@ -74,13 +74,12 @@ class feedController {
   };
 
   #getGenericFeed = async (req) => {
-    const rawPosts = await this.#PostService.getPosts({
-      status: 'posted',
-    });
-    const posts = {
-      totalCount: rawPosts?.[0]?.totalCount?.[0]?.totalCount,
-      limitedDocuments: rawPosts?.[0]?.limitedDocuments,
-    };
+    const posts = await this.#PostService.getPosts(
+      {
+        status: 'posted',
+      },
+      req.query,
+    );
 
     const collections = await this.#CollectionService.getCollections(
       {
@@ -131,14 +130,13 @@ class feedController {
     const following = rawFollowing?.[0]?.following;
 
     // Fetch recent posts and collections by followed users
-    const rawPosts = await this.#PostService.getPosts({
-      author: { $in: following },
-      status: 'posted',
-    });
-    const posts = {
-      totalCount: rawPosts?.[0]?.totalCount?.[0]?.totalCount,
-      limitedDocuments: rawPosts?.[0]?.limitedDocuments,
-    };
+    const posts = await this.#PostService.getPosts(
+      {
+        author: { $in: following },
+        status: 'posted',
+      },
+      req.query,
+    );
 
     const collections = await this.#CollectionService.getCollections(
       {
