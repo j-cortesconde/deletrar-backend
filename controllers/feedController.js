@@ -129,7 +129,7 @@ class feedController {
       comments.hasNextPage ||
       shareds.hasNextPage;
 
-    const nextPage = hasNextPage ? (req.query?.page || 1) + 1 : null;
+    const nextPage = hasNextPage ? (Number(req.query?.page) || 1) + 1 : null;
 
     return { totalCounts, limitedDocuments, hasNextPage, nextPage };
   };
@@ -197,7 +197,7 @@ class feedController {
       comments.hasNextPage ||
       shareds.hasNextPage;
 
-    const nextPage = hasNextPage ? (req.query?.page || 1) + 1 : null;
+    const nextPage = hasNextPage ? (Number(req.query?.page) || 1) + 1 : null;
 
     return { totalCounts, limitedDocuments, hasNextPage, nextPage };
   };
