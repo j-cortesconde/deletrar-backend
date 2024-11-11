@@ -98,12 +98,13 @@ class SharedController {
 
   // Only returns status="posted" shareds
   getAllShareds = async (req, res, next) => {
-    const docs = await this.#service.getSharedsAggregation({
-      status: 'posted',
-    });
-
-    const totalCount = docs?.[0].totalCount[0].totalCount;
-    const limitedDocuments = docs?.[0].limitedDocuments;
+    const { totalCount, limitedDocuments } =
+      await this.#service.getSharedsAggregation(
+        {
+          status: 'posted',
+        },
+        req.query,
+      );
 
     // SEND RESPONSE
     res.status(200).json({
@@ -114,13 +115,14 @@ class SharedController {
 
   // Only returns status="posted" shareds
   getSharedsBySharer = async (req, res, next) => {
-    const docs = await this.#service.getSharedsAggregation({
-      sharer: req.params.username,
-      status: 'posted',
-    });
-
-    const totalCount = docs?.[0].totalCount[0].totalCount;
-    const limitedDocuments = docs?.[0].limitedDocuments;
+    const { totalCount, limitedDocuments } =
+      await this.#service.getSharedsAggregation(
+        {
+          sharer: req.params.username,
+          status: 'posted',
+        },
+        req.query,
+      );
 
     // SEND RESPONSE
     res.status(200).json({
@@ -248,12 +250,12 @@ class SharedController {
   getSharedById = async (req, res, next) => {
     const sharedId = mongoose.Types.ObjectId.createFromHexString(req.params.id);
 
-    const docs = await this.#service.getSharedsAggregation({
+    const { limitedDocuments } = await this.#service.getSharedsAggregation({
       _id: sharedId,
       status: 'posted',
     });
 
-    const doc = docs?.[0].limitedDocuments?.[0];
+    const doc = limitedDocuments?.[0];
 
     if (!doc) {
       return res.status(404).json({

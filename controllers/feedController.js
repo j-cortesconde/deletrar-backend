@@ -62,7 +62,7 @@ class feedController {
     }
 
     if (!req.user?.username || userFeed.limitedDocuments?.length < 20) {
-      genericFeed = await this.#getGenericFeed();
+      genericFeed = await this.#getGenericFeed(req);
     }
 
     const data = this.#combineFeeds(userFeed, genericFeed);
@@ -73,7 +73,7 @@ class feedController {
     });
   };
 
-  #getGenericFeed = async () => {
+  #getGenericFeed = async (req) => {
     const rawPosts = await this.#PostService.getPosts({
       status: 'posted',
     });
@@ -98,13 +98,12 @@ class feedController {
       limitedDocuments: rawComments?.[0]?.limitedDocuments,
     };
 
-    const rawShareds = await this.#SharedService.getSharedsAggregation({
-      status: 'posted',
-    });
-    const shareds = {
-      totalCount: rawShareds?.[0]?.totalCount?.[0]?.totalCount,
-      limitedDocuments: rawShareds?.[0]?.limitedDocuments,
-    };
+    const shareds = await this.#SharedService.getSharedsAggregation(
+      {
+        status: 'posted',
+      },
+      req.query,
+    );
 
     // Add counts for the response (totalCount for the total amount of documents in collection and actualCount for total amount of documents in the response)
     const totalCount = {
@@ -161,15 +160,13 @@ class feedController {
       limitedDocuments: rawComments?.[0]?.limitedDocuments,
     };
 
-    const rawShareds = await this.#SharedService.getSharedsAggregation({
-      sharer: { $in: following },
-      status: 'posted',
-    });
-
-    const shareds = {
-      totalCount: rawShareds?.[0]?.totalCount?.[0]?.totalCount,
-      limitedDocuments: rawShareds?.[0]?.limitedDocuments,
-    };
+    const shareds = await this.#SharedService.getSharedsAggregation(
+      {
+        sharer: { $in: following },
+        status: 'posted',
+      },
+      req.query,
+    );
 
     // Add counts for the response (totalCount for the total amount of documents in collection and actualCount for total amount of documents in the response)
     const totalCount = {
