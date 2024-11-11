@@ -1,6 +1,7 @@
 const Collection = require('../models/collectionModel');
 const AggregationFeatures = require('../utils/aggregationFeatures');
 const APIFeatures = require('../utils/apiFeatures');
+const { AGGREGATION_LIMIT } = require('../utils/constants');
 
 class CollectionService {
   #Model = Collection;
@@ -24,7 +25,7 @@ class CollectionService {
     return features.query;
   }
 
-  getCollections(matchObject, reqQuery) {
+  async getCollections(matchObject, reqQuery) {
     const basePipeline = [
       {
         $match: {
@@ -105,7 +106,27 @@ class CollectionService {
       .sort()
       .paginate();
 
-    return this.#Model.aggregate(features.pipeline);
+    const result = await this.#Model.aggregate(features.pipeline);
+
+    // This was added so you can have hasNextPage & nextPage for infinite pagination (feed scrolling on frontEnd)
+    const totalCount = result?.[0]?.totalCount?.[0]?.totalCount;
+    const limitedDocuments = result?.[0]?.limitedDocuments;
+
+    const page = Number(reqQuery?.page) || 1;
+    const userLimit = Number(reqQuery?.limit) || AGGREGATION_LIMIT;
+    const actualLimit =
+      userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
+    const skip = (page - 1) * actualLimit;
+
+    const hasNextPage = skip + limitedDocuments.length < totalCount;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    return {
+      limitedDocuments,
+      totalCount,
+      hasNextPage,
+      nextPage,
+    };
   }
 
   getCollection(collectionId, optionsObject) {

@@ -82,13 +82,12 @@ class feedController {
       limitedDocuments: rawPosts?.[0]?.limitedDocuments,
     };
 
-    const rawCollections = await this.#CollectionService.getCollections({
-      status: 'posted',
-    });
-    const collections = {
-      totalCount: rawCollections?.[0]?.totalCount?.[0]?.totalCount,
-      limitedDocuments: rawCollections?.[0]?.limitedDocuments,
-    };
+    const collections = await this.#CollectionService.getCollections(
+      {
+        status: 'posted',
+      },
+      req.query,
+    );
 
     const comments = await this.#CommentService.getCommentsAggregation(
       {
@@ -141,14 +140,13 @@ class feedController {
       limitedDocuments: rawPosts?.[0]?.limitedDocuments,
     };
 
-    const rawCollections = await this.#CollectionService.getCollections({
-      collector: { $in: following },
-      status: 'posted',
-    });
-    const collections = {
-      totalCount: rawCollections?.[0]?.totalCount?.[0]?.totalCount,
-      limitedDocuments: rawCollections?.[0]?.limitedDocuments,
-    };
+    const collections = await this.#CollectionService.getCollections(
+      {
+        collector: { $in: following },
+        status: 'posted',
+      },
+      req.query,
+    );
 
     const comments = await this.#CommentService.getCommentsAggregation(
       {
