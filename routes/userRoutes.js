@@ -5,10 +5,12 @@ const express = require('express');
 
 const UserController = require('../controllers/userController');
 const AuthController = require('../controllers/authController');
+const UploadController = require('../controllers/uploadController');
 
 const router = express.Router();
 const userController = new UserController();
 const authController = new AuthController();
+const uploadController = new UploadController();
 
 router.use(authController.getLoggedInUser);
 
@@ -67,13 +69,12 @@ router
   .post('/invite', authController.invite)
   .patch('/updateMyPassword', authController.updatePassword)
   .patch('/deactivateMe', userController.deactivateMe)
-  // Disabled til further notice
-  // .patch(
-  //   '/updateMe',
-  //   userController.uploadUserPhoto,
-  //   userController.resizeUserPhoto,
-  //   userController.updateMe,
-  // )
+  .patch(
+    '/updateMe',
+    uploadController.multerImageUpload,
+    uploadController.uploadProfilePic,
+    userController.updateMe,
+  )
   .delete('/deleteMe', userController.deleteMe);
 
 // Make the following routes accessible only to admins:

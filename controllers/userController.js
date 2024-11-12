@@ -1,9 +1,9 @@
 // FIXME: I removed the catchAsync function from all methods that call services. Should add again somehow
-const sharp = require('sharp');
-const catchAsync = require('../utils/catchAsync');
+// const sharp = require('sharp');
+// const catchAsync = require('../utils/catchAsync');
 const filterObj = require('../utils/filterObj');
 const AppError = require('../utils/appError');
-const uploadImage = require('../utils/uploadImage');
+// const uploadImage = require('../utils/uploadImage');
 const UserService = require('../services/userService');
 const PostService = require('../services/postService');
 const CollectionService = require('../services/collectionService');
@@ -39,25 +39,6 @@ class UserController {
       throw new AppError('The password you entered is wrong.', 401);
     }
   };
-
-  // If an 'image' type file is sent in the request as 'photo' field it gets uploaded to the memoryStorage
-  uploadUserPhoto = uploadImage.single('photo');
-
-  // If an 'image' type file was uploaded to the memoryStorage, it gets a filename, it gets reshaped/reformatted and it is uploaded to public>img>users
-  // FIXME: Shouldn't this become a service too?
-  resizeUserPhoto = catchAsync(async (req, res, next) => {
-    if (!req.file) return next();
-
-    req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
-
-    await sharp(req.file.buffer)
-      .resize(500, 500)
-      .toFormat('jpeg')
-      .jpeg({ quality: 90 })
-      .toFile(`public/img/users/${req.file.filename}`);
-
-    next();
-  });
 
   // Returns the logged in users' information
   // FIXME: This is duplicating getUserById code. PosSol: Pass (req.params.id || req.user.id) into .getUserById()
