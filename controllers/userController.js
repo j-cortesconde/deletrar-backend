@@ -1,9 +1,6 @@
 // FIXME: I removed the catchAsync function from all methods that call services. Should add again somehow
-// const sharp = require('sharp');
-// const catchAsync = require('../utils/catchAsync');
 const filterObj = require('../utils/filterObj');
 const AppError = require('../utils/appError');
-// const uploadImage = require('../utils/uploadImage');
 const UserService = require('../services/userService');
 const PostService = require('../services/postService');
 const CollectionService = require('../services/collectionService');

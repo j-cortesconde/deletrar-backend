@@ -1,33 +1,11 @@
 // TODO: Isnt there a better way to handle text versions by creating multiple documents that point to the initial doc instead of saving each version in a field?
 
-const sharp = require('sharp');
-const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
-const uploadImage = require('../utils/uploadImage');
 const CollectionService = require('../services/collectionService');
 
 class CollectionController {
   #service = new CollectionService();
-
-  // If an 'image' type file is sent in the request as 'coverImage' field it gets uploaded to the memoryStorage
-  uploadCollectionImage = uploadImage.single('coverImage');
-
-  // If an 'image' type file was uploaded to the memoryStorage, it gets a filename, it gets reshaped/reformatted and it is uploaded to public>img>collections
-  //FIXME: CatchAsync and shouldnt it be service?
-  resizeCollectionImage = catchAsync(async (req, res, next) => {
-    if (!req.file) return next();
-
-    req.file.filename = `collection-${req.user.id}-${Date.now()}.jpeg`;
-
-    await sharp(req.file.buffer)
-      .resize(500, 500)
-      .toFormat('jpeg')
-      .jpeg({ quality: 90 })
-      .toFile(`public/img/collections/${req.file.filename}`);
-
-    next();
-  });
 
   // Function that creates collections filtering out of the creating object the fields the user isnt allowed to enter
   createCollection = async (req, res, next) => {

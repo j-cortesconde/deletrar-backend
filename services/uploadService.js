@@ -8,10 +8,23 @@ class UploadService {
   #multerStorage = multer.memoryStorage();
 
   #multerFilter(req, file, cb) {
-    if (file.mimetype.startsWith('image')) {
-      cb(null, true);
-    } else {
-      cb(new AppError('Not an image! Please upload only images.', 400), false);
+    try {
+      if (file.mimetype.startsWith('image')) {
+        cb(null, true);
+      } else {
+        cb(
+          new AppError('Not an image! Please upload only images.', 400),
+          false,
+        );
+      }
+    } catch (err) {
+      cb(
+        new AppError(
+          'Error processing file upload. Please talk to admin.',
+          500,
+        ),
+        false,
+      );
     }
   }
 
@@ -32,7 +45,7 @@ class UploadService {
   multerImageUpload = this.#upload.single('image');
 
   async uploadFileToS3(file, folder) {
-    const fileName = `${folder}/${uuidv4()}-${file.originalname}`;
+    const fileName = `${folder}/${uuidv4()}`;
     const params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       Key: fileName,

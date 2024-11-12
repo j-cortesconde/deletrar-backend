@@ -35,8 +35,6 @@ class UploadController {
 
   uploadCoverImage = async (req, res, next) => {
     try {
-      this.#UploadService.multerImageUpload(req, res, next);
-
       // Check if a file is uploaded, if none, just next
       if (!req.file) {
         return next();

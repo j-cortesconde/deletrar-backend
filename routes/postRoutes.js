@@ -4,10 +4,12 @@ const express = require('express');
 
 const PostController = require('../controllers/postController');
 const AuthController = require('../controllers/authController');
+const UploadController = require('../controllers/uploadController');
 
 const router = express.Router();
 const postController = new PostController();
 const authController = new AuthController();
+const uploadController = new UploadController();
 
 router.use(authController.getLoggedInUser);
 
@@ -29,14 +31,14 @@ router
   .get('/ownHidden', postController.getOwnHidenPosts)
   .post(
     '/',
-    postController.uploadPostImage,
-    postController.resizePostImage,
+    uploadController.multerImageUpload,
+    uploadController.uploadCoverImage,
     postController.createPost,
   )
   .patch(
     '/id/:id',
-    postController.uploadPostImage,
-    postController.resizePostImage,
+    uploadController.multerImageUpload,
+    uploadController.uploadCoverImage,
     postController.updatePost,
   );
 
