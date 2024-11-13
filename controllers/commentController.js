@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
 const CommentService = require('../services/commentService');
+const { ANONYMOUS_USERNAME } = require('../utils/constants');
 
 class CommentController {
   #CommentService = new CommentService();
@@ -18,8 +19,18 @@ class CommentController {
       'status',
     );
 
-    filteredBody.author = req.user?.username || null;
-    filteredBody.createdAt = Date.now();
+    // No debería suceder nunca, pero encontré algunos comments sin targetCollection ni targetPost. No sé cuándo ni cómo habrá sucedido, pero no voy a investigarlo ahora. Lo dejo como un TODO: para cuando salte este error
+    if (!filteredBody.targetCollection && !filteredBody.targetPost) {
+      return next(
+        new AppError(
+          'Comment must have either a targetPost or a targetCollection. Please contact admin',
+          400,
+        ),
+      );
+    }
+
+    filteredBody.author = req.user?.username || ANONYMOUS_USERNAME;
+    filteredBody.postedAt = Date.now();
 
     const doc = await this.#CommentService.createComment(filteredBody);
 
@@ -103,7 +114,7 @@ class CommentController {
       { path: 'reply', populate: { path: 'replies' } },
       'replies',
     ];
-    const sort = { createdAt: -1 };
+    const sort = { postedAt: -1 };
 
     const totalDocs = await this.#CommentService.countComments(matchObject);
 
@@ -142,7 +153,7 @@ class CommentController {
       { path: 'reply', populate: { path: 'replies' } },
       'replies',
     ];
-    const sort = { createdAt: -1 };
+    const sort = { postedAt: -1 };
 
     const totalDocs = await this.#CommentService.countComments(matchObject);
 
@@ -176,7 +187,7 @@ class CommentController {
     };
 
     const populate = 'replies';
-    const sort = { createdAt: -1 };
+    const sort = { postedAt: 1 };
 
     const totalDocs = await this.#CommentService.countComments(matchObject);
 
@@ -198,6 +209,7 @@ class CommentController {
     });
   };
 
+  //TODO: ¿Debería de alguna forma limitar la cantidad de comentarios? Algún día quizás. No MVP
   getCommentThread = async (req, res, next) => {
     const populate = { path: 'replyingToArray', populate: 'replies' };
 

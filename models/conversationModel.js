@@ -18,6 +18,11 @@ const conversationSchema = new mongoose.Schema(
       default: true,
       select: false,
     },
+    documentType: {
+      type: String,
+      default: 'conversation',
+    },
+    //TODO: EStos dos de abajo quizas sean artefactos del Merge
     read: {
       type: Boolean,
       default: false,

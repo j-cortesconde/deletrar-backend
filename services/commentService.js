@@ -1,5 +1,6 @@
 const Comment = require('../models/commentModel');
-const { COMMENT_LIMIT } = require('../utils/constants');
+const AggregationFeatures = require('../utils/aggregationFeatures');
+const { COMMENT_LIMIT, AGGREGATION_LIMIT } = require('../utils/constants');
 
 class CommentService {
   #Comment = Comment;
@@ -36,6 +37,227 @@ class CommentService {
 
   deleteComment(commentId) {
     return this.#Comment.findByIdAndDelete(commentId);
+  }
+
+  async getCommentsAggregation(matchObject, reqQuery) {
+    const basePipeline = [
+      {
+        $match: {
+          ...matchObject,
+        },
+      },
+      // Lookup information for the author
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'author',
+          foreignField: 'username',
+          pipeline: [{ $project: { _id: 1, username: 1, name: 1, photo: 1 } }],
+          as: 'author',
+        },
+      },
+      // The user document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          author: { $arrayElemAt: ['$author', 0] },
+        },
+      },
+      // Lookup information for the targetPost
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'targetPost',
+          foreignField: '_id',
+          pipeline: [
+            {
+              $project: {
+                author: 1,
+                _id: 1,
+                title: 1,
+                summary: 1,
+                coverImage: 1,
+                updatedAt: 1,
+                postedAt: 1,
+              },
+            },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'author',
+                foreignField: 'username',
+                pipeline: [
+                  {
+                    $project: {
+                      _id: 1,
+                      username: 1,
+                      name: 1,
+                      photo: 1,
+                    },
+                  },
+                ],
+                as: 'author',
+              },
+            },
+            // The user document is returned inside a one element array. This removes the array from between
+            {
+              $addFields: {
+                author: { $arrayElemAt: ['$author', 0] },
+              },
+            },
+          ],
+          as: 'targetPost',
+        },
+      },
+      // The post document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          targetPost: { $arrayElemAt: ['$targetPost', 0] },
+        },
+      },
+      // Lookup information for the targetCollection
+      {
+        $lookup: {
+          from: 'collections',
+          localField: 'targetCollection',
+          foreignField: '_id',
+          pipeline: [
+            {
+              $project: {
+                collector: 1,
+                _id: 1,
+                title: 1,
+                subtitle: 1,
+                summary: 1,
+                coverImage: 1,
+                updatedAt: 1,
+                postedAt: 1,
+              },
+            },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'collector',
+                foreignField: 'username',
+                pipeline: [
+                  {
+                    $project: {
+                      _id: 1,
+                      username: 1,
+                      name: 1,
+                      photo: 1,
+                    },
+                  },
+                ],
+                as: 'collector',
+              },
+            },
+            // The user document is returned inside a one element array. This removes the array from between
+            {
+              $addFields: {
+                collector: { $arrayElemAt: ['$collector', 0] },
+              },
+            },
+          ],
+          as: 'targetCollection',
+        },
+      },
+      // The collection document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          targetCollection: { $arrayElemAt: ['$targetCollection', 0] },
+        },
+      },
+      // Lookup information for the replyingTo comment
+      {
+        $lookup: {
+          from: 'comments',
+          localField: 'replyingTo',
+          foreignField: '_id',
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                content: 1,
+                author: 1,
+                replyingToArray: 1,
+                replyingTo: 1,
+                postedAt: 1,
+              },
+            },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'author',
+                foreignField: 'username',
+                pipeline: [
+                  {
+                    $project: {
+                      _id: 1,
+                      username: 1,
+                      name: 1,
+                      photo: 1,
+                    },
+                  },
+                ],
+                as: 'author',
+              },
+            },
+            // The user document is returned inside a one element array. This removes the array from between
+            {
+              $addFields: {
+                author: { $arrayElemAt: ['$author', 0] },
+              },
+            },
+          ],
+          as: 'replyingTo',
+        },
+      },
+      // The comment document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          replyingTo: { $arrayElemAt: ['$replyingTo', 0] },
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          author: 1,
+          replyingToArray: 1,
+          postedAt: 1,
+          targetPost: 1,
+          targetCollection: 1,
+          replyingTo: 1,
+          documentType: 1,
+        },
+      },
+    ];
+
+    const features = new AggregationFeatures(basePipeline, reqQuery)
+      .sort()
+      .paginate();
+
+    const result = await this.#Model.aggregate(features.pipeline);
+
+    // This was added so you can have hasNextPage & nextPage for infinite pagination (feed scrolling on frontEnd)
+    const totalCount = result?.[0]?.totalCount?.[0]?.totalCount;
+    const limitedDocuments = result?.[0]?.limitedDocuments;
+
+    const page = Number(reqQuery?.page) || 1;
+    const userLimit = Number(reqQuery?.limit) || AGGREGATION_LIMIT;
+    const actualLimit =
+      userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
+    const skip = (page - 1) * actualLimit;
+
+    const hasNextPage = skip + limitedDocuments.length < totalCount;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    return {
+      limitedDocuments,
+      totalCount,
+      hasNextPage,
+      nextPage,
+    };
   }
 }
 

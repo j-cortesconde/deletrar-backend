@@ -33,14 +33,14 @@ const collectionSchema = new mongoose.Schema(
     ],
     createdAt: {
       type: Date,
-      default: Date.now(),
+      default: Date.now,
     },
     postedAt: Date,
     updatedAt: Date,
     status: {
       type: String,
       default: 'editing',
-      enum: ['editing', 'posted', 'deleted'],
+      enum: ['editing', 'posted', 'deleted', 'inactive'],
     },
     collector: {
       type: String,
@@ -52,6 +52,10 @@ const collectionSchema = new mongoose.Schema(
         type: Boolean,
         default: true,
       },
+    },
+    documentType: {
+      type: String,
+      default: 'collection',
     },
   },
   {

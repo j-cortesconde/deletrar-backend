@@ -5,10 +5,12 @@ const express = require('express');
 
 const UserController = require('../controllers/userController');
 const AuthController = require('../controllers/authController');
+const UploadController = require('../controllers/uploadController');
 
 const router = express.Router();
 const userController = new UserController();
 const authController = new AuthController();
+const uploadController = new UploadController();
 
 router.use(authController.getLoggedInUser);
 
@@ -65,10 +67,11 @@ router
 router
   .post('/invite', authController.invite)
   .patch('/updateMyPassword', authController.updatePassword)
+  .patch('/deactivateMe', userController.deactivateMe)
   .patch(
     '/updateMe',
-    userController.uploadUserPhoto,
-    userController.resizeUserPhoto,
+    uploadController.multerImageUpload,
+    uploadController.uploadProfilePic,
     userController.updateMe,
   )
   .delete('/deleteMe', userController.deleteMe);

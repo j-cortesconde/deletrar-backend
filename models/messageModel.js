@@ -25,6 +25,10 @@ const messageSchema = new mongoose.Schema(
       default: true,
       select: false,
     },
+    documentType: {
+      type: String,
+      default: 'message',
+    },
   },
   {
     toJSON: { virtuals: true },

@@ -3,10 +3,12 @@ const express = require('express');
 
 const AuthController = require('../controllers/authController');
 const CollectionController = require('../controllers/collectionController');
+const UploadController = require('../controllers/uploadController');
 
 const router = express.Router();
 const authController = new AuthController();
 const collectionController = new CollectionController();
+const uploadController = new UploadController();
 
 router.use(authController.getLoggedInUser);
 
@@ -30,14 +32,14 @@ router
   .get('/ownHidden', collectionController.getOwnHiddenCollections)
   .post(
     '/',
-    collectionController.uploadCollectionImage,
-    collectionController.resizeCollectionImage,
+    uploadController.multerImageUpload,
+    uploadController.uploadCoverImage,
     collectionController.createCollection,
   )
   .patch(
     '/id/:id',
-    collectionController.uploadCollectionImage,
-    collectionController.resizeCollectionImage,
+    uploadController.multerImageUpload,
+    uploadController.uploadCoverImage,
     collectionController.updateCollection,
   )
   .patch('/id/:id/addPost', collectionController.addPost)

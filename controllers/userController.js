@@ -1,13 +1,19 @@
 // FIXME: I removed the catchAsync function from all methods that call services. Should add again somehow
-const sharp = require('sharp');
-const catchAsync = require('../utils/catchAsync');
 const filterObj = require('../utils/filterObj');
 const AppError = require('../utils/appError');
-const uploadImage = require('../utils/uploadImage');
 const UserService = require('../services/userService');
+const PostService = require('../services/postService');
+const CollectionService = require('../services/collectionService');
+const SharedService = require('../services/sharedService');
 
 class UserController {
   #UserService = new UserService();
+
+  #PostService = new PostService();
+
+  #CollectionService = new CollectionService();
+
+  #SharedService = new SharedService();
 
   // Makes sure the user submitted a currentPassword and checks it's correct
   #checkPassword = async (req) => {
@@ -30,25 +36,6 @@ class UserController {
       throw new AppError('The password you entered is wrong.', 401);
     }
   };
-
-  // If an 'image' type file is sent in the request as 'photo' field it gets uploaded to the memoryStorage
-  uploadUserPhoto = uploadImage.single('photo');
-
-  // If an 'image' type file was uploaded to the memoryStorage, it gets a filename, it gets reshaped/reformatted and it is uploaded to public>img>users
-  // FIXME: Shouldn't this become a service too?
-  resizeUserPhoto = catchAsync(async (req, res, next) => {
-    if (!req.file) return next();
-
-    req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
-
-    await sharp(req.file.buffer)
-      .resize(500, 500)
-      .toFormat('jpeg')
-      .jpeg({ quality: 90 })
-      .toFile(`public/img/users/${req.file.filename}`);
-
-    next();
-  });
 
   // Returns the logged in users' information
   // FIXME: This is duplicating getUserById code. PosSol: Pass (req.params.id || req.user.id) into .getUserById()
@@ -184,9 +171,48 @@ class UserController {
       { select, new: true, includeInactive: true },
     );
 
+    await this.#CollectionService.updateCollections(
+      { collector: req.user.username, status: 'inactive' },
+      { status: 'posted' },
+    );
+
+    await this.#PostService.updatePosts(
+      { author: req.user.username, status: 'inactive' },
+      { status: 'posted' },
+    );
+
+    await this.#SharedService.updateShareds(
+      { sharer: req.user.username, status: 'inactive' },
+      { status: 'posted' },
+    );
+
     res.status(200).json({
       status: 'success',
       data: user,
+    });
+  };
+
+  // Finds the document for the current logged in user and sets it 'active' property to true, effectively reenabling it.
+  deactivateMe = async (req, res, next) => {
+    await this.#UserService.updateUser({ _id: req.user.id }, { active: false });
+
+    await this.#CollectionService.updateCollections(
+      { collector: req.user.username, status: 'posted' },
+      { status: 'inactive' },
+    );
+
+    await this.#PostService.updatePosts(
+      { author: req.user.username, status: 'posted' },
+      { status: 'inactive' },
+    );
+
+    await this.#SharedService.updateShareds(
+      { sharer: req.user.username, status: 'posted' },
+      { status: 'inactive' },
+    );
+
+    res.status(200).json({
+      status: 'success',
     });
   };
 

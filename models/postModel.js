@@ -23,14 +23,14 @@ const postSchema = new mongoose.Schema(
     },
     createdAt: {
       type: Date,
-      default: Date.now(),
+      default: Date.now,
     },
     postedAt: Date,
     updatedAt: Date,
     status: {
       type: String,
       default: 'editing',
-      enum: ['editing', 'posted', 'deleted'],
+      enum: ['editing', 'posted', 'deleted', 'inactive'],
     },
     author: {
       type: String,
@@ -42,6 +42,10 @@ const postSchema = new mongoose.Schema(
         type: Boolean,
         default: true,
       },
+    },
+    documentType: {
+      type: String,
+      default: 'post',
     },
     currentVersion: {
       type: Number,

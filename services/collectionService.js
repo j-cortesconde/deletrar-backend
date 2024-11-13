@@ -1,6 +1,7 @@
 const Collection = require('../models/collectionModel');
 const AggregationFeatures = require('../utils/aggregationFeatures');
 const APIFeatures = require('../utils/apiFeatures');
+const { AGGREGATION_LIMIT } = require('../utils/constants');
 
 class CollectionService {
   #Collection = Collection;
@@ -24,7 +25,7 @@ class CollectionService {
     return features.query;
   }
 
-  getCollections(matchObject, reqQuery) {
+  async getCollections(matchObject, reqQuery) {
     const basePipeline = [
       {
         $match: {
@@ -42,8 +43,61 @@ class CollectionService {
           coverImage: 1,
           status: 1,
           collector: 1,
-          // TODO: Perhaps this should be projection the lookup of post titles
           posts: 1,
+          documentType: 1,
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'collector',
+          foreignField: 'username',
+          pipeline: [{ $project: { _id: 1, username: 1, name: 1, photo: 1 } }],
+          as: 'collector',
+        },
+      },
+      // The user document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          collector: { $arrayElemAt: ['$collector', 0] },
+        },
+      },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'posts',
+          foreignField: '_id',
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                author: 1,
+                title: 1,
+                summary: 1,
+                postedAt: 1,
+                coverImage: 1,
+                status: 1,
+              },
+            },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'author',
+                foreignField: 'username',
+                pipeline: [
+                  { $project: { _id: 1, username: 1, name: 1, photo: 1 } },
+                ],
+                as: 'author',
+              },
+            },
+            // The user document is returned inside a one element array. This removes the array from between
+            {
+              $addFields: {
+                author: { $arrayElemAt: ['$author', 0] },
+              },
+            },
+          ],
+          as: 'posts',
         },
       },
     ];
@@ -52,16 +106,44 @@ class CollectionService {
       .sort()
       .paginate();
 
-    return this.#Collection.aggregate(features.pipeline);
+    const result = await this.#Collection.aggregate(features.pipeline);
+
+    // This was added so you can have hasNextPage & nextPage for infinite pagination (feed scrolling on frontEnd)
+    const totalCount = result?.[0]?.totalCount?.[0]?.totalCount;
+    const limitedDocuments = result?.[0]?.limitedDocuments;
+
+    const page = Number(reqQuery?.page) || 1;
+    const userLimit = Number(reqQuery?.limit) || AGGREGATION_LIMIT;
+    const actualLimit =
+      userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
+    const skip = (page - 1) * actualLimit;
+
+    const hasNextPage = skip + limitedDocuments.length < totalCount;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    return {
+      limitedDocuments,
+      totalCount,
+      hasNextPage,
+      nextPage,
+    };
   }
 
   getCollection(collectionId, optionsObject) {
     return this.#Collection.findById(collectionId, null, optionsObject);
   }
 
-  updateCollection(collectionId, updateObject, updateOptions) {
+  updateCollection(matchObject, updateObject, updateOptions) {
     return this.#Collection.findByIdAndUpdate(
-      collectionId,
+      matchObject,
+      updateObject,
+      updateOptions,
+    );
+  }
+
+  updateCollections(matchObject, updateObject, updateOptions) {
+    return this.#Collection.updateMany(
+      matchObject,
       updateObject,
       updateOptions,
     );
@@ -111,7 +193,12 @@ class CollectionService {
           summary: 1,
           coverImage: 1,
           status: 1,
-          collector: { name: '$collectorInfo.name', _id: '$collectorInfo._id' }, // Returns only the collector's name & id
+          documentType: 1,
+          collector: {
+            name: '$collectorInfo.name',
+            _id: '$collectorInfo._id',
+            username: '$collectorInfo.username',
+          }, // Returns only the collector's name & id
         },
       },
       {

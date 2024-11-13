@@ -1,6 +1,7 @@
 const Post = require('../models/postModel');
 const AggregationFeatures = require('../utils/aggregationFeatures');
 const APIFeatures = require('../utils/apiFeatures');
+const { AGGREGATION_LIMIT } = require('../utils/constants');
 
 class PostService {
   #Post = Post;
@@ -24,7 +25,7 @@ class PostService {
     return features.query;
   }
 
-  getPosts(matchObject, reqQuery) {
+  async getPosts(matchObject, reqQuery) {
     const basePipeline = [
       {
         $match: {
@@ -41,6 +42,22 @@ class PostService {
           coverImage: 1,
           status: 1,
           author: 1,
+          documentType: 1,
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'author',
+          foreignField: 'username',
+          pipeline: [{ $project: { _id: 1, username: 1, name: 1, photo: 1 } }],
+          as: 'author',
+        },
+      },
+      // The user document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          author: { $arrayElemAt: ['$author', 0] },
         },
       },
     ];
@@ -49,15 +66,39 @@ class PostService {
       .sort()
       .paginate();
 
-    return this.#Post.aggregate(features.pipeline);
+    const result = await this.#Post.aggregate(features.pipeline);
+
+    // This was added so you can have hasNextPage & nextPage for infinite pagination (feed scrolling on frontEnd)
+    const totalCount = result?.[0]?.totalCount?.[0]?.totalCount;
+    const limitedDocuments = result?.[0]?.limitedDocuments;
+
+    const page = Number(reqQuery?.page) || 1;
+    const userLimit = Number(reqQuery?.limit) || AGGREGATION_LIMIT;
+    const actualLimit =
+      userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
+    const skip = (page - 1) * actualLimit;
+
+    const hasNextPage = skip + limitedDocuments.length < totalCount;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    return {
+      limitedDocuments,
+      totalCount,
+      hasNextPage,
+      nextPage,
+    };
   }
 
   getPost(postId, optionsObject) {
     return this.#Post.findById(postId, null, optionsObject);
   }
 
-  updatePost(postId, updateObject, updateOptions) {
-    return this.#Post.findByIdAndUpdate(postId, updateObject, updateOptions);
+  updatePost(matchObject, updateObject, updateOptions) {
+    return this.#Post.findByIdAndUpdate(
+      matchObject,
+      updateObject,
+      updateOptions,
+    );
   }
 
   deletePost(postId) {
@@ -104,7 +145,12 @@ class PostService {
           summary: 1,
           coverImage: 1,
           status: 1,
-          author: { name: '$authorInfo.name', _id: '$authorInfo._id' }, // Returns only the author's name & id
+          documentType: 1,
+          author: {
+            name: '$authorInfo.name',
+            _id: '$authorInfo._id',
+            username: '$authorInfo.username',
+          }, // Returns only the author's name & id
         },
       },
       {

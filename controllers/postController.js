@@ -1,33 +1,11 @@
 // TODO: Isnt there a better way to handle text versions by creating multiple documents that point to the initial doc instead of saving each version in a field?
 
-const sharp = require('sharp');
-const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
-const uploadImage = require('../utils/uploadImage');
 const PostService = require('../services/postService');
 
 class PostController {
   #PostService = new PostService();
-
-  // If an 'image' type file is sent in the request as 'coverImage' field it gets uploaded to the memoryStorage
-  uploadPostImage = uploadImage.single('coverImage');
-
-  // If an 'image' type file was uploaded to the memoryStorage, it gets a filename, it gets reshaped/reformatted and it is uploaded to public>img>posts
-  //FIXME: CatchAsync and shouldnt it be service?
-  resizePostImage = catchAsync(async (req, res, next) => {
-    if (!req.file) return next();
-
-    req.file.filename = `post-${req.user.id}-${Date.now()}.jpeg`;
-
-    await sharp(req.file.buffer)
-      .resize(500, 500)
-      .toFormat('jpeg')
-      .jpeg({ quality: 90 })
-      .toFile(`public/img/posts/${req.file.filename}`);
-
-    next();
-  });
 
   // Function that creates posts filtering out of the creating object the fields the user isnt allowed to enter
   createPost = async (req, res, next) => {
@@ -107,7 +85,7 @@ class PostController {
     filteredBody.updatedAt = Date.now();
 
     const doc = await this.#PostService.updatePost(
-      req.params.id,
+      { _id: req.params.id },
       filteredBody,
       {
         new: true,

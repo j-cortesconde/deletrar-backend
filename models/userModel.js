@@ -91,7 +91,7 @@ const userSchema = new mongoose.Schema(
     },
     createdAt: {
       type: Date,
-      default: Date.now(),
+      default: Date.now,
     },
     //TODO: Settings still to do:
     settings: {
@@ -103,6 +103,10 @@ const userSchema = new mongoose.Schema(
     notes: {
       type: [String],
       select: false,
+    },
+    documentType: {
+      type: String,
+      default: 'user',
     },
   },
   {
