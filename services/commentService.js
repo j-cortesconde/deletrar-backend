@@ -237,7 +237,7 @@ class CommentService {
       .sort()
       .paginate();
 
-    const result = await this.#Model.aggregate(features.pipeline);
+    const result = await this.#Comment.aggregate(features.pipeline);
 
     // This was added so you can have hasNextPage & nextPage for infinite pagination (feed scrolling on frontEnd)
     const totalCount = result?.[0]?.totalCount?.[0]?.totalCount;

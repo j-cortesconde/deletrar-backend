@@ -3,32 +3,32 @@ const AggregationFeatures = require('../utils/aggregationFeatures');
 const { SHARED_LIMIT, AGGREGATION_LIMIT } = require('../utils/constants');
 
 class SharedService {
-  #Model = Shared;
+  #Shared = Shared;
 
   createShared(sharedObject) {
-    return this.#Model.create(sharedObject);
+    return this.#Shared.create(sharedObject);
   }
 
   getShareds(matchObject, optionsObject, reqQuery) {
     const limit = SHARED_LIMIT;
     const skip = reqQuery?.page ? (reqQuery.page - 1) * limit : 0;
 
-    return this.#Model
+    return this.#Shared
       .find(matchObject, null, optionsObject)
       .skip(skip)
       .limit(limit);
   }
 
   countShareds(matchObject) {
-    return this.#Model.countDocuments(matchObject);
+    return this.#Shared.countDocuments(matchObject);
   }
 
   getShared(sharedId, optionsObject) {
-    return this.#Model.findById(sharedId, null, optionsObject);
+    return this.#Shared.findById(sharedId, null, optionsObject);
   }
 
   updateShared(filterObject, updateObject, updateOptions) {
-    return this.#Model.findOneAndUpdate(
+    return this.#Shared.findOneAndUpdate(
       filterObject,
       updateObject,
       updateOptions,
@@ -36,11 +36,11 @@ class SharedService {
   }
 
   updateShareds(filterObject, updateObject, updateOptions) {
-    return this.#Model.updateMany(filterObject, updateObject, updateOptions);
+    return this.#Shared.updateMany(filterObject, updateObject, updateOptions);
   }
 
   deleteShared(sharedId) {
-    return this.#Model.findByIdAndDelete(sharedId);
+    return this.#Shared.findByIdAndDelete(sharedId);
   }
 
   // TODO: These pipelines should be abstracted and combined intelligently (im repeating a lot of code and its getting confusing). Not MVP but soon
@@ -453,7 +453,7 @@ class SharedService {
       .sort()
       .paginate();
 
-    const result = await this.#Model.aggregate(features.pipeline);
+    const result = await this.#Shared.aggregate(features.pipeline);
 
     // This was added so you can have hasNextPage & nextPage for infinite pagination (feed scrolling on frontEnd)
     const totalCount = result?.[0]?.totalCount?.[0]?.totalCount;
