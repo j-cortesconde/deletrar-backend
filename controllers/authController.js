@@ -44,7 +44,7 @@ class AuthController {
   };
 
   // TODO: Not handling cases in which the decoding fails for bad token
-  getTokenUser = async (req, res, token) => {
+  getTokenUser = async (token, res) => {
     try {
       // 2) Verification token
       const decoded = await promisify(jwt.verify)(
@@ -77,13 +77,14 @@ class AuthController {
       return currentUser;
     } catch (err) {
       if (err?.expiredAt) {
-        this.logout(req, res);
+        if (res) this.logout(res);
         return {
           error: 'Login has expired. Please log in again.',
         };
       }
       return {
-        error: 'An error has ocurred. Please log in again.',
+        // error: 'An error has ocurred. Please log in again.',
+        error: err,
       };
     }
   };
@@ -346,7 +347,7 @@ class AuthController {
     this.#createSendToken(user, 200, res);
   });
 
-  logout = (req, res) => {
+  logout = (res) => {
     res.cookie('jwt', 'loggedout', {
       expires: new Date(Date.now() + 10 * 1000),
       httpOnly: true,
@@ -376,7 +377,7 @@ class AuthController {
     }
 
     // Calls a private method that gets and returns the user for that given token (or returns an object with an error key if no valid users were found so that the 'protect' method stops it)
-    req.user = await this.getTokenUser(req, res, token);
+    req.user = await this.getTokenUser(token, res);
     next();
   };
 

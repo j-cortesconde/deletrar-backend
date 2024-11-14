@@ -64,7 +64,6 @@ class IoController {
 
     socket.on('disconnect', () => {
       console.log('Client disconnected');
-      // Remove the socket from activeSockets upon disconnect
       socket.leave(socket.user.username);
     });
   };
@@ -86,16 +85,16 @@ class IoController {
 
     // If so, join the conversation room
     socket.join(conversationId);
-    console.log(
-      `User ${socket.user.username} joined conversation ${conversationId}`,
-    );
+    // console.log(
+    //   `User ${socket.user.username} joined conversation ${conversationId}`,
+    // );
   };
 
   #handleLeaveConversation = (socket, conversationId) => {
     socket.leave(conversationId);
-    console.log(
-      `User ${socket.user.username} left conversation ${conversationId}`,
-    );
+    // console.log(
+    //   `User ${socket.user.username} left conversation ${conversationId}`,
+    // );
   };
 
   #handleSendMessage = async (socket, conversationId, addresseeUsername) => {
@@ -122,7 +121,7 @@ class IoController {
 
     // TODO: Shouldn't this be inside the validator if?
     // Communicate to the addresse that a message has been sent
-    socket.in(addresseeUsername.emit('newUserMessage'));
+    socket.in(addresseeUsername).emit('newUserMessage');
   };
 
   // TODO: Could add to notify user of typing (not only conversation) but not MVP
