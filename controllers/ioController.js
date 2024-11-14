@@ -4,9 +4,6 @@ const ConversationController = require('./conversationController');
 class IoController {
   #io;
 
-  // Map to store active sockets associated with usernames
-  #activeSockets = new Map();
-
   #authController = new AuthController();
 
   #conversationController = new ConversationController();
@@ -43,7 +40,7 @@ class IoController {
     console.log('New client connected:', socket.user.username);
 
     // Add the socket to activeSockets upon connection
-    this.#activeSockets.set(socket.user.username, socket);
+    socket.join(socket.user.username);
 
     socket.on('joinConversation', async (conversationId) => {
       await this.#handleJoinConversation(socket, conversationId);
@@ -60,7 +57,7 @@ class IoController {
     socket.on('disconnect', () => {
       console.log('Client disconnected');
       // Remove the socket from activeSockets upon disconnect
-      this.#activeSockets.delete(socket.user.username);
+      socket.leave(socket.user.username);
     });
   };
 
@@ -110,15 +107,13 @@ class IoController {
         });
       }
 
+      // TODO: Should this instead of .to be a .in?
       // Communicate through the conversation that a message has been sent
       socket.to(conversationId).emit('newConversationMessage');
     }
 
     // Communicate to the addresse that a message has been sent
-    const addresseeSocket = this.#activeSockets.get(addresseeUsername);
-    if (addresseeSocket) {
-      addresseeSocket.emit('newUserMessage');
-    }
+    socket.in(addresseeUsername.emit('newUserMessage'));
   };
 }
 
