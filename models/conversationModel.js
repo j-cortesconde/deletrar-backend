@@ -22,7 +22,6 @@ const conversationSchema = new mongoose.Schema(
       type: String,
       default: 'conversation',
     },
-    //TODO: EStos dos de abajo quizas sean artefactos del Merge
     read: {
       type: Boolean,
       default: false,
