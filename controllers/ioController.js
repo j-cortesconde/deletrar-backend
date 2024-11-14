@@ -54,6 +54,14 @@ class IoController {
       await this.#handleSendMessage(socket, conversationId, addresseeUsername);
     });
 
+    socket.on('typing', async (conversationId) => {
+      await this.#handleTyping(socket, conversationId);
+    });
+
+    socket.on('stopTyping', async (conversationId) => {
+      await this.#handleStopTyping(socket, conversationId);
+    });
+
     socket.on('disconnect', () => {
       console.log('Client disconnected');
       // Remove the socket from activeSockets upon disconnect
@@ -112,8 +120,54 @@ class IoController {
       socket.to(conversationId).emit('newConversationMessage');
     }
 
+    // TODO: Shouldn't this be inside the validator if?
     // Communicate to the addresse that a message has been sent
     socket.in(addresseeUsername.emit('newUserMessage'));
+  };
+
+  // TODO: Could add to notify user of typing (not only conversation) but not MVP
+  #handleTyping = async (socket, conversationId) => {
+    if (conversationId) {
+      // Check if the user is a participant in the conversation
+      const isParticipant =
+        await this.#conversationController.isUserInConversation(
+          socket.user.username,
+          conversationId,
+        );
+
+      // If not, return an error message
+      if (!isParticipant) {
+        return socket.emit('error', {
+          message: 'You are not allowed to join this conversation',
+        });
+      }
+
+      // Communicate through the conversation that a message has been sent
+      socket.in(conversationId).emit('typing');
+    }
+  };
+
+  // TODO: Could add to notify user of typing (not only conversation) but not MVP
+  #handleStopTyping = async (socket, conversationId) => {
+    if (conversationId) {
+      // Check if the user is a participant in the conversation
+      const isParticipant =
+        await this.#conversationController.isUserInConversation(
+          socket.user.username,
+          conversationId,
+        );
+
+      // If not, return an error message
+      if (!isParticipant) {
+        return socket.emit('error', {
+          message: 'You are not allowed to join this conversation',
+        });
+      }
+
+      // TODO: Should this instead of .to be a .in?
+      // Communicate through the conversation that a message has been sent
+      socket.in(conversationId).emit('stopTyping');
+    }
   };
 }
 
