@@ -175,15 +175,10 @@ class PostController {
       req.query,
     );
 
-    const response = {
-      count: data[0]?.totalCount[0]?.totalCount,
-      docs: data[0]?.limitedDocuments,
-    };
-
     // SEND RESPONSE
     res.status(200).json({
       status: 'success',
-      data: response,
+      data,
     });
   };
 
@@ -194,15 +189,10 @@ class PostController {
       req.query,
     );
 
-    const response = {
-      count: data[0]?.totalCount[0]?.totalCount,
-      docs: data[0]?.limitedDocuments,
-    };
-
     // SEND RESPONSE
     res.status(200).json({
       status: 'success',
-      data: response,
+      data,
     });
   };
 

@@ -98,36 +98,34 @@ class SharedController {
 
   // Only returns status="posted" shareds
   getAllShareds = async (req, res, next) => {
-    const { totalCount, limitedDocuments } =
-      await this.#service.getSharedsAggregation(
-        {
-          status: 'posted',
-        },
-        req.query,
-      );
+    const data = await this.#service.getSharedsAggregation(
+      {
+        status: 'posted',
+      },
+      req.query,
+    );
 
     // SEND RESPONSE
     res.status(200).json({
       status: 'success',
-      data: { totalCount, limitedDocuments },
+      data,
     });
   };
 
   // Only returns status="posted" shareds
   getSharedsBySharer = async (req, res, next) => {
-    const { totalCount, limitedDocuments } =
-      await this.#service.getSharedsAggregation(
-        {
-          sharer: req.params.username,
-          status: 'posted',
-        },
-        req.query,
-      );
+    const data = await this.#service.getSharedsAggregation(
+      {
+        sharer: req.params.username,
+        status: 'posted',
+      },
+      req.query,
+    );
 
     // SEND RESPONSE
     res.status(200).json({
       status: 'success',
-      data: { totalCount, limitedDocuments },
+      data,
     });
   };
 
