@@ -114,14 +114,12 @@ class IoController {
         });
       }
 
-      // TODO: Should this instead of .to be a .in?
       // Communicate through the conversation that a message has been sent
       socket.to(conversationId).emit('newConversationMessage');
-    }
 
-    // TODO: Shouldn't this be inside the validator if?
-    // Communicate to the addresse that a message has been sent
-    socket.in(addresseeUsername).emit('newUserMessage');
+      // Communicate to the addresse that a message has been sent
+      socket.to(addresseeUsername).emit('newUserMessage');
+    }
   };
 
   // TODO: Could add to notify user of typing (not only conversation) but not MVP
@@ -163,7 +161,6 @@ class IoController {
         });
       }
 
-      // TODO: Should this instead of .to be a .in?
       // Communicate through the conversation that a message has been sent
       socket.in(conversationId).emit('stopTyping');
     }
