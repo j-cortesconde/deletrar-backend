@@ -142,6 +142,8 @@ class feedController {
     );
     const following = rawFollowing?.[0]?.following;
 
+    if (!following) return;
+
     // Fetch recent posts, collections and comments by followed users
     const [posts, collections, comments, shareds] = await Promise.all([
       this.#PostService.getPosts(
