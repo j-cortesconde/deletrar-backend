@@ -80,7 +80,7 @@ class ConversationService {
     const nextPage = hasNextPage ? page + 1 : null;
 
     return {
-      paginatedConversations,
+      conversations: paginatedConversations,
       totalCount,
       hasNextPage,
       nextPage,
