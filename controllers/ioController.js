@@ -50,9 +50,17 @@ class IoController {
       this.#handleLeaveConversation(socket, conversationId);
     });
 
-    socket.on('sendMessage', async (conversationId, addresseeUsername) => {
-      await this.#handleSendMessage(socket, conversationId, addresseeUsername);
-    });
+    socket.on(
+      'sendMessage',
+      async (conversationId, addresseeUsername, newMessage) => {
+        await this.#handleSendMessage(
+          socket,
+          conversationId,
+          addresseeUsername,
+          newMessage,
+        );
+      },
+    );
 
     socket.on('typing', async (conversationId) => {
       await this.#handleTyping(socket, conversationId);
@@ -97,7 +105,12 @@ class IoController {
     // );
   };
 
-  #handleSendMessage = async (socket, conversationId, addresseeUsername) => {
+  #handleSendMessage = async (
+    socket,
+    conversationId,
+    addresseeUsername,
+    newMessage,
+  ) => {
     if (conversationId) {
       // TODO: These two first steps might be redundant
       // Check if the user is a participant in the conversation
@@ -115,7 +128,7 @@ class IoController {
       }
 
       // Communicate through the conversation that a message has been sent
-      socket.to(conversationId).emit('newConversationMessage');
+      socket.to(conversationId).emit('newConversationMessage', newMessage);
 
       // Communicate to the addresse that a message has been sent
       socket.to(addresseeUsername).emit('newUserMessage');

@@ -66,7 +66,11 @@ class feedController {
       userFeed = await this.#getUserFeed(req);
     }
 
-    if (!req.user?.username || userFeed.limitedDocuments?.length < 20) {
+    if (
+      !req.user?.username ||
+      !userFeed ||
+      userFeed.limitedDocuments?.length < 20
+    ) {
       genericFeed = await this.#getGenericFeed(req);
     }
 
