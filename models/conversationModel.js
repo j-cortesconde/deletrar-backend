@@ -1,12 +1,9 @@
-// TODO: Remove 'read' functionality. I no longer care for it.
 // TODO: See how to handle very long conversations
 // TODO: Fix conversation sorting when getting the list of a user's conversations
 const mongoose = require('mongoose');
-const messageSchema = require('./messageModel');
 
 const conversationSchema = new mongoose.Schema(
   {
-    messages: [messageSchema],
     participants: [
       {
         type: String,
@@ -22,17 +19,10 @@ const conversationSchema = new mongoose.Schema(
       type: String,
       default: 'conversation',
     },
-    read: {
-      type: Boolean,
-      default: false,
-    },
-    lastMessageTimestamp: {
-      type: Date,
-      default: Date.now,
-    },
     // TODO: No settings yet, but could be user specific settings
   },
   {
+    timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   },
@@ -48,11 +38,13 @@ conversationSchema.pre(/^find/, function (next) {
   next();
 });
 
-conversationSchema.virtual('lastMessage').get(function () {
-  if (this.messages.length > 0) {
-    return this.messages[this.messages.length - 1];
-  }
-  return null;
+// Virtual field to populate last message
+conversationSchema.virtual('lastMessage', {
+  ref: 'Message',
+  localField: '_id',
+  foreignField: 'conversation',
+  justOne: true,
+  options: { sort: { timestamp: -1 } }, // Get the most recent message
 });
 
 const Conversation = mongoose.model('Conversation', conversationSchema);

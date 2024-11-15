@@ -22,16 +22,15 @@ router
     '/with/:addresseeUsername',
     conversationController.getConversationByAddresseeUsername,
   )
-  .get('/id/:conversationId', conversationController.getConversationById)
   .patch(
     '/sendMessage/user/:addresseeUsername',
     conversationController.sendMessage,
   )
+  // TODO: Seems to be no need for this. Conversations are created by sending a first message
   .post('/user/:addresseeUsername', conversationController.createConversation);
 
-// Make the following routes accessible only to admins:
-router.use(authController.restrictTo('admin'));
-
-router.delete('/id/:id', conversationController.adminDeleteConversation);
+// TODO: Not needed at the moment
+// // Make the following routes accessible only to admins:
+// router.use(authController.restrictTo('admin'));
 
 module.exports = router;

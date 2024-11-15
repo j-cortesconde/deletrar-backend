@@ -466,7 +466,6 @@ class AuthController {
   restrictTo =
     (...roles) =>
     (req, res, next) => {
-      console.log(req.user);
       // roles=['admin', 'user'] includes req.user.role='user'
       if (!roles.includes(req.user.role)) {
         return next(

@@ -1,8 +1,10 @@
-const AppError = require('../utils/appError');
 const ConversationService = require('../services/conversationService');
+const MessageService = require('../services/messageService');
 
 class ConversationController {
   #ConversationService = new ConversationService();
+
+  #MessageService = new MessageService();
 
   isUserInConversation = async (username, conversationId) => {
     const conversation =
@@ -18,33 +20,70 @@ class ConversationController {
     );
   };
 
-  // Function that checks if theres a conversation. If it already exists, returns it, else it creates and returns a new conversation after recieving a request body with keys [addressee, message]
+  // Function that checks if theres a conversation. If it already exists, creates a new message for it and returns it, else it creates and returns a new conversation after recieving a request body with key [message]
   createConversation = async (req, res, next) => {
-    const doc = await this.#ConversationService.getConversation({
-      participants: { $all: [req.user.username, req.params.addresseeUsername] },
-    });
-
-    if (doc) {
-      res.status(200).json({
-        status: 'success',
-        data: doc,
+    if (req.params.addresseeUsername === req.user.username) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'No se puede iniciar una conversación consigo mismo.',
       });
-    } else {
-      const newConversation = {
-        participants: [req.user.username, req.params.addresseeUsername],
-        messages: [
-          {
-            content: req.body.message,
-            messenger: req.user.username,
-          },
-        ],
-      };
+    }
 
-      const newDoc =
-        await this.#ConversationService.createConversation(newConversation);
+    if (!req.body.message) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'La solicitud debe incluir un mensaje.',
+      });
+    }
+    const postedMessage = {
+      content: req.body.message,
+      messenger: req.user.username,
+    };
+
+    const existingConversation =
+      await this.#ConversationService.getConversation({
+        participants: {
+          $all: [req.user.username, req.params.addresseeUsername],
+        },
+      });
+
+    if (existingConversation) {
+      postedMessage.conversation = existingConversation._id;
+
+      await this.#MessageService.createMessage(postedMessage);
+
+      const messages = await this.#MessageService.getMessages(
+        {
+          conversation: existingConversation._id,
+        },
+        null,
+        req.query,
+      );
 
       const response = {
-        conversation: newDoc,
+        conversation: existingConversation,
+        /// Doing this reverse here since the service didn't seem to allow for a chain of conflicting sorts
+        messages: messages.reverse(),
+      };
+
+      res.status(200).json({
+        status: 'success',
+        data: response,
+      });
+    } else {
+      const postedConversation = {
+        participants: [req.user.username, req.params.addresseeUsername],
+      };
+      const newConversation =
+        await this.#ConversationService.createConversation(postedConversation);
+
+      postedMessage.conversation = newConversation._id;
+      const newMessage =
+        await this.#MessageService.createMessage(postedMessage);
+
+      const response = {
+        conversation: newConversation,
+        messages: [newMessage],
         addressee: req.params.addresseeUsername,
       };
 
@@ -55,41 +94,53 @@ class ConversationController {
     }
   };
 
-  // Pushes a new message to the messages array of the given id's conversation
+  // Creates a new message for a conversation
   sendMessage = async (req, res, next) => {
-    const newMessage = {
+    if (req.params.addresseeUsername === req.user.username) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'No se puede enviar un mensaje a sí mismo.',
+      });
+    }
+
+    if (!req.body.message) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'La solicitud debe incluir un mensaje.',
+      });
+    }
+
+    const postedMessage = {
       content: req.body.message,
       messenger: req.user.username,
     };
 
-    const oldDoc = await this.#ConversationService.getConversation({
-      participants: { $all: [req.user.username, req.params.addresseeUsername] },
-    });
-
-    if (!oldDoc) {
-      return this.createConversation(req, res, next);
-    }
-
-    const doc = await this.#ConversationService.updateConversation(
-      {
+    const existingConversation =
+      await this.#ConversationService.getConversation({
         participants: {
           $all: [req.user.username, req.params.addresseeUsername],
         },
-      },
+      });
+
+    if (!existingConversation) {
+      return this.createConversation(req, res, next);
+    }
+    postedMessage.conversation = existingConversation._id;
+
+    await this.#MessageService.createMessage(postedMessage);
+    const messages = await this.#MessageService.getMessages(
       {
-        $push: { messages: newMessage },
-        read: false,
-        lastMessageTimestamp: new Date().toISOString(),
+        conversation: existingConversation._id,
       },
-      {
-        new: true,
-        runValidators: true,
-      },
+      null,
+      req.query,
     );
 
     const response = {
-      conversation: doc,
+      conversation: existingConversation,
       addressee: req.params.addresseeUsername,
+      /// Doing this reverse here since the service didn't seem to allow for a chain of conflicting sorts
+      messages: messages.reverse(),
     };
 
     res.status(200).json({
@@ -103,89 +154,72 @@ class ConversationController {
       participants: req.user.username,
     };
 
-    const sort = { lastMessageTimestamp: -1 };
-
-    const totalDocs =
-      await this.#ConversationService.countConversations(matchObject);
-
-    const paginatedDocs = await this.#ConversationService.getConversations(
+    const data = await this.#ConversationService.getConversations(
       matchObject,
-      { sort },
       req.query,
     );
-
-    const response = {
-      count: totalDocs,
-      docs: paginatedDocs,
-    };
 
     // SEND RESPONSE
     res.status(200).json({
       status: 'success',
-      data: response,
-    });
-  };
-
-  // TODO: Add functionality that will check req.user is participant
-  // TODO: Check if this method is even being used
-  getConversationById = async (req, res, next) => {
-    const doc = await this.#ConversationService.getConversationById(
-      req.params.conversationId,
-    );
-
-    if (!doc) {
-      return res.status(404).json({
-        status: 'fail',
-        message: 'No se encontró ninguna conversación con ese ID.',
-      });
-    }
-
-    res.status(200).json({
-      status: 'success',
-      data: doc,
+      data,
     });
   };
 
   getConversationByAddresseeUsername = async (req, res, next) => {
-    const doc = await this.#ConversationService.getConversation({
-      participants: { $all: [req.user.username, req.params.addresseeUsername] },
-    });
-
-    if (!doc) {
-      return res.status(404).json({
+    if (req.params.addresseeUsername === req.user.username) {
+      return res.status(400).json({
         status: 'fail',
-        message: 'No se encontró ninguna conversación con ese ID.',
+        message: 'No se puede tener una conversación consigo mismo.',
       });
     }
 
-    // Makes so if the reader isn't who sent the last message then the conversation will be marked as read:true
-    if (doc.lastMessage?.messenger !== req.user.username) {
-      await this.#ConversationService.updateConversation(
+    const conversation = await this.#ConversationService.getConversation(
+      {
+        participants: {
+          $all: [req.user.username, req.params.addresseeUsername],
+        },
+      },
+      { populate: 'lastMessage' },
+    );
+
+    if (!conversation) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'No se encontró ninguna conversación con ese usuario.',
+      });
+    }
+
+    // Makes so if the requester isn't who sent the last message then the message will be marked as read:true
+    if (conversation.lastMessage?.messenger !== req.user.username) {
+      const updatedLastMessage = await this.#MessageService.updateMessage(
         {
-          _id: doc._id,
+          _id: conversation.lastMessage._id,
         },
         { read: true },
+        { new: true },
       );
+
+      conversation.lastMessage = updatedLastMessage;
     }
+
+    const messages = await this.#MessageService.getMessages(
+      {
+        conversation: conversation._id,
+      },
+      null,
+      req.query,
+    );
+
+    const response = {
+      conversation,
+      /// Doing this reverse here since the service didn't seem to allow for a chain of conflicting sorts
+      messages: messages.reverse(),
+    };
 
     res.status(200).json({
       status: 'success',
-      data: doc,
-    });
-  };
-
-  adminDeleteConversation = async (req, res, next) => {
-    const doc = await this.#ConversationService.deleteConversation(
-      req.params.conversationId,
-    );
-
-    if (!doc) {
-      return next(new AppError('No document found with that ID', 404));
-    }
-
-    res.status(204).json({
-      status: 'success',
-      data: null,
+      data: response,
     });
   };
 }

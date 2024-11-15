@@ -1,5 +1,5 @@
 const Conversation = require('../models/conversationModel');
-const { CONVERSATION_LIMIT } = require('../utils/constants');
+const { AGGREGATION_LIMIT } = require('../utils/constants');
 
 class ConversationService {
   #Conversation = Conversation;
@@ -12,18 +12,83 @@ class ConversationService {
     return this.#Conversation.countDocuments(matchObject);
   }
 
-  getConversations(matchObject, optionsObject, reqQuery) {
-    const limit = CONVERSATION_LIMIT;
-    const skip = reqQuery?.page ? (reqQuery.page - 1) * limit : 0;
+  async getConversations(matchObject, reqQuery) {
+    const basePipeline = [
+      {
+        $match: {
+          ...matchObject,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          participants: 1,
+          documentType: 1,
+          createdAt: 1,
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'participants',
+          foreignField: 'username',
+          pipeline: [{ $project: { _id: 1, username: 1, name: 1, photo: 1 } }],
+          as: 'participants',
+        },
+      },
+      {
+        $lookup: {
+          from: 'messages',
+          localField: '_id',
+          foreignField: 'conversation',
+          pipeline: [{ $sort: { timestamp: -1 } }, { $limit: 1 }],
+          as: 'lastMessage',
+        },
+      },
+      // The message document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          lastMessage: { $arrayElemAt: ['$lastMessage', 0] },
+        },
+      },
+    ];
 
-    return this.#Conversation
-      .find(matchObject, null, optionsObject)
-      .skip(skip)
-      .limit(limit);
+    const allConversations = await this.#Conversation.aggregate(basePipeline);
+
+    // Sort the conversations array by the lastMessage timestamp (Didnt manage to make this work in the aggregation pipeline)
+    const sortedConversations = allConversations.sort(
+      (a, b) => b.lastMessage.timestamp - a.lastMessage.timestamp, // Sort descending (most recent first)
+    );
+
+    // Paginate the sorted array (must also do it outside aggregation since I want to paginate AFTER sort)
+    const page = Number(reqQuery?.page) || 1;
+    const userLimit = Number(reqQuery?.limit) || AGGREGATION_LIMIT;
+    const actualLimit =
+      userLimit < AGGREGATION_LIMIT ? userLimit : AGGREGATION_LIMIT;
+
+    const startIndex = (page - 1) * actualLimit;
+    const paginatedConversations = sortedConversations.slice(
+      startIndex,
+      startIndex + actualLimit,
+    );
+
+    // This was added so you can have hasNextPage & nextPage for infinite pagination (feed scrolling on frontEnd)
+    const totalCount = allConversations.length;
+    const skip = (page - 1) * actualLimit;
+
+    const hasNextPage = skip + paginatedConversations.length < totalCount;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    return {
+      paginatedConversations,
+      totalCount,
+      hasNextPage,
+      nextPage,
+    };
   }
 
-  getConversation(matchObject) {
-    return this.#Conversation.findOne(matchObject);
+  getConversation(matchObject, optionsObject) {
+    return this.#Conversation.findOne(matchObject, null, optionsObject);
   }
 
   getConversationById(conversationId, optionsObject) {
