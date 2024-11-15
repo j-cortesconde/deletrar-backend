@@ -62,6 +62,7 @@ class ConversationController {
 
       const response = {
         conversation: existingConversation,
+        addressee: req.params.addresseeUsername,
         /// Doing this reverse here since the service didn't seem to allow for a chain of conflicting sorts
         messages: messages.reverse(),
       };
