@@ -50,7 +50,8 @@ class ConversationController {
     if (existingConversation) {
       postedMessage.conversation = existingConversation._id;
 
-      await this.#MessageService.createMessage(postedMessage);
+      const newMessage =
+        await this.#MessageService.createMessage(postedMessage);
 
       const messages = await this.#MessageService.getMessages(
         {
@@ -63,6 +64,7 @@ class ConversationController {
       const response = {
         conversation: existingConversation,
         addressee: req.params.addresseeUsername,
+        newMessage,
         /// Doing this reverse here since the service didn't seem to allow for a chain of conflicting sorts
         messages: messages.reverse(),
       };
@@ -85,6 +87,7 @@ class ConversationController {
       const response = {
         conversation: newConversation,
         messages: [newMessage],
+        newMessage,
         addressee: req.params.addresseeUsername,
       };
 
@@ -128,7 +131,7 @@ class ConversationController {
     }
     postedMessage.conversation = existingConversation._id;
 
-    await this.#MessageService.createMessage(postedMessage);
+    const newMessage = await this.#MessageService.createMessage(postedMessage);
     const messages = await this.#MessageService.getMessages(
       {
         conversation: existingConversation._id,
@@ -140,6 +143,7 @@ class ConversationController {
     const response = {
       conversation: existingConversation,
       addressee: req.params.addresseeUsername,
+      newMessage,
       /// Doing this reverse here since the service didn't seem to allow for a chain of conflicting sorts
       messages: messages.reverse(),
     };
