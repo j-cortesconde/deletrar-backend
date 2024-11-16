@@ -25,9 +25,9 @@ router
   .patch(
     '/sendMessage/user/:addresseeUsername',
     conversationController.sendMessage,
-  )
-  // TODO: Seems to be no need for this. Conversations are created by sending a first message
-  .post('/user/:addresseeUsername', conversationController.createConversation);
+  );
+// Seems to be no need for this. Conversations are created by sending a first message
+// .post('/user/:addresseeUsername', conversationController.createConversation);
 
 // TODO: Not needed at the moment
 // // Make the following routes accessible only to admins:

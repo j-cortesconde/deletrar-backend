@@ -21,7 +21,7 @@ class ConversationController {
   };
 
   // Function that checks if theres a conversation. If it already exists, creates a new message for it and returns it, else it creates and returns a new conversation after recieving a request body with key [message]
-  createConversation = async (req, res, next) => {
+  #createConversation = async (req, res, next) => {
     if (req.params.addresseeUsername === req.user.username) {
       return res.status(400).json({
         status: 'fail',
@@ -40,63 +40,64 @@ class ConversationController {
       messenger: req.user.username,
     };
 
-    const existingConversation =
-      await this.#ConversationService.getConversation({
-        participants: {
-          $all: [req.user.username, req.params.addresseeUsername],
-        },
-      });
+    // TODO: For a public createConversation, this would be necessary. Since this is private only to be used by sendMessage when no conversation is found, this is unnecessary and inconvenient
 
-    if (existingConversation) {
-      postedMessage.conversation = existingConversation._id;
+    // const existingConversation =
+    //   await this.#ConversationService.getConversation({
+    //     participants: {
+    //       $all: [req.user.username, req.params.addresseeUsername],
+    //     },
+    //   });
 
-      const newMessage =
-        await this.#MessageService.createMessage(postedMessage);
+    // if (existingConversation) {
+    //   postedMessage.conversation = existingConversation._id;
 
-      const messages = await this.#MessageService.getMessages(
-        {
-          conversation: existingConversation._id,
-        },
-        null,
-        req.query,
-      );
+    //   const newMessage =
+    //     await this.#MessageService.createMessage(postedMessage);
 
-      const response = {
-        conversation: existingConversation,
-        addressee: req.params.addresseeUsername,
-        newMessage,
-        /// Doing this reverse here since the service didn't seem to allow for a chain of conflicting sorts
-        messages: messages.reverse(),
-      };
+    //   // const messages = await this.#MessageService.getMessages(
+    //   //   {
+    //   //     conversation: existingConversation._id,
+    //   //   },
+    //   //   null,
+    //   //   req.query,
+    //   // );
 
-      res.status(200).json({
-        status: 'success',
-        data: response,
-      });
-    } else {
-      const postedConversation = {
-        participants: [req.user.username, req.params.addresseeUsername],
-      };
-      const newConversation =
-        await this.#ConversationService.createConversation(postedConversation);
+    //   const response = {
+    //     conversation: existingConversation,
+    //     addressee: req.params.addresseeUsername,
+    //     newMessage,
+    //     /// Doing this reverse here since the service didn't seem to allow for a chain of conflicting sorts
+    //     messages: messages.reverse(),
+    //   };
 
-      postedMessage.conversation = newConversation._id;
-      const newMessage =
-        await this.#MessageService.createMessage(postedMessage);
+    //   res.status(200).json({
+    //     status: 'success',
+    //     data: response,
+    //   });
+    // } else {
+    const postedConversation = {
+      participants: [req.user.username, req.params.addresseeUsername],
+    };
+    const newConversation =
+      await this.#ConversationService.createConversation(postedConversation);
 
-      const response = {
-        conversation: newConversation,
-        messages: [newMessage],
-        newMessage,
-        addressee: req.params.addresseeUsername,
-      };
+    postedMessage.conversation = newConversation._id;
+    const newMessage = await this.#MessageService.createMessage(postedMessage);
 
-      res.status(200).json({
-        status: 'success',
-        data: response,
-      });
-    }
+    const response = {
+      conversation: newConversation,
+      messages: [newMessage],
+      newMessage,
+      addressee: req.params.addresseeUsername,
+    };
+
+    res.status(200).json({
+      status: 'success',
+      data: response,
+    });
   };
+  // };
 
   // Creates a new message for a conversation
   sendMessage = async (req, res, next) => {
@@ -127,25 +128,16 @@ class ConversationController {
       });
 
     if (!existingConversation) {
-      return this.createConversation(req, res, next);
+      return this.#createConversation(req, res, next);
     }
     postedMessage.conversation = existingConversation._id;
 
     const newMessage = await this.#MessageService.createMessage(postedMessage);
-    const messages = await this.#MessageService.getMessages(
-      {
-        conversation: existingConversation._id,
-      },
-      null,
-      req.query,
-    );
 
     const response = {
       conversation: existingConversation,
       addressee: req.params.addresseeUsername,
       newMessage,
-      /// Doing this reverse here since the service didn't seem to allow for a chain of conflicting sorts
-      messages: messages.reverse(),
     };
 
     res.status(200).json({
