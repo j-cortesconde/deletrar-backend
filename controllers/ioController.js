@@ -52,10 +52,10 @@ class IoController {
 
     socket.on(
       'sendMessage',
-      async (conversationId, addresseeUsername, newMessage) => {
+      async (conversation, addresseeUsername, newMessage) => {
         await this.#handleSendMessage(
           socket,
-          conversationId,
+          conversation,
           addresseeUsername,
           newMessage,
         );
@@ -107,17 +107,17 @@ class IoController {
 
   #handleSendMessage = async (
     socket,
-    conversationId,
+    conversation,
     addresseeUsername,
     newMessage,
   ) => {
-    if (conversationId) {
+    if (conversation._id) {
       // TODO: These two first steps might be redundant
       // Check if the user is a participant in the conversation
       const isParticipant =
         await this.#conversationController.isUserInConversation(
           socket.user.username,
-          conversationId,
+          conversation._id,
         );
 
       // If not, return an error message
@@ -127,11 +127,14 @@ class IoController {
         });
       }
 
+      conversation.lastMessage = newMessage;
       // Communicate through the conversation that a message has been sent
-      socket.to(conversationId).emit('newConversationMessage', newMessage);
+      socket
+        .to(conversation._id)
+        .emit('newConversationMessage', conversation, newMessage);
 
       // Communicate to the addresse that a message has been sent
-      socket.to(addresseeUsername).emit('newUserMessage');
+      socket.to(addresseeUsername).emit('newUserMessage', conversation);
     }
   };
 
