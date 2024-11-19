@@ -70,6 +70,10 @@ class IoController {
       await this.#handleStopTyping(socket, conversationId);
     });
 
+    socket.on('messageRead', async (conversationId, messageId) => {
+      await this.#handleRead(socket, conversationId, messageId);
+    });
+
     socket.on('disconnect', () => {
       console.log('Client disconnected');
       socket.leave(socket.user.username);
@@ -180,6 +184,27 @@ class IoController {
       // Communicate through the conversation that a message has been sent
       socket.in(conversationId).emit('stopTyping');
     }
+  };
+
+  #handleRead = async (socket, conversationId, messageId) => {
+    // Check if the user is a participant in the conversation
+    const isParticipant =
+      await this.#conversationController.isUserInConversation(
+        socket.user.username,
+        conversationId,
+      );
+
+    // If not, return an error message
+    if (!isParticipant) {
+      return socket.emit('error', {
+        message: 'You are not allowed to join this conversation',
+      });
+    }
+
+    await this.#conversationController.markAsRead(messageId);
+
+    // Communicate through the conversation that a message has been sent
+    socket.in(conversationId).emit('isRead', conversationId, messageId);
   };
 }
 

@@ -20,6 +20,18 @@ class ConversationController {
     );
   };
 
+  markAsRead = async (messageId) => {
+    const message = await this.#MessageService.updateMessage(
+      { _id: messageId },
+      { read: true },
+      { new: true },
+    );
+
+    if (!message) throw new Error('Message not found');
+
+    return message;
+  };
+
   // Function that checks if theres a conversation. If it already exists, creates a new message for it and returns it, else it creates and returns a new conversation after recieving a request body with key [message]
   #createConversation = async (req, res, next) => {
     if (req.params.addresseeUsername === req.user.username) {
