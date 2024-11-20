@@ -83,6 +83,7 @@ class SharedService {
                 coverImage: 1,
                 updatedAt: 1,
                 postedAt: 1,
+                status: 1,
               },
             },
             {
@@ -137,6 +138,7 @@ class SharedService {
                 updatedAt: 1,
                 postedAt: 1,
                 posts: 1,
+                status: 1,
               },
             },
             {
@@ -236,6 +238,7 @@ class SharedService {
                 replyingTo: 1,
                 replyingToArray: 1,
                 postedAt: 1,
+                status: 1,
               },
             },
             // Lookup information for the author of the sharedComment
@@ -272,6 +275,7 @@ class SharedService {
                       coverImage: 1,
                       updatedAt: 1,
                       postedAt: 1,
+                      status: 1,
                     },
                   },
                   {
@@ -325,6 +329,7 @@ class SharedService {
                       coverImage: 1,
                       updatedAt: 1,
                       postedAt: 1,
+                      status: 1,
                     },
                   },
                   {
@@ -376,6 +381,7 @@ class SharedService {
                       replyingToArray: 1,
                       replyingTo: 1,
                       postedAt: 1,
+                      status: 1,
                     },
                   },
                   {
@@ -423,6 +429,7 @@ class SharedService {
                 targetCollection: 1,
                 replyingTo: 1,
                 documentType: 1,
+                status: 1,
               },
             },
           ],

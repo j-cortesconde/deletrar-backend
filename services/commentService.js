@@ -229,6 +229,7 @@ class CommentService {
           targetCollection: 1,
           replyingTo: 1,
           documentType: 1,
+          status: 1,
         },
       },
     ];
