@@ -97,8 +97,13 @@ class ConversationController {
     postedMessage.conversation = newConversation._id;
     const newMessage = await this.#MessageService.createMessage(postedMessage);
 
+    const existingConversation =
+      await this.#ConversationService.getConversation({
+        _id: newConversation._id,
+      });
+
     const response = {
-      conversation: newConversation,
+      conversation: existingConversation,
       messages: [newMessage],
       newMessage,
       addressee: req.params.addresseeUsername,
