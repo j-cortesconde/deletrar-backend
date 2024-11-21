@@ -42,7 +42,11 @@ class UserController {
   // TODO: Update. It shouldnt be duplicating. Now it gets different info for frontend route protection (like inactive, state and role)
   getMe = async (req, res, next) => {
     if (!req?.user?.id) {
-      return next(new AppError("User isn't logged in", 500));
+      // return next(new AppError("User isn't logged in", 500));
+      return res.status(200).json({
+        status: 'success',
+        data: null,
+      });
     }
 
     const select =
@@ -101,6 +105,19 @@ class UserController {
       {
         new: true,
         runValidators: true,
+        fields: {
+          _id: 1,
+          name: 1,
+          username: 1,
+          email: 1,
+          photo: 1,
+          role: 1,
+          active: 1,
+          createdAt: 1,
+          description: 1,
+          followerAmount: 1,
+          settings: 1,
+        },
       },
     );
 

@@ -95,9 +95,17 @@ const userSchema = new mongoose.Schema(
     },
     //TODO: Settings still to do:
     settings: {
+      publicAccount: {
+        type: Boolean,
+        default: true,
+      },
       receivingInvitationRequests: {
         type: Boolean,
         default: true,
+      },
+      publicEditing: {
+        type: Boolean,
+        default: false,
       },
     },
     notes: {
