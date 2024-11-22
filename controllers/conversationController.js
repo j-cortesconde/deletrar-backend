@@ -71,7 +71,6 @@ class ConversationController {
     //   //   {
     //   //     conversation: existingConversation._id,
     //   //   },
-    //   //   null,
     //   //   req.query,
     //   // );
 
@@ -197,6 +196,7 @@ class ConversationController {
       { populate: 'lastMessage' },
     );
 
+    // TODO: No habría que cambiar esto por una respuesta vacía en vez de un error?
     if (!conversation) {
       return res.status(404).json({
         status: 'fail',
@@ -217,18 +217,22 @@ class ConversationController {
       conversation.lastMessage = updatedLastMessage;
     }
 
-    const messages = await this.#MessageService.getMessages(
-      {
-        conversation: conversation._id,
-      },
-      null,
-      req.query,
-    );
+    const { limitedDocuments, totalCount, hasNextPage, nextPage } =
+      await this.#MessageService.getMessages(
+        {
+          conversation: conversation._id,
+        },
+        req.query,
+      );
 
     const response = {
       conversation,
+      totalCount,
+      hasNextPage,
+      nextPage,
+      // TODO: Since this service is now an aggregation pipeline instead of a query, this might be avoidable
       /// Doing this reverse here since the service didn't seem to allow for a chain of conflicting sorts
-      messages: messages.reverse(),
+      messages: limitedDocuments.reverse(),
     };
 
     res.status(200).json({

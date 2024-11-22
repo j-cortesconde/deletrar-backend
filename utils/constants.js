@@ -20,7 +20,7 @@ exports.SHARED_LIMIT = 30;
 
 // This is the limit for conversations displayed
 // IMPORTANT. This must only be changed in accordance to the change of its given constant(NONE YET) in frontend
-exports.CONVERSATION_LIMIT = 10;
+exports.CONVERSATION_LIMIT = 30;
 
 // The username set for all anonymous users who are allowed to leave comments or interact in other ways with the app
 exports.ANONYMOUS_USERNAME = 'lectoranonimo';
