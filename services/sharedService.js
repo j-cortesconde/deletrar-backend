@@ -248,6 +248,7 @@ class SharedService {
                 localField: 'author',
                 foreignField: 'username',
                 pipeline: [
+                  { $match: { active: true } },
                   { $project: { _id: 1, username: 1, name: 1, photo: 1 } },
                 ],
                 as: 'author',
@@ -390,6 +391,7 @@ class SharedService {
                       localField: 'author',
                       foreignField: 'username',
                       pipeline: [
+                        { $match: { active: true } },
                         {
                           $project: {
                             _id: 1,

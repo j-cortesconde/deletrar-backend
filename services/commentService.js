@@ -52,7 +52,10 @@ class CommentService {
           from: 'users',
           localField: 'author',
           foreignField: 'username',
-          pipeline: [{ $project: { _id: 1, username: 1, name: 1, photo: 1 } }],
+          pipeline: [
+            { $match: { active: true } },
+            { $project: { _id: 1, username: 1, name: 1, photo: 1 } },
+          ],
           as: 'author',
         },
       },
@@ -190,6 +193,7 @@ class CommentService {
                 localField: 'author',
                 foreignField: 'username',
                 pipeline: [
+                  { $match: { active: true } },
                   {
                     $project: {
                       _id: 1,
