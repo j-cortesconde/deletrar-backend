@@ -12,11 +12,11 @@ class PostController {
     const filteredBody = filterObj(
       req.body,
       'title',
-      'content',
       'summary',
       'status',
       'settings',
     );
+    if (req.body.content) filteredBody.content = JSON.parse(req.body.content);
     filteredBody.author = req.user.username;
     filteredBody.currentVersion = 1;
     filteredBody.updatedAt = Date.now();
@@ -59,11 +59,11 @@ class PostController {
     const filteredBody = filterObj(
       req.body,
       'title',
-      'content',
       'summary',
       'status',
       'settings',
     );
+    if (req.body.content) filteredBody.content = JSON.parse(req.body.content);
 
     if (Object.keys(filteredBody).length === 0) {
       return next(
