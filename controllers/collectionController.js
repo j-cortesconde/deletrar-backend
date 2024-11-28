@@ -3,12 +3,13 @@
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
 const CollectionService = require('../services/collectionService');
+const catchAsync = require('../utils/catchAsync');
 
 class CollectionController {
   #CollectionService = new CollectionService();
 
   // Function that creates collections filtering out of the creating object the fields the user isnt allowed to enter
-  createCollection = async (req, res, next) => {
+  createCollection = catchAsync(async (req, res, next) => {
     const filteredBody = filterObj(
       req.body,
       'title',
@@ -29,10 +30,10 @@ class CollectionController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
   // Updates the collection limiting the fields that can be updated, adding update time.
-  updateCollection = async (req, res, next) => {
+  updateCollection = catchAsync(async (req, res, next) => {
     const populate = [
       {
         path: 'collector',
@@ -114,10 +115,10 @@ class CollectionController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
   // Only returns status="posted" collections
-  getAllCollections = async (req, res, next) => {
+  getAllCollections = catchAsync(async (req, res, next) => {
     req.query.status = 'posted';
 
     const docs = await this.#CollectionService.getAllCollections(
@@ -131,10 +132,10 @@ class CollectionController {
       results: docs.length,
       data: docs,
     });
-  };
+  });
 
   // Only returns status="posted" collections
-  getCollectionsByCollectorUsername = async (req, res, next) => {
+  getCollectionsByCollectorUsername = catchAsync(async (req, res, next) => {
     const data = await this.#CollectionService.getCollections(
       { collector: req.params.username, status: 'posted' },
       req.query,
@@ -145,10 +146,10 @@ class CollectionController {
       status: 'success',
       data,
     });
-  };
+  });
 
   // Returns collections where status isn't "posted"
-  getOwnHiddenCollections = async (req, res, next) => {
+  getOwnHiddenCollections = catchAsync(async (req, res, next) => {
     const data = await this.#CollectionService.getCollections(
       { collector: req.user.username, status: { $ne: 'posted' } },
       req.query,
@@ -159,10 +160,10 @@ class CollectionController {
       status: 'success',
       data,
     });
-  };
+  });
 
   // TODO: I could add a setting to collections where one could set collection visibility (specific users that could see other users editing collections, private posted collections, etc) and add that logic here
-  getCollectionById = async (req, res, next) => {
+  getCollectionById = catchAsync(async (req, res, next) => {
     const populate = [
       {
         path: 'collector',
@@ -204,9 +205,9 @@ class CollectionController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
-  adminDeleteCollection = async (req, res, next) => {
+  adminDeleteCollection = catchAsync(async (req, res, next) => {
     const doc = await this.#CollectionService.deleteCollection(req.params.id);
 
     if (!doc) {
@@ -217,9 +218,9 @@ class CollectionController {
       status: 'success',
       data: null,
     });
-  };
+  });
 
-  searchCollections = async (req, res, next) => {
+  searchCollections = catchAsync(async (req, res, next) => {
     const docs = await this.#CollectionService.searchCollections(
       req.params.searchTerm,
     );
@@ -229,9 +230,9 @@ class CollectionController {
       results: docs.length,
       data: docs,
     });
-  };
+  });
 
-  addPost = async (req, res, next) => {
+  addPost = catchAsync(async (req, res, next) => {
     const populate = [
       {
         path: 'collector',
@@ -268,9 +269,9 @@ class CollectionController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
-  removePost = async (req, res, next) => {
+  removePost = catchAsync(async (req, res, next) => {
     const populate = [
       {
         path: 'collector',
@@ -305,9 +306,9 @@ class CollectionController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
-  movePost = async (req, res, next) => {
+  movePost = catchAsync(async (req, res, next) => {
     const populate = [
       {
         path: 'collector',
@@ -357,7 +358,7 @@ class CollectionController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 }
 
 module.exports = CollectionController;

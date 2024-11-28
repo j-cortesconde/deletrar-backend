@@ -3,12 +3,13 @@
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
 const PostService = require('../services/postService');
+const catchAsync = require('../utils/catchAsync');
 
 class PostController {
   #PostService = new PostService();
 
   // Function that creates posts filtering out of the creating object the fields the user isnt allowed to enter
-  createPost = async (req, res, next) => {
+  createPost = catchAsync(async (req, res, next) => {
     const filteredBody = filterObj(
       req.body,
       'title',
@@ -29,10 +30,10 @@ class PostController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
   // Updates the post limiting the fields that can be updated, adding update time, counting number of versions (posted versions) and adding the document's previous state as a string to its previousVersion field (if both previous and new version are posted versions).
-  updatePost = async (req, res, next) => {
+  updatePost = catchAsync(async (req, res, next) => {
     const populate = [
       {
         path: 'author',
@@ -101,10 +102,10 @@ class PostController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
   //Looks for a document's previous version. If no version number is specified in GET, the immediate previous is sent. Else, that which was specified.
-  getPreviousVersion = async (req, res, next) => {
+  getPreviousVersion = catchAsync(async (req, res, next) => {
     const populate = [
       {
         path: 'author',
@@ -158,10 +159,10 @@ class PostController {
       status: 'success',
       data: oldVersion,
     });
-  };
+  });
 
   // Only returns status="posted" posts
-  getAllPosts = async (req, res, next) => {
+  getAllPosts = catchAsync(async (req, res, next) => {
     req.query.status = 'posted';
 
     const docs = await this.#PostService.getAllPosts(req.query, '-settings');
@@ -172,10 +173,10 @@ class PostController {
       results: docs.length,
       data: docs,
     });
-  };
+  });
 
   // Only returns status="posted" posts
-  getPostsByAuthorUsername = async (req, res, next) => {
+  getPostsByAuthorUsername = catchAsync(async (req, res, next) => {
     const data = await this.#PostService.getPosts(
       { author: req.params.username, status: 'posted' },
       req.query,
@@ -186,10 +187,10 @@ class PostController {
       status: 'success',
       data,
     });
-  };
+  });
 
   // Returns posts where status isn't "posted"
-  getOwnHidenPosts = async (req, res, next) => {
+  getOwnHidenPosts = catchAsync(async (req, res, next) => {
     const data = await this.#PostService.getPosts(
       { author: req.user.username, status: { $ne: 'posted' } },
       req.query,
@@ -200,10 +201,10 @@ class PostController {
       status: 'success',
       data,
     });
-  };
+  });
 
   // TODO: I could add a setting to posts where one could set post visibility (specific users that could see other users editing posts, private posted posts, etc) and add that logic here
-  getPostById = async (req, res, next) => {
+  getPostById = catchAsync(async (req, res, next) => {
     const populate = [
       {
         path: 'author',
@@ -232,9 +233,9 @@ class PostController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
-  adminDeletePost = async (req, res, next) => {
+  adminDeletePost = catchAsync(async (req, res, next) => {
     const doc = await this.#PostService.deletePost(req.params.id);
 
     if (!doc) {
@@ -245,9 +246,9 @@ class PostController {
       status: 'success',
       data: null,
     });
-  };
+  });
 
-  searchPosts = async (req, res, next) => {
+  searchPosts = catchAsync(async (req, res, next) => {
     const docs = await this.#PostService.searchPosts(req.params.searchTerm);
 
     res.status(200).json({
@@ -255,7 +256,7 @@ class PostController {
       results: docs.length,
       data: docs,
     });
-  };
+  });
 }
 
 module.exports = PostController;

@@ -4,6 +4,7 @@ const PostService = require('../services/postService');
 const CollectionService = require('../services/collectionService');
 const CommentService = require('../services/commentService');
 const SharedService = require('../services/sharedService');
+const catchAsync = require('../utils/catchAsync');
 
 class feedController {
   #UserService = new UserService();
@@ -58,7 +59,7 @@ class feedController {
     };
   };
 
-  getFeed = async (req, res) => {
+  getFeed = catchAsync(async (req, res) => {
     let userFeed;
     let genericFeed;
 
@@ -80,9 +81,9 @@ class feedController {
       status: 'Success',
       data,
     });
-  };
+  });
 
-  #getGenericFeed = async (req) => {
+  #getGenericFeed = catchAsync(async (req) => {
     const [posts, collections, comments, shareds] = await Promise.all([
       this.#PostService.getPosts(
         {
@@ -136,10 +137,10 @@ class feedController {
     const nextPage = hasNextPage ? (Number(req.query?.page) || 1) + 1 : null;
 
     return { totalCounts, limitedDocuments, hasNextPage, nextPage };
-  };
+  });
 
   // TODO: Estoy agregando Posts y Collections por fecha de publicación, no por fecha de actualización. Agregar esto es posible funcionalidad futura (no MVP). Tampoco estoy agregando replies a comments de gente que sigo: funcionalidad futura al cuadrado (no MVP al cudadrado)
-  #getUserFeed = async (req) => {
+  #getUserFeed = catchAsync(async (req) => {
     // Get the list of followed users
     const rawFollowing = await this.#UserService.getFullFollowingIds(
       req.user.username,
@@ -206,7 +207,7 @@ class feedController {
     const nextPage = hasNextPage ? (Number(req.query?.page) || 1) + 1 : null;
 
     return { totalCounts, limitedDocuments, hasNextPage, nextPage };
-  };
+  });
 }
 
 module.exports = feedController;

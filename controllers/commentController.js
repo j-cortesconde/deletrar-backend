@@ -2,13 +2,14 @@ const mongoose = require('mongoose');
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
 const CommentService = require('../services/commentService');
+const catchAsync = require('../utils/catchAsync');
 const { ANONYMOUS_USERNAME } = require('../utils/constants');
 
 class CommentController {
   #CommentService = new CommentService();
 
   // Function that creates comments filtering out of the creating object the fields the user isnt allowed to enter
-  createComment = async (req, res, next) => {
+  createComment = catchAsync(async (req, res, next) => {
     const filteredBody = filterObj(
       req.body,
       'content',
@@ -38,10 +39,10 @@ class CommentController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
   // Updates the comment limiting the fields that can be updated (for now, only the status)
-  updateComment = async (req, res, next) => {
+  updateComment = catchAsync(async (req, res, next) => {
     const populate = [
       {
         path: 'targetCollection',
@@ -99,10 +100,10 @@ class CommentController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
   // Only returns status="posted" comments
-  getCommentsByPostId = async (req, res, next) => {
+  getCommentsByPostId = catchAsync(async (req, res, next) => {
     const targetPost = mongoose.Types.ObjectId.createFromHexString(
       req.params.postId,
     );
@@ -137,10 +138,10 @@ class CommentController {
       status: 'success',
       data: response,
     });
-  };
+  });
 
   // Only returns status="posted" comments
-  getCommentsByCollectionId = async (req, res, next) => {
+  getCommentsByCollectionId = catchAsync(async (req, res, next) => {
     const targetCollection = mongoose.Types.ObjectId.createFromHexString(
       req.params.collectionId,
     );
@@ -176,10 +177,10 @@ class CommentController {
       status: 'success',
       data: response,
     });
-  };
+  });
 
   // Only returns status="posted" comments
-  getCommentsByRepliedCommentId = async (req, res, next) => {
+  getCommentsByRepliedCommentId = catchAsync(async (req, res, next) => {
     const replyingTo = mongoose.Types.ObjectId.createFromHexString(
       req.params.commentId,
     );
@@ -210,10 +211,10 @@ class CommentController {
       status: 'success',
       data: response,
     });
-  };
+  });
 
   //TODO: ¿Debería de alguna forma limitar la cantidad de comentarios? Algún día quizás. No MVP
-  getCommentThread = async (req, res, next) => {
+  getCommentThread = catchAsync(async (req, res, next) => {
     const populate = { path: 'replyingToArray', populate: 'replies' };
 
     const doc = await this.#CommentService.getComment(req.params.commentId, {
@@ -237,9 +238,9 @@ class CommentController {
       status: 'success',
       data: docs,
     });
-  };
+  });
 
-  getCommentById = async (req, res, next) => {
+  getCommentById = catchAsync(async (req, res, next) => {
     const populate = [
       {
         path: 'targetCollection',
@@ -289,9 +290,9 @@ class CommentController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
-  adminDeleteComment = async (req, res, next) => {
+  adminDeleteComment = catchAsync(async (req, res, next) => {
     const doc = await this.#CommentService.deleteComment(req.params.id);
 
     if (!doc) {
@@ -302,7 +303,7 @@ class CommentController {
       status: 'success',
       data: null,
     });
-  };
+  });
 }
 
 module.exports = CommentController;

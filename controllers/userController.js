@@ -5,6 +5,7 @@ const UserService = require('../services/userService');
 const PostService = require('../services/postService');
 const CollectionService = require('../services/collectionService');
 const SharedService = require('../services/sharedService');
+const catchAsync = require('../utils/catchAsync');
 
 class UserController {
   #UserService = new UserService();
@@ -16,7 +17,7 @@ class UserController {
   #SharedService = new SharedService();
 
   // Makes sure the user submitted a currentPassword and checks it's correct
-  #checkPassword = async (req) => {
+  #checkPassword = catchAsync(async (req) => {
     // 1.1) Demands currentPassword
     if (!req.body.currentPassword)
       throw new AppError(
@@ -35,12 +36,12 @@ class UserController {
       // 1.3) Check if POSTed currentPassword is correct. If so, continues, else it errors
       throw new AppError('La contraseña que ingresaste es incorrecta.', 401);
     }
-  };
+  });
 
   // Returns the logged in users' information
   // FIXME: This is duplicating getUserById code. PosSol: Pass (req.params.id || req.user.id) into .getUserById()
   // TODO: Update. It shouldnt be duplicating. Now it gets different info for frontend route protection (like inactive, state and role)
-  getMe = async (req, res, next) => {
+  getMe = catchAsync(async (req, res, next) => {
     if (!req?.user?.id) {
       // return next(new AppError("User isn't logged in", 500));
       return res.status(200).json({
@@ -65,10 +66,10 @@ class UserController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
   // Updates currently loggedin user's information. Excludes password info and all info that isn't allowed to update this way (also allows to update photo path)
-  updateMe = async (req, res, next) => {
+  updateMe = catchAsync(async (req, res, next) => {
     // 0) Create error if user POSTs password data
     if (req.body.password || req.body.passwordConfirm) {
       return next(
@@ -129,10 +130,10 @@ class UserController {
       status: 'success',
       data: updatedUser,
     });
-  };
+  });
 
   // Initializes the user (adds custom username and changes role from invitee to user)
-  initializeMe = async (req, res, next) => {
+  initializeMe = catchAsync(async (req, res, next) => {
     // 1) Make sure the request includes a username and the user isn't initiated (is invitee)
     if (!req.body.username)
       return res.status(401).json({
@@ -163,10 +164,10 @@ class UserController {
       status: 'success',
       data: updatedUser,
     });
-  };
+  });
 
   // Finds the document for the current logged in user and sets it 'active' property to false, effectively disabling it.
-  deleteMe = async (req, res, next) => {
+  deleteMe = catchAsync(async (req, res, next) => {
     try {
       await this.#checkPassword(req);
     } catch (error) {
@@ -179,10 +180,10 @@ class UserController {
       status: 'success',
       data: null,
     });
-  };
+  });
 
   // Finds the document for the current logged in user and sets it 'active' property to true, effectively reenabling it.
-  reactivateMe = async (req, res, next) => {
+  reactivateMe = catchAsync(async (req, res, next) => {
     const select =
       'name username email photo description createdAt role settings active';
 
@@ -211,10 +212,10 @@ class UserController {
       status: 'success',
       data: user,
     });
-  };
+  });
 
   // Finds the document for the current logged in user and sets it 'active' property to true, effectively reenabling it.
-  deactivateMe = async (req, res, next) => {
+  deactivateMe = catchAsync(async (req, res, next) => {
     await this.#UserService.updateUser({ _id: req.user.id }, { active: false });
 
     await this.#CollectionService.updateCollections(
@@ -235,9 +236,9 @@ class UserController {
     res.status(200).json({
       status: 'success',
     });
-  };
+  });
 
-  getAllUsers = async (req, res, next) => {
+  getAllUsers = catchAsync(async (req, res, next) => {
     const doc = await this.#UserService.getAllUsers(
       req.query,
       'name username email photo description createdAt',
@@ -249,9 +250,9 @@ class UserController {
       results: doc.length,
       data: doc,
     });
-  };
+  });
 
-  getUserByUsername = async (req, res, next) => {
+  getUserByUsername = catchAsync(async (req, res, next) => {
     const select =
       'name username email photo description followerAmount createdAt';
     const doc = await this.#UserService.getUser(
@@ -269,19 +270,19 @@ class UserController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
-  createUser = async (req, res, next) => {
+  createUser = catchAsync(async (req, res, next) => {
     const doc = await this.#UserService.createUser(req.body);
 
     res.status(201).json({
       status: 'success',
       data: doc,
     });
-  };
+  });
 
   // Shouldn't be used for password updating.
-  updateUser = async (req, res, next) => {
+  updateUser = catchAsync(async (req, res, next) => {
     const doc = await this.#UserService.updateUser(
       { username: req.params.username },
       req.body,
@@ -299,9 +300,9 @@ class UserController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
-  deleteUser = async (req, res, next) => {
+  deleteUser = catchAsync(async (req, res, next) => {
     const doc = await this.#UserService.deleteUser(req.params.username);
 
     if (!doc) {
@@ -312,9 +313,9 @@ class UserController {
       status: 'success',
       data: null,
     });
-  };
+  });
 
-  followUser = async (req, res, next) => {
+  followUser = catchAsync(async (req, res, next) => {
     await this.#UserService.updateUser(
       { _id: req.user.id },
       {
@@ -344,9 +345,9 @@ class UserController {
       status: 'success',
       data: { otherUsername: otherUser.username },
     });
-  };
+  });
 
-  unfollowUser = async (req, res, next) => {
+  unfollowUser = catchAsync(async (req, res, next) => {
     await this.#UserService.updateUser(
       { _id: req.user.id },
       { $pull: { following: req.params.otherUsername } },
@@ -369,9 +370,9 @@ class UserController {
       status: 'success',
       data: { otherUsername: otherUser.username },
     });
-  };
+  });
 
-  searchUsers = async (req, res, next) => {
+  searchUsers = catchAsync(async (req, res, next) => {
     const docs = await this.#UserService.searchUsers(req.params.searchTerm);
 
     res.status(200).json({
@@ -379,12 +380,12 @@ class UserController {
       results: docs.length,
       data: docs,
     });
-  };
+  });
 
   // FIXME: HAVE TO CHANGE THIS as i said below
   // TODO: The following/follower model isnt ideal. The way it is now, there is a way to order by oldest/latest followed user (the users one follows) but not by oldest/latest following user (the users that follow one). Better solution is out there
   // TODO: Expanding on this. If you add a followers array field to the user schema and each time a user follows another one the followed username gets unshifted into the following array field of the follower document and the follower username gets unshifted into the followers array field of the followed user, then both the following and the followers arrays become ordered from latest first to oldest last. If this is done so, the getFollowers service should be changed for something that resembles the current state of the getFollowing one (a common service could even be created that just gets passed in the name of the field queried, following/followers)
-  getFollowers = async (req, res, next) => {
+  getFollowers = catchAsync(async (req, res, next) => {
     const data = await this.#UserService.getFollowingOrFollowers(
       'followers',
       req.params.username,
@@ -401,9 +402,9 @@ class UserController {
       status: 'success',
       data: response,
     });
-  };
+  });
 
-  getFollowing = async (req, res, next) => {
+  getFollowing = catchAsync(async (req, res, next) => {
     const data = await this.#UserService.getFollowingOrFollowers(
       'following',
       req.params.username,
@@ -420,9 +421,9 @@ class UserController {
       status: 'success',
       data: response,
     });
-  };
+  });
 
-  isFollower = async (req, res, next) => {
+  isFollower = catchAsync(async (req, res, next) => {
     const select = 'username';
 
     const doc = await this.#UserService.getUser(
@@ -439,9 +440,9 @@ class UserController {
       status: 'success',
       data: isFollower,
     });
-  };
+  });
 
-  amFollowing = async (req, res, next) => {
+  amFollowing = catchAsync(async (req, res, next) => {
     const select = 'username';
 
     const doc = await this.#UserService.getUser(
@@ -458,9 +459,9 @@ class UserController {
       status: 'success',
       data: amFollowing,
     });
-  };
+  });
 
-  savePost = async (req, res, next) => {
+  savePost = catchAsync(async (req, res, next) => {
     const doc = await this.#UserService.updateUser(
       { _id: req.user.id },
       {
@@ -479,9 +480,9 @@ class UserController {
       // TODO: See if ownUser must remain
       data: { ownUser: doc, docId: req.params.postId },
     });
-  };
+  });
 
-  unsavePost = async (req, res, next) => {
+  unsavePost = catchAsync(async (req, res, next) => {
     const doc = await this.#UserService.updateUser(
       { _id: req.user.id },
       { $pull: { savedPosts: req.params.postId } },
@@ -495,9 +496,9 @@ class UserController {
       status: 'success',
       data: { ownUser: doc, docId: req.params.postId },
     });
-  };
+  });
 
-  haveSavedPost = async (req, res, next) => {
+  haveSavedPost = catchAsync(async (req, res, next) => {
     const select = 'username';
 
     const doc = await this.#UserService.getUser(
@@ -514,9 +515,9 @@ class UserController {
       status: 'success',
       data: haveSaved,
     });
-  };
+  });
 
-  getSavedPosts = async (req, res, next) => {
+  getSavedPosts = catchAsync(async (req, res, next) => {
     const data = await this.#UserService.getSavedPosts(
       req.params.username,
       req.query,
@@ -533,9 +534,9 @@ class UserController {
       status: 'success',
       data: response,
     });
-  };
+  });
 
-  saveCollection = async (req, res, next) => {
+  saveCollection = catchAsync(async (req, res, next) => {
     const doc = await this.#UserService.updateUser(
       { _id: req.user.id },
       {
@@ -554,9 +555,9 @@ class UserController {
       // TODO: See if ownUser must remain
       data: { ownUser: doc, docId: req.params.collectionId },
     });
-  };
+  });
 
-  unsaveCollection = async (req, res, next) => {
+  unsaveCollection = catchAsync(async (req, res, next) => {
     const doc = await this.#UserService.updateUser(
       { _id: req.user.id },
       { $pull: { savedCollections: req.params.collectionId } },
@@ -570,9 +571,9 @@ class UserController {
       status: 'success',
       data: { ownUser: doc, docId: req.params.collectionId },
     });
-  };
+  });
 
-  haveSavedCollection = async (req, res, next) => {
+  haveSavedCollection = catchAsync(async (req, res, next) => {
     const select = 'username';
 
     const doc = await this.#UserService.getUser(
@@ -589,9 +590,9 @@ class UserController {
       status: 'success',
       data: haveSaved,
     });
-  };
+  });
 
-  getSavedCollections = async (req, res, next) => {
+  getSavedCollections = catchAsync(async (req, res, next) => {
     const data = await this.#UserService.getSavedCollections(
       req.params.username,
       req.query,
@@ -608,7 +609,7 @@ class UserController {
       status: 'success',
       data: response,
     });
-  };
+  });
 }
 
 module.exports = UserController;

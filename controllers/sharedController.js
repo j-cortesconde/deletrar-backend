@@ -2,12 +2,13 @@ const mongoose = require('mongoose');
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
 const SharedService = require('../services/sharedService');
+const catchAsync = require('../utils/catchAsync');
 
 class SharedController {
   #service = new SharedService();
 
   // Function that creates shareds filtering out of the creating object the fields the user isnt allowed to enter
-  createShared = async (req, res, next) => {
+  createShared = catchAsync(async (req, res, next) => {
     const filteredBody = filterObj(
       req.body,
       'sharedPost',
@@ -37,10 +38,10 @@ class SharedController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
   // Updates the shared limiting the fields that can be updated (for now, only the status)
-  updateShared = async (req, res, next) => {
+  updateShared = catchAsync(async (req, res, next) => {
     // TODO: Seems unnecessary. If necessary should be passed inside and object as the second arguemnt of getShared
     // const populate = [
     //   {
@@ -99,10 +100,10 @@ class SharedController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
   // Only returns status="posted" shareds
-  getAllShareds = async (req, res, next) => {
+  getAllShareds = catchAsync(async (req, res, next) => {
     const data = await this.#service.getSharedsAggregation(
       {
         status: 'posted',
@@ -115,10 +116,10 @@ class SharedController {
       status: 'success',
       data,
     });
-  };
+  });
 
   // Only returns status="posted" shareds
-  getSharedsBySharer = async (req, res, next) => {
+  getSharedsBySharer = catchAsync(async (req, res, next) => {
     const data = await this.#service.getSharedsAggregation(
       {
         sharer: req.params.username,
@@ -132,12 +133,12 @@ class SharedController {
       status: 'success',
       data,
     });
-  };
+  });
 
   // Only returns status="posted" shareds
   // TODO: Is not limiting ammount. Might want to, but not MVP
   // TODO: Add populate for collection and forth. MVP
-  getSharedsByPostId = async (req, res, next) => {
+  getSharedsByPostId = catchAsync(async (req, res, next) => {
     const sharedPost = mongoose.Types.ObjectId.createFromHexString(
       req.params.postId,
     );
@@ -172,12 +173,12 @@ class SharedController {
       status: 'success',
       data: response,
     });
-  };
+  });
 
   // Only returns status="posted" shareds
   // TODO: Is not limiting ammount. Might want to, but not MVP
   // TODO: Add populate for collection and forth. MVP
-  getSharedsByCollectionId = async (req, res, next) => {
+  getSharedsByCollectionId = catchAsync(async (req, res, next) => {
     const sharedCollection = mongoose.Types.ObjectId.createFromHexString(
       req.params.collectionId,
     );
@@ -212,12 +213,12 @@ class SharedController {
       status: 'success',
       data: response,
     });
-  };
+  });
 
   // Only returns status="posted" shareds
 
   // TODO: Is not limiting ammount. Might want to, but not MVP
-  getSharedsByCommentId = async (req, res, next) => {
+  getSharedsByCommentId = catchAsync(async (req, res, next) => {
     const sharedComment = mongoose.Types.ObjectId.createFromHexString(
       req.params.commentId,
     );
@@ -247,10 +248,10 @@ class SharedController {
       status: 'success',
       data: response,
     });
-  };
+  });
 
   // This is being done with getSharedsAggregation. Not using getShared, which may or may not be better. If this implementation fails, explore that before debugging this one
-  getSharedById = async (req, res, next) => {
+  getSharedById = catchAsync(async (req, res, next) => {
     const sharedId = mongoose.Types.ObjectId.createFromHexString(req.params.id);
 
     const { limitedDocuments } = await this.#service.getSharedsAggregation({
@@ -271,9 +272,9 @@ class SharedController {
       status: 'success',
       data: doc,
     });
-  };
+  });
 
-  adminDeleteShared = async (req, res, next) => {
+  adminDeleteShared = catchAsync(async (req, res, next) => {
     const doc = await this.#service.deleteShared(req.params.id);
 
     if (!doc) {
@@ -286,7 +287,7 @@ class SharedController {
       status: 'success',
       data: null,
     });
-  };
+  });
 }
 
 module.exports = SharedController;

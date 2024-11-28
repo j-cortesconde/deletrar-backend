@@ -1,12 +1,13 @@
 const UploadService = require('../services/uploadService');
 const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
 
 class UploadController {
   #UploadService = new UploadService();
 
   multerImageUpload = this.#UploadService.multerImageUpload;
 
-  uploadProfilePic = async (req, res, next) => {
+  uploadProfilePic = catchAsync(async (req, res, next) => {
     try {
       // Check if a file is uploaded, if none, just next
       if (!req.file) {
@@ -31,9 +32,9 @@ class UploadController {
         ),
       );
     }
-  };
+  });
 
-  uploadCoverImage = async (req, res, next) => {
+  uploadCoverImage = catchAsync(async (req, res, next) => {
     try {
       // Check if a file is uploaded, if none, just next
       if (!req.file) {
@@ -58,7 +59,7 @@ class UploadController {
         ),
       );
     }
-  };
+  });
 }
 
 module.exports = UploadController;

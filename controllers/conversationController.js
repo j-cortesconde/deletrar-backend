@@ -1,12 +1,13 @@
 const ConversationService = require('../services/conversationService');
 const MessageService = require('../services/messageService');
+const catchAsync = require('../utils/catchAsync');
 
 class ConversationController {
   #ConversationService = new ConversationService();
 
   #MessageService = new MessageService();
 
-  isUserInConversation = async (username, conversationId) => {
+  isUserInConversation = catchAsync(async (username, conversationId) => {
     const conversation =
       await this.#ConversationService.getConversationById(conversationId);
 
@@ -18,9 +19,9 @@ class ConversationController {
     return conversation.participants.some(
       (participant) => participant.username === username,
     );
-  };
+  });
 
-  markAsRead = async (messageId) => {
+  markAsRead = catchAsync(async (messageId) => {
     const message = await this.#MessageService.updateMessage(
       { _id: messageId },
       { read: true },
@@ -30,10 +31,10 @@ class ConversationController {
     if (!message) throw new Error('No se encontró ese mensaje.');
 
     return message;
-  };
+  });
 
   // Function that checks if theres a conversation. If it already exists, creates a new message for it and returns it, else it creates and returns a new conversation after recieving a request body with key [message]
-  #createConversation = async (req, res, next) => {
+  #createConversation = catchAsync(async (req, res, next) => {
     if (req.params.addresseeUsername === req.user.username) {
       return res.status(400).json({
         status: 'fail',
@@ -112,11 +113,11 @@ class ConversationController {
       status: 'success',
       data: response,
     });
-  };
+  });
   // };
 
   // Creates a new message for a conversation
-  sendMessage = async (req, res, next) => {
+  sendMessage = catchAsync(async (req, res, next) => {
     if (req.params.addresseeUsername === req.user.username) {
       return res.status(400).json({
         status: 'fail',
@@ -160,9 +161,9 @@ class ConversationController {
       status: 'success',
       data: response,
     });
-  };
+  });
 
-  getOwnConversations = async (req, res, next) => {
+  getOwnConversations = catchAsync(async (req, res, next) => {
     const matchObject = {
       participants: req.user.username,
     };
@@ -177,9 +178,9 @@ class ConversationController {
       status: 'success',
       data,
     });
-  };
+  });
 
-  getConversationByAddresseeUsername = async (req, res, next) => {
+  getConversationByAddresseeUsername = catchAsync(async (req, res, next) => {
     if (req.params.addresseeUsername === req.user.username) {
       return res.status(400).json({
         status: 'fail',
@@ -239,7 +240,7 @@ class ConversationController {
       status: 'success',
       data: response,
     });
-  };
+  });
 }
 
 module.exports = ConversationController;
