@@ -1,5 +1,5 @@
-// FIXME: This should be entirely removed (it was even causing issues with authentication, making some methods return before they finished awaiting)
-// TODO: This should be entirely removed (it was even causing issues with authentication, making some methods return before they finished awaiting)
+// This function is basically a try/catch wrapper for async controller functions
+// IMPORTANT: This function should only wrap functions which are ONLY called in routers. It should not wrap functions which will be called by other controller functions
 module.exports = (fn) => (req, res, next) => {
   fn(req, res, next).catch(next);
 };
