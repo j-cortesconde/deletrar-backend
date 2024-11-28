@@ -198,7 +198,7 @@ class CollectionService {
             name: '$collectorInfo.name',
             _id: '$collectorInfo._id',
             username: '$collectorInfo.username',
-          }, // Returns only the collector's name & id
+          },
         },
       },
       {
