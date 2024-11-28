@@ -23,7 +23,7 @@ class SharedController {
     ) {
       return next(
         new AppError(
-          'Shared must have either a sharedPost a sharedCollection or a sharedComment. Please contact admin',
+          'Tenés que estar compartiendo un texto, una colección o un comentario. Por favor comunicate con un administrador.',
           400,
         ),
       );
@@ -60,12 +60,17 @@ class SharedController {
     const oldDoc = await this.#service.getShared(req.params.id);
 
     if (!oldDoc) {
-      return next(new AppError('No shared found with that ID', 404));
+      return next(
+        new AppError('No se encontró ese documento compartido.', 404),
+      );
     }
 
     if (oldDoc.sharer.id !== req.user.id) {
       return next(
-        new AppError("You don't own the shared you're trying to update", 400),
+        new AppError(
+          'No sos propietario del documento compartido que estás intentando modificar.',
+          400,
+        ),
       );
     }
 
@@ -75,7 +80,7 @@ class SharedController {
     if (Object.keys(filteredBody).length === 0) {
       return next(
         new AppError(
-          "None of the fields you're trying to update are valid",
+          'Ninguno de los campos que estás intentando modificar es válido.',
           400,
         ),
       );
@@ -272,7 +277,9 @@ class SharedController {
     const doc = await this.#service.deleteShared(req.params.id);
 
     if (!doc) {
-      return next(new AppError('No document found with that ID', 404));
+      return next(
+        new AppError('No se encontró ese documento compartido.', 404),
+      );
     }
 
     res.status(204).json({

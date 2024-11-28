@@ -26,7 +26,7 @@ class UploadController {
     } catch (error) {
       return next(
         new AppError(
-          'File upload failed. Try again later or check with an admin',
+          'Falló la carga de la imagen. Volvé a intentarlo más tarde o comunicate con un administrador.',
           500,
         ),
       );
@@ -53,7 +53,7 @@ class UploadController {
     } catch (error) {
       return next(
         new AppError(
-          'File upload failed. Try again later or check with an admin',
+          'Falló la carga de la imagen. Volvé a intentarlo más tarde o comunicate con un administrador.',
           500,
         ),
       );

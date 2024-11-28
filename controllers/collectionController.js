@@ -58,13 +58,18 @@ class CollectionController {
     });
 
     if (!oldDoc) {
-      return next(new AppError('No collection found with that ID', 404));
+      return next(
+        new AppError(
+          'No se encontró la colección que estás intentando modificar.',
+          404,
+        ),
+      );
     }
 
     if (oldDoc.collector.id !== req.user.id) {
       return next(
         new AppError(
-          "You don't own the collection you're trying to update",
+          'No sos propietario de la colección que estás intentando modificar.',
           400,
         ),
       );
@@ -83,7 +88,7 @@ class CollectionController {
     if (Object.keys(filteredBody).length === 0) {
       return next(
         new AppError(
-          "None of the fields you're trying to update are valid",
+          'Ninguno de los campos que estás intentando modificar es válido.',
           400,
         ),
       );
@@ -205,7 +210,7 @@ class CollectionController {
     const doc = await this.#CollectionService.deleteCollection(req.params.id);
 
     if (!doc) {
-      return next(new AppError('No document found with that ID', 404));
+      return next(new AppError('No se encontró la colección.', 404));
     }
 
     res.status(204).json({

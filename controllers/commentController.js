@@ -23,7 +23,7 @@ class CommentController {
     if (!filteredBody.targetCollection && !filteredBody.targetPost) {
       return next(
         new AppError(
-          'Comment must have either a targetPost or a targetCollection. Please contact admin',
+          'El comentario debe tener hacerse sobre un texto o una colección. Por favor comunicate con un administrador.',
           400,
         ),
       );
@@ -62,12 +62,15 @@ class CommentController {
     });
 
     if (!oldDoc) {
-      return next(new AppError('No comment found with that ID', 404));
+      return next(new AppError('No se encontró ese comentario.', 404));
     }
 
     if (oldDoc.author.id !== req.user.id) {
       return next(
-        new AppError("You don't own the comment you're trying to update", 400),
+        new AppError(
+          'No sos propietario del comentario que estás intentando modificar.',
+          400,
+        ),
       );
     }
 
@@ -76,7 +79,7 @@ class CommentController {
     if (Object.keys(filteredBody).length === 0) {
       return next(
         new AppError(
-          "None of the fields you're trying to update are valid",
+          'Ninguno de los campos que estás intentando modificar es válido.',
           400,
         ),
       );
@@ -217,13 +220,16 @@ class CommentController {
       populate,
     });
 
-    if (!doc) return next(new AppError('No comment found with that ID', 404));
+    if (!doc) return next(new AppError('No se encontró ese comentario.', 404));
 
     const docs = doc.replyingToArray;
 
     if (!docs)
       return next(
-        new AppError('No comment thread found for that comment', 404),
+        new AppError(
+          'No se encontró un hilo de respuestas para ese comentario.',
+          404,
+        ),
       );
 
     // SEND RESPONSE
@@ -289,7 +295,7 @@ class CommentController {
     const doc = await this.#CommentService.deleteComment(req.params.id);
 
     if (!doc) {
-      return next(new AppError('No document found with that ID', 404));
+      return next(new AppError('No se encontró ese comentario.', 404));
     }
 
     res.status(204).json({

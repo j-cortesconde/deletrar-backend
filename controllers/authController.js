@@ -62,14 +62,15 @@ class AuthController {
 
       if (!currentUser) {
         return {
-          error: 'The user belonging to this token does no longer exist.',
+          error: 'Ese usuario ya no existe.',
         };
       }
 
       // 4) Check if user changed password after the token was issued
       if (this.#UserService.changedPasswordAfter(currentUser, decoded.iat)) {
         return {
-          error: 'User recently changed password! Please log in again.',
+          error:
+            'Se registró un cambio de contraseña recientemente. Por favor volvé a iniciar sesión.',
         };
       }
 
@@ -79,11 +80,12 @@ class AuthController {
       if (err?.expiredAt) {
         if (res) this.logout(req, res);
         return {
-          error: 'Login has expired. Please log in again.',
+          error:
+            'Las credenciales de acceso han vencio. Por favor volvé a inciar sesión.',
         };
       }
       return {
-        error: 'An error has ocurred. Please log in again.',
+        error: 'Ocurrió un error. Por favor volvé a inciar sesión.',
         // error: err,
       };
     }
@@ -327,7 +329,7 @@ class AuthController {
 
     // 1) Check if email and password exist
     if (!email || !password) {
-      return next(new AppError('Please provide email and password!', 400));
+      return next(new AppError('Indicá correo y contraseña.', 400));
     }
 
     // 2) Get user associated with that email address
@@ -340,7 +342,7 @@ class AuthController {
     );
     // 3) Check password is correct
     if (!(await this.#UserService.isPasswordCorrect(user, password))) {
-      return next(new AppError('Incorrect email or password', 401));
+      return next(new AppError('Correo y/o contraseña erróneos.', 401));
     }
 
     // 4) If everything ok, send token to client
@@ -371,7 +373,7 @@ class AuthController {
 
     if (!token) {
       req.user = {
-        error: 'You are not logged in! Please log in to get access.',
+        error: 'Por favor iniciá sesión.',
       };
       return next();
     }
@@ -386,7 +388,12 @@ class AuthController {
   protect = catchAsync(async (req, res, next) => {
     // 1) REDUNDANCY. If nothing was passed in req.user, returns a generic error
     if (!req.user) {
-      return next(new AppError('There was an unexpected issue', 500));
+      return next(
+        new AppError(
+          'Tenés que iniciar sesión para realizar esta acción.',
+          400,
+        ),
+      );
     }
 
     // 2) Checks if there is a user error message in req.user.error
@@ -401,12 +408,10 @@ class AuthController {
   // Checks the user is initialized (isn't invitee). If so, nexts, if not, errors and prompts to initialize.
   isInitialized = (req, res, next) => {
     if (req.user.role === 'invitee') {
-      const initializeURL = `${req.protocol}://${req.get(
-        'host',
-      )}/api/v1/users/initializeMe`;
+      const initializeURL = `${process.env.FRONTEND_ADDRESS}/account/initialize`;
       return next(
         new AppError(
-          `User isnt yet initialized. Please do so by patching a username request at ${initializeURL}`,
+          `Tu cuenta aún no fue inicializada. Para hacerlo, dirigite a ${initializeURL}`,
           401,
         ),
       );
@@ -418,12 +423,10 @@ class AuthController {
   // Checks the user account is active. If so, nexts, if not, errors and prompts to reactivate.
   isActive = (req, res, next) => {
     if (!req.user.active) {
-      const reactivateURL = `${req.protocol}://${req.get(
-        'host',
-      )}/api/v1/users/reactivateMe`;
+      const reactivateURL = `${process.env.FRONTEND_ADDRESS}/account/reactivate`;
       return next(
         new AppError(
-          `User has been deactivated. Please reactivate it by sending a GET request to ${reactivateURL}`,
+          `Tu cuenta está desactivada. Para reactivarla dirigite a ${reactivateURL}`,
           401,
         ),
       );
@@ -470,7 +473,7 @@ class AuthController {
       if (!roles.includes(req.user.role)) {
         return next(
           new AppError(
-            'You do not have permission to perform this action',
+            'No tenés permiso para realizar esta acción. Por favor comunicate con un administrador.',
             403,
           ),
         );
@@ -561,12 +564,7 @@ class AuthController {
         req.body.passwordCurrent,
       ))
     ) {
-      return next(
-        new AppError(
-          'The value you entered for passwordCurrent is wrong.',
-          401,
-        ),
-      );
+      return next(new AppError('La contraseña es incorrecta.', 401));
     }
 
     // 3) If so, update password

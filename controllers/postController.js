@@ -47,12 +47,15 @@ class PostController {
     });
 
     if (!oldDoc) {
-      return next(new AppError('No post found with that ID', 404));
+      return next(new AppError('No se encontró ese texto.', 404));
     }
 
     if (oldDoc.author.id !== req.user.id) {
       return next(
-        new AppError("You don't own the post you're trying to update", 400),
+        new AppError(
+          'No sos propietario del texto que estás intentando modificar.',
+          400,
+        ),
       );
     }
 
@@ -68,7 +71,7 @@ class PostController {
     if (Object.keys(filteredBody).length === 0) {
       return next(
         new AppError(
-          "None of the fields you're trying to update are valid",
+          'Ninguno de los campos que estás intentando modificar es válido.',
           400,
         ),
       );
@@ -114,11 +117,11 @@ class PostController {
     const doc = await this.#PostService.getPost(req.params.id, { populate });
 
     if (!doc) {
-      return next(new AppError('No post found with that ID', 404));
+      return next(new AppError('No se encontró ese texto.', 404));
     }
 
     if (!doc.previousVersion) {
-      return next(new AppError('This post has no previous versions', 400));
+      return next(new AppError('Este texto no tiene versiones previas.', 400));
     }
 
     // If no version was specified in params, the immediate previous is chosen
@@ -127,7 +130,7 @@ class PostController {
     if (version > doc.currentVersion - 1 || version < 1) {
       return next(
         new AppError(
-          `Choose a valid previous version number between ${doc.currentVersion - 1} and 1`,
+          `Elegí un número de versión previa que se encuentre entre ${doc.currentVersion - 1} y 1`,
           400,
         ),
       );
@@ -144,7 +147,10 @@ class PostController {
     } catch (err) {
       // Redundancy error. Shouldn't occur if the rest of the code is working without bugs
       return next(
-        new AppError('It seems you chose an invalid version number', 400),
+        new AppError(
+          'Parece que elegiste un número inválido de versión previa.',
+          400,
+        ),
       );
     }
 
@@ -232,7 +238,7 @@ class PostController {
     const doc = await this.#PostService.deletePost(req.params.id);
 
     if (!doc) {
-      return next(new AppError('No document found with that ID', 404));
+      return next(new AppError('No se encontró ese texto.', 404));
     }
 
     res.status(204).json({

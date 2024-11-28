@@ -20,7 +20,7 @@ class UserController {
     // 1.1) Demands currentPassword
     if (!req.body.currentPassword)
       throw new AppError(
-        'You must submit your currentPassword before continuing.',
+        'Tenés que informar tu contraseña actual antes de poder seguir adelante.',
         401,
       );
 
@@ -33,7 +33,7 @@ class UserController {
       ))
     ) {
       // 1.3) Check if POSTed currentPassword is correct. If so, continues, else it errors
-      throw new AppError('The password you entered is wrong.', 401);
+      throw new AppError('La contraseña que ingresaste es incorrecta.', 401);
     }
   };
 
@@ -58,7 +58,7 @@ class UserController {
     });
 
     if (!doc) {
-      return next(new AppError('No document found with that ID', 404));
+      return next(new AppError('No se encontró ese usuario.', 404));
     }
 
     res.status(200).json({
@@ -72,8 +72,9 @@ class UserController {
     // 0) Create error if user POSTs password data
     if (req.body.password || req.body.passwordConfirm) {
       return next(
+        // TODO: Inform which is the correct section
         new AppError(
-          'This route is not for password updates. Please use /updateMyPassword.',
+          'Esta no es la forma en que se debe modificar la contraseña. Por favor dirigite a la sección correspondiente.',
           400,
         ),
       );
@@ -261,7 +262,7 @@ class UserController {
     );
 
     if (!doc) {
-      return next(new AppError('No document found with that username', 404));
+      return next(new AppError('No se encontró ese usuario.', 404));
     }
 
     res.status(200).json({
@@ -291,7 +292,7 @@ class UserController {
     );
 
     if (!doc) {
-      return next(new AppError('No document found with that username', 404));
+      return next(new AppError('No se encontró ese usuario.', 404));
     }
 
     res.status(200).json({
@@ -304,7 +305,7 @@ class UserController {
     const doc = await this.#UserService.deleteUser(req.params.username);
 
     if (!doc) {
-      return next(new AppError('No document found with that username', 404));
+      return next(new AppError('No se encontró ese usuario.', 404));
     }
 
     res.status(204).json({
@@ -520,8 +521,7 @@ class UserController {
       req.params.username,
       req.query,
     );
-    if (!data)
-      return next(new AppError('No user found with that username', 404));
+    if (!data) return next(new AppError('No se encontró ese usuario.', 404));
 
     const response = {
       count: data[0]?.totalAmount,
@@ -596,8 +596,7 @@ class UserController {
       req.params.username,
       req.query,
     );
-    if (!data)
-      return next(new AppError('No user found with that username', 404));
+    if (!data) return next(new AppError('No se encontró ese usuario.', 404));
 
     const response = {
       count: data[0]?.totalAmount,

@@ -13,14 +13,17 @@ class UploadService {
         cb(null, true);
       } else {
         cb(
-          new AppError('Not an image! Please upload only images.', 400),
+          new AppError(
+            'El archivo que enviaste no es una imagen. Por favor enviá sólo imágenes.',
+            400,
+          ),
           false,
         );
       }
     } catch (err) {
       cb(
         new AppError(
-          'Error processing file upload. Please talk to admin.',
+          'Hubo un problema cargando la imagen. Por favor comunicate con un administrador.',
           500,
         ),
         false,

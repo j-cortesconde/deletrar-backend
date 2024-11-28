@@ -11,7 +11,7 @@ class ConversationController {
       await this.#ConversationService.getConversationById(conversationId);
 
     if (!conversation) {
-      throw new Error('Conversation not found');
+      throw new Error('No se encontró esa conversación.');
     }
 
     // Check if the username exists in the participants array
@@ -27,7 +27,7 @@ class ConversationController {
       { new: true },
     );
 
-    if (!message) throw new Error('Message not found');
+    if (!message) throw new Error('No se encontró ese mensaje.');
 
     return message;
   };

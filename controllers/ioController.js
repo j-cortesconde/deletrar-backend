@@ -17,7 +17,7 @@ class IoController {
     const { token } = socket.handshake.auth;
 
     if (!token) {
-      return next(new Error('Authentication error. Send a token.'));
+      return next(new Error('Por favor iniciá sesión.'));
     }
 
     // 2) Get that token's user
@@ -25,7 +25,11 @@ class IoController {
 
     // 3) If no user (or error in user retrieval) next an error
     if (!socket.user) {
-      return next(new Error('There was an unexpected error'));
+      return next(
+        new Error(
+          'Hubo un error inesperado. Volvé a intentarlo más tarde o comunicate con un administrador.',
+        ),
+      );
     }
 
     if (socket.user.error) {
