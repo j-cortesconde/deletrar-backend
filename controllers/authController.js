@@ -44,7 +44,7 @@ class AuthController {
   };
 
   // TODO: Not handling cases in which the decoding fails for bad token
-  getTokenUser = catchAsync(async (token, req, res) => {
+  getTokenUser = async (token, req, res) => {
     try {
       // 2) Verification token
       const decoded = await promisify(jwt.verify)(
@@ -89,7 +89,7 @@ class AuthController {
         // error: err,
       };
     }
-  });
+  };
 
   // Highly complex method that handles foreign user's account request (to admins or users) and that contemplates the account already existing (in any role)
   requestInvite = catchAsync(async (req, res, next) => {
@@ -359,7 +359,7 @@ class AuthController {
 
   // Checks the user is logged in and if pw hasn't changed sin jwt emission. If so, adds it to req.user, if not, adds the error the protect method should return. In any case it nexts.
   // Adds the user document from the User model to  req.user
-  getLoggedInUser = catchAsync(async (req, res, next) => {
+  getLoggedInUser = async (req, res, next) => {
     // 1) Getting token and check of it's there
     let token;
     if (
@@ -381,7 +381,7 @@ class AuthController {
     // Calls a private method that gets and returns the user for that given token (or returns an object with an error key if no valid users were found so that the 'protect' method stops it)
     req.user = await this.getTokenUser(token, req, res);
     next();
-  });
+  };
 
   // IMPORTANT: This MW  must work in tandem with the getLoggedInUser MW
   // If the user is logged in, it gets it from getLoggedInUser in req.user. If user isnt logged in (or their login is invalid), gets instead an error message in req.user.error. In the first case it nexts, in the second case it returns the error.
@@ -433,37 +433,6 @@ class AuthController {
     }
     next();
   };
-
-  // FIXME: Check use cases: (seems to be for view renders). Ill do it in React on a different dir. Old message: Only for rendered pages, no errors!
-  isLoggedIn = catchAsync(async (req, res, next) => {
-    if (req.cookies.jwt) {
-      try {
-        // 1) verify token
-        const decoded = await promisify(jwt.verify)(
-          req.cookies.jwt,
-          process.env.JWT_SECRET,
-        );
-
-        // 2) Check if user still exists
-        const currentUser = await this.#UserService.getUserById(decoded.id);
-        if (!currentUser) {
-          return next();
-        }
-
-        // 3) Check if user changed password after the token was issued
-        if (currentUser.changedPasswordAfter(decoded.iat)) {
-          return next();
-        }
-
-        // THERE IS A LOGGED IN USER
-        res.locals.user = currentUser;
-        return next();
-      } catch (err) {
-        return next();
-      }
-    }
-    next();
-  });
 
   // Takes an unkown quantity of strings, arrays them and checks if the current logged in user's role is one of those specified roles. Nexts if so, errors if not.
   restrictTo =
