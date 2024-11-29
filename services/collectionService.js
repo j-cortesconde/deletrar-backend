@@ -52,7 +52,9 @@ class CollectionService {
           from: 'users',
           localField: 'collector',
           foreignField: 'username',
-          pipeline: [{ $project: { _id: 1, username: 1, name: 1, photo: 1 } }],
+          pipeline: [
+            { $project: { _id: 1, username: 1, name: 1, photo: 1, active: 1 } },
+          ],
           as: 'collector',
         },
       },
@@ -60,6 +62,11 @@ class CollectionService {
       {
         $addFields: {
           collector: { $arrayElemAt: ['$collector', 0] },
+        },
+      },
+      {
+        $match: {
+          'collector.active': true,
         },
       },
       {
@@ -73,7 +80,7 @@ class CollectionService {
                 _id: 1,
                 author: 1,
                 title: 1,
-                summary: 1,
+                // summary: 1,
                 postedAt: 1,
                 coverImage: 1,
                 status: 1,
@@ -85,7 +92,15 @@ class CollectionService {
                 localField: 'author',
                 foreignField: 'username',
                 pipeline: [
-                  { $project: { _id: 1, username: 1, name: 1, photo: 1 } },
+                  {
+                    $project: {
+                      _id: 1,
+                      username: 1,
+                      name: 1,
+                      photo: 1,
+                      active: 1,
+                    },
+                  },
                 ],
                 as: 'author',
               },
@@ -129,8 +144,94 @@ class CollectionService {
     };
   }
 
-  getCollection(collectionId, optionsObject) {
-    return this.#Collection.findById(collectionId, null, optionsObject);
+  // getCollection(collectionId, optionsObject) {
+  //   return this.#Collection.findById(collectionId, null, optionsObject);
+  // }
+  getCollection(matchObject) {
+    return this.#Collection.aggregate([
+      {
+        $match: {
+          ...matchObject,
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'collector',
+          foreignField: 'username',
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                id: { $toString: '$_id' },
+                username: 1,
+                name: 1,
+                photo: 1,
+                active: 1,
+              },
+            },
+          ],
+          as: 'collector',
+        },
+      },
+      // The user document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          collector: { $arrayElemAt: ['$collector', 0] },
+        },
+      },
+      {
+        $match: {
+          'collector.active': true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'posts',
+          foreignField: '_id',
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                author: 1,
+                title: 1,
+                summary: 1,
+                postedAt: 1,
+                coverImage: 1,
+                status: 1,
+              },
+            },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'author',
+                foreignField: 'username',
+                pipeline: [
+                  {
+                    $project: {
+                      _id: 1,
+                      username: 1,
+                      name: 1,
+                      photo: 1,
+                      active: 1,
+                    },
+                  },
+                ],
+                as: 'author',
+              },
+            },
+            // The user document is returned inside a one element array. This removes the array from between
+            {
+              $addFields: {
+                author: { $arrayElemAt: ['$author', 0] },
+              },
+            },
+          ],
+          as: 'posts',
+        },
+      },
+    ]);
   }
 
   updateCollection(matchObject, updateObject, updateOptions) {
@@ -198,9 +299,11 @@ class CollectionService {
             name: '$collectorInfo.name',
             _id: '$collectorInfo._id',
             username: '$collectorInfo.username',
+            active: '$collectorInfo.active',
           },
         },
       },
+      { $match: { 'collector.active': true } },
       {
         $limit: 10, // Limit results to 10 documents
       },

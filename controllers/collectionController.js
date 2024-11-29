@@ -1,5 +1,6 @@
 // TODO: Isnt there a better way to handle text versions by creating multiple documents that point to the initial doc instead of saving each version in a field?
 
+const mongoose = require('mongoose');
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
 const CollectionService = require('../services/collectionService');
@@ -34,28 +35,12 @@ class CollectionController {
 
   // Updates the collection limiting the fields that can be updated, adding update time.
   updateCollection = catchAsync(async (req, res, next) => {
-    const populate = [
-      {
-        path: 'collector',
-        model: 'User',
-        select: 'name photo username',
-        foreignField: 'username',
-      },
-      {
-        path: 'posts',
-        model: 'Post',
-        select: 'title author postedAt coverImage',
-        populate: {
-          path: 'author',
-          model: 'User',
-          select: 'name',
-          foreignField: 'username',
-        },
-      },
-    ];
+    const collectionId = mongoose.Types.ObjectId.createFromHexString(
+      req.params.id,
+    );
 
-    const oldDoc = await this.#CollectionService.getCollection(req.params.id, {
-      populate,
+    const [oldDoc] = await this.#CollectionService.getCollection({
+      _id: collectionId,
     });
 
     if (!oldDoc) {
@@ -100,6 +85,26 @@ class CollectionController {
 
     if (req.file) filteredBody.coverImage = req.file.filename;
     filteredBody.updatedAt = Date.now();
+
+    const populate = [
+      {
+        path: 'collector',
+        model: 'User',
+        select: 'name photo username active',
+        foreignField: 'username',
+      },
+      {
+        path: 'posts',
+        model: 'Post',
+        select: 'title author postedAt summary coverImage status',
+        populate: {
+          path: 'author',
+          model: 'User',
+          select: 'name username photo active',
+          foreignField: 'username',
+        },
+      },
+    ];
 
     const doc = await this.#CollectionService.updateCollection(
       { _id: req.params.id },
@@ -164,27 +169,12 @@ class CollectionController {
 
   // TODO: I could add a setting to collections where one could set collection visibility (specific users that could see other users editing collections, private posted collections, etc) and add that logic here
   getCollectionById = catchAsync(async (req, res, next) => {
-    const populate = [
-      {
-        path: 'collector',
-        model: 'User',
-        select: 'name username photo',
-        foreignField: 'username',
-      },
-      {
-        path: 'posts',
-        model: 'Post',
-        select: 'title author postedAt coverImage status',
-        populate: {
-          path: 'author',
-          model: 'User',
-          select: 'name username photo',
-          foreignField: 'username',
-        },
-      },
-    ];
-    const doc = await this.#CollectionService.getCollection(req.params.id, {
-      populate,
+    const collectionId = mongoose.Types.ObjectId.createFromHexString(
+      req.params.id,
+    );
+
+    const [doc] = await this.#CollectionService.getCollection({
+      _id: collectionId,
     });
 
     if (!doc) {
