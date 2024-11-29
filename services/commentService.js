@@ -58,7 +58,7 @@ class CommentService {
           foreignField: 'username',
           pipeline: [
             { $match: { active: true } },
-            { $project: { _id: 1, username: 1, name: 1, photo: 1 } },
+            { $project: { _id: 1, username: 1, name: 1, photo: 1, active: 1 } },
           ],
           as: 'author',
         },
@@ -78,37 +78,8 @@ class CommentService {
           pipeline: [
             {
               $project: {
-                author: 1,
                 _id: 1,
                 title: 1,
-                summary: 1,
-                coverImage: 1,
-                updatedAt: 1,
-                postedAt: 1,
-              },
-            },
-            {
-              $lookup: {
-                from: 'users',
-                localField: 'author',
-                foreignField: 'username',
-                pipeline: [
-                  {
-                    $project: {
-                      _id: 1,
-                      username: 1,
-                      name: 1,
-                      photo: 1,
-                    },
-                  },
-                ],
-                as: 'author',
-              },
-            },
-            // The user document is returned inside a one element array. This removes the array from between
-            {
-              $addFields: {
-                author: { $arrayElemAt: ['$author', 0] },
               },
             },
           ],
@@ -130,38 +101,8 @@ class CommentService {
           pipeline: [
             {
               $project: {
-                collector: 1,
                 _id: 1,
                 title: 1,
-                subtitle: 1,
-                summary: 1,
-                coverImage: 1,
-                updatedAt: 1,
-                postedAt: 1,
-              },
-            },
-            {
-              $lookup: {
-                from: 'users',
-                localField: 'collector',
-                foreignField: 'username',
-                pipeline: [
-                  {
-                    $project: {
-                      _id: 1,
-                      username: 1,
-                      name: 1,
-                      photo: 1,
-                    },
-                  },
-                ],
-                as: 'collector',
-              },
-            },
-            // The user document is returned inside a one element array. This removes the array from between
-            {
-              $addFields: {
-                collector: { $arrayElemAt: ['$collector', 0] },
               },
             },
           ],
@@ -184,11 +125,7 @@ class CommentService {
             {
               $project: {
                 _id: 1,
-                content: 1,
                 author: 1,
-                replyingToArray: 1,
-                replyingTo: 1,
-                postedAt: 1,
               },
             },
             {
@@ -203,7 +140,6 @@ class CommentService {
                       _id: 1,
                       username: 1,
                       name: 1,
-                      photo: 1,
                     },
                   },
                 ],
