@@ -50,7 +50,9 @@ class PostService {
           from: 'users',
           localField: 'author',
           foreignField: 'username',
-          pipeline: [{ $project: { _id: 1, username: 1, name: 1, photo: 1 } }],
+          pipeline: [
+            { $project: { _id: 1, username: 1, name: 1, photo: 1, active: 1 } },
+          ],
           as: 'author',
         },
       },
@@ -58,6 +60,11 @@ class PostService {
       {
         $addFields: {
           author: { $arrayElemAt: ['$author', 0] },
+        },
+      },
+      {
+        $match: {
+          'author.active': true,
         },
       },
     ];
@@ -89,8 +96,41 @@ class PostService {
     };
   }
 
-  getPost(postId, optionsObject) {
-    return this.#Post.findById(postId, null, optionsObject);
+  getPost(matchObject) {
+    return this.#Post.aggregate([
+      { $match: { ...matchObject } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'author',
+          foreignField: 'username',
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                id: { $toString: '$_id' },
+                username: 1,
+                name: 1,
+                photo: 1,
+                active: 1,
+              },
+            },
+          ],
+          as: 'author',
+        },
+      },
+      // The user document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          author: { $arrayElemAt: ['$author', 0] },
+        },
+      },
+      {
+        $match: {
+          'author.active': true,
+        },
+      },
+    ]);
   }
 
   updatePost(matchObject, updateObject, updateOptions) {
@@ -99,6 +139,10 @@ class PostService {
       updateObject,
       updateOptions,
     );
+  }
+
+  updatePosts(matchObject, updateObject, updateOptions) {
+    return this.#Post.updateMany(matchObject, updateObject, updateOptions);
   }
 
   deletePost(postId) {
@@ -150,9 +194,11 @@ class PostService {
             name: '$authorInfo.name',
             _id: '$authorInfo._id',
             username: '$authorInfo.username',
-          }, // Returns only the author's name & id
+            active: '$authorInfo.active',
+          },
         },
       },
+      { $match: { 'author.active': true } },
       {
         $limit: 10, // Limit results to 10 documents
       },

@@ -197,7 +197,7 @@ class CollectionController {
     if (doc.status !== 'posted' && doc.collector.id !== req.user.id) {
       return res.status(401).json({
         status: 'fail',
-        message: 'No tiene autorización para acceder a esta colección.',
+        message: 'No tenés autorización para acceder a esta colección.',
       });
     }
 

@@ -1,5 +1,6 @@
 // TODO: Isnt there a better way to handle text versions by creating multiple documents that point to the initial doc instead of saving each version in a field?
 
+const mongoose = require('mongoose');
 const AppError = require('../utils/appError');
 const filterObj = require('../utils/filterObj');
 const PostService = require('../services/postService');
@@ -34,17 +35,10 @@ class PostController {
 
   // Updates the post limiting the fields that can be updated, adding update time, counting number of versions (posted versions) and adding the document's previous state as a string to its previousVersion field (if both previous and new version are posted versions).
   updatePost = catchAsync(async (req, res, next) => {
-    const populate = [
-      {
-        path: 'author',
-        model: 'User',
-        select: 'name photo username',
-        foreignField: 'username',
-      },
-    ];
+    const postId = mongoose.Types.ObjectId.createFromHexString(req.params.id);
 
-    const oldDoc = await this.#PostService.getPost(req.params.id, {
-      populate,
+    const [oldDoc] = await this.#PostService.getPost({
+      _id: postId,
     });
 
     if (!oldDoc) {
@@ -82,11 +76,20 @@ class PostController {
       filteredBody.postedAt = Date.now();
 
     if (oldDoc.status === 'posted') {
-      filteredBody.previousVersion = JSON.stringify(oldDoc.toObject());
+      filteredBody.previousVersion = JSON.stringify(oldDoc);
       filteredBody.currentVersion = oldDoc.currentVersion + 1;
     }
     if (req.file) filteredBody.coverImage = req.file.filename;
     filteredBody.updatedAt = Date.now();
+
+    const populate = [
+      {
+        path: 'author',
+        model: 'User',
+        select: 'name photo username',
+        foreignField: 'username',
+      },
+    ];
 
     const doc = await this.#PostService.updatePost(
       { _id: req.params.id },
@@ -106,16 +109,11 @@ class PostController {
 
   //Looks for a document's previous version. If no version number is specified in GET, the immediate previous is sent. Else, that which was specified.
   getPreviousVersion = catchAsync(async (req, res, next) => {
-    const populate = [
-      {
-        path: 'author',
-        model: 'User',
-        select: 'name photo username',
-        foreignField: 'username',
-      },
-    ];
+    const postId = mongoose.Types.ObjectId.createFromHexString(req.params.id);
 
-    const doc = await this.#PostService.getPost(req.params.id, { populate });
+    const [doc] = await this.#PostService.getPost({
+      _id: postId,
+    });
 
     if (!doc) {
       return next(new AppError('No se encontró ese texto.', 404));
@@ -205,15 +203,11 @@ class PostController {
 
   // TODO: I could add a setting to posts where one could set post visibility (specific users that could see other users editing posts, private posted posts, etc) and add that logic here
   getPostById = catchAsync(async (req, res, next) => {
-    const populate = [
-      {
-        path: 'author',
-        model: 'User',
-        select: 'name photo username',
-        foreignField: 'username',
-      },
-    ];
-    const doc = await this.#PostService.getPost(req.params.id, { populate });
+    const postId = mongoose.Types.ObjectId.createFromHexString(req.params.id);
+
+    const [doc] = await this.#PostService.getPost({
+      _id: postId,
+    });
 
     if (!doc) {
       return res.status(404).json({
@@ -225,7 +219,7 @@ class PostController {
     if (doc.status !== 'posted' && doc.author.id !== req.user.id) {
       return res.status(401).json({
         status: 'fail',
-        message: 'No tiene autorización para acceder a este texto.',
+        message: 'No tenés autorización para acceder a este texto.',
       });
     }
 
