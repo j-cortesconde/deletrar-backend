@@ -43,23 +43,12 @@ class CommentController {
 
   // Updates the comment limiting the fields that can be updated (for now, only the status)
   updateComment = catchAsync(async (req, res, next) => {
-    const populate = [
-      {
-        path: 'targetCollection',
-        model: 'Collection',
-        select: 'title collector',
-        foreignField: 'id',
-      },
-      {
-        path: 'targetPost',
-        model: 'Post',
-        select: 'title author',
-        foreignField: 'id',
-      },
-    ];
+    const commentId = mongoose.Types.ObjectId.createFromHexString(
+      req.params.id,
+    );
 
-    const oldDoc = await this.#CommentService.getComment(req.params.id, {
-      populate,
+    const [oldDoc] = await this.#CommentService.getComment({
+      _id: commentId,
     });
 
     if (!oldDoc) {
@@ -85,6 +74,21 @@ class CommentController {
         ),
       );
     }
+
+    const populate = [
+      {
+        path: 'targetCollection',
+        model: 'Collection',
+        select: 'title collector',
+        foreignField: 'id',
+      },
+      {
+        path: 'targetPost',
+        model: 'Post',
+        select: 'title author',
+        foreignField: 'id',
+      },
+    ];
 
     const doc = await this.#CommentService.updateComment(
       req.params.id,
@@ -215,11 +219,17 @@ class CommentController {
 
   //TODO: ¿Debería de alguna forma limitar la cantidad de comentarios? Algún día quizás. No MVP
   getCommentThread = catchAsync(async (req, res, next) => {
-    const populate = { path: 'replyingToArray', populate: 'replies' };
+    const commentId = mongoose.Types.ObjectId.createFromHexString(
+      req.params.commentId,
+    );
 
-    const doc = await this.#CommentService.getComment(req.params.commentId, {
-      populate,
-    });
+    const [doc] = await this.#CommentService.getComment(
+      {
+        _id: commentId,
+        status: 'posted',
+      },
+      true,
+    );
 
     if (!doc) return next(new AppError('No se encontró ese comentario.', 404));
 
@@ -241,45 +251,16 @@ class CommentController {
   });
 
   getCommentById = catchAsync(async (req, res, next) => {
-    const populate = [
-      {
-        path: 'targetCollection',
-        model: 'Collection',
-        select: 'title collector',
-        foreignField: '_id',
-        populate: {
-          path: 'collector',
-          select: 'name username',
-          model: 'User',
-          foreignField: 'username',
-        },
-      },
-      {
-        path: 'targetPost',
-        model: 'Post',
-        select: 'title author',
-        foreignField: '_id',
-        populate: {
-          path: 'author',
-          select: 'name username',
-          model: 'User',
-          foreignField: 'username',
-        },
-      },
-      {
-        path: 'replyingToArray',
-        model: 'Comment',
-        foreignField: '_id',
-        populate: { path: 'replies' },
-      },
-      'replies',
-    ];
+    const commentId = mongoose.Types.ObjectId.createFromHexString(
+      req.params.id,
+    );
 
-    const doc = await this.#CommentService.getComment(req.params.id, {
-      populate,
+    const [doc] = await this.#CommentService.getComment({
+      _id: commentId,
+      status: 'posted',
     });
 
-    if (!doc || doc.status !== 'posted') {
+    if (!doc) {
       return res.status(404).json({
         status: 'fail',
         message: 'No se encontró el comentario que estás buscando.',

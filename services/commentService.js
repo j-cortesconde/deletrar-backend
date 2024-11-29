@@ -23,8 +23,199 @@ class CommentService {
     return this.#Comment.countDocuments(matchObject);
   }
 
-  getComment(commentId, optionsObject) {
-    return this.#Comment.findById(commentId, null, optionsObject);
+  getComment(matchObject, populateReplyingToArray = false) {
+    const basePipeline = [
+      { $match: { ...matchObject } },
+      // Populate author
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'author',
+          foreignField: 'username',
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                id: { $toString: '$_id' },
+                username: 1,
+                name: 1,
+                photo: 1,
+              },
+            },
+          ],
+          as: 'author',
+        },
+      },
+      {
+        $addFields: {
+          author: { $arrayElemAt: ['$author', 0] },
+        },
+      },
+      // Populate targetPost
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'targetPost',
+          foreignField: '_id',
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                title: 1,
+              },
+            },
+          ],
+          as: 'targetPost',
+        },
+      },
+      {
+        $addFields: {
+          targetPost: { $arrayElemAt: ['$targetPost', 0] },
+        },
+      },
+      // Populate targetCollection
+      {
+        $lookup: {
+          from: 'collections',
+          localField: 'targetCollection',
+          foreignField: '_id',
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                title: 1,
+              },
+            },
+          ],
+          as: 'targetCollection',
+        },
+      },
+      {
+        $addFields: {
+          targetCollection: { $arrayElemAt: ['$targetCollection', 0] },
+        },
+      },
+      // Calculating the amount of (immediate) replies for this comment
+      {
+        $lookup: {
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'replyingTo',
+          as: 'replies',
+        },
+      },
+      {
+        $addFields: {
+          replies: {
+            $size: {
+              $filter: {
+                input: '$replies',
+                as: 'reply',
+                cond: { $eq: ['$$reply.status', 'posted'] },
+              },
+            },
+          },
+        },
+      },
+    ];
+
+    if (populateReplyingToArray)
+      basePipeline.push({
+        $lookup: {
+          from: 'comments',
+          localField: 'replyingToArray',
+          foreignField: '_id',
+          pipeline: [
+            {
+              $facet: {
+                posted: [
+                  { $match: { status: 'posted' } },
+                  {
+                    $project: {
+                      _id: 1,
+                      status: 1,
+                      author: 1,
+                      postedAt: 1,
+                      content: 1,
+                    },
+                  },
+                  // Populate thread comment's author
+                  {
+                    $lookup: {
+                      from: 'users',
+                      localField: 'author',
+                      foreignField: 'username',
+                      pipeline: [
+                        { $match: { active: true } },
+                        {
+                          $project: {
+                            _id: 1,
+                            username: 1,
+                            name: 1,
+                            photo: 1,
+                            active: 1,
+                          },
+                        },
+                      ],
+                      as: 'author',
+                    },
+                  },
+                  {
+                    $addFields: {
+                      author: { $arrayElemAt: ['$author', 0] },
+                    },
+                  },
+
+                  // Calculating the amount of (immediate) replies for this thread comment
+                  {
+                    $lookup: {
+                      from: 'comments',
+                      localField: '_id',
+                      foreignField: 'replyingTo',
+                      as: 'replies',
+                    },
+                  },
+                  {
+                    $addFields: {
+                      replies: {
+                        $size: {
+                          $filter: {
+                            input: '$replies',
+                            as: 'reply',
+                            cond: { $eq: ['$$reply.status', 'posted'] },
+                          },
+                        },
+                      },
+                    },
+                  },
+                ],
+                notPosted: [
+                  { $match: { status: { $ne: 'posted' } } },
+                  { $project: { _id: 1, status: 1 } },
+                ],
+              },
+            },
+            {
+              $project: {
+                result: {
+                  $cond: {
+                    if: { $eq: [{ $size: '$posted' }, 0] },
+                    then: '$notPosted',
+                    else: '$posted',
+                  },
+                },
+              },
+            },
+            {
+              $unwind: '$result', // Flatten the resulting array if you expect one document at a time
+            },
+            { $replaceRoot: { newRoot: '$result' } },
+          ],
+          as: 'replyingToArray',
+        },
+      });
+
+    return this.#Comment.aggregate(basePipeline);
   }
 
   updateComment(commentId, updateObject, updateOptions) {
