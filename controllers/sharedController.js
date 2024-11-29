@@ -42,22 +42,6 @@ class SharedController {
 
   // Updates the shared limiting the fields that can be updated (for now, only the status)
   updateShared = catchAsync(async (req, res, next) => {
-    // TODO: Seems unnecessary. If necessary should be passed inside and object as the second arguemnt of getShared
-    // const populate = [
-    //   {
-    //     path: 'sharedCollection',
-    //     model: 'Collection',
-    //     select: 'title collector',
-    //     foreignField: 'id',
-    //   },
-    //   {
-    //     path: 'sharedPost',
-    //     model: 'Post',
-    //     select: 'title author',
-    //     foreignField: 'id',
-    //   },
-    // ];
-
     const oldDoc = await this.#service.getShared(req.params.id);
 
     if (!oldDoc) {

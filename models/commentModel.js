@@ -37,7 +37,7 @@ const commentSchema = new mongoose.Schema(
     status: {
       type: String,
       default: 'posted',
-      enum: ['posted', 'deleted'],
+      enum: ['posted', 'deleted', 'inactive'],
     },
     documentType: {
       type: String,

@@ -35,6 +35,10 @@ class CommentService {
     );
   }
 
+  updateComments(filterObject, updateObject, updateOptions) {
+    return this.#Comment.updateMany(filterObject, updateObject, updateOptions);
+  }
+
   deleteComment(commentId) {
     return this.#Comment.findByIdAndDelete(commentId);
   }

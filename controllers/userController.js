@@ -1,11 +1,12 @@
 // FIXME: I removed the catchAsync function from all methods that call services. Should add again somehow
 const filterObj = require('../utils/filterObj');
 const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
 const UserService = require('../services/userService');
 const PostService = require('../services/postService');
 const CollectionService = require('../services/collectionService');
 const SharedService = require('../services/sharedService');
-const catchAsync = require('../utils/catchAsync');
+const CommentService = require('../services/commentService');
 
 class UserController {
   #UserService = new UserService();
@@ -16,8 +17,10 @@ class UserController {
 
   #SharedService = new SharedService();
 
+  #CommentService = new CommentService();
+
   // Makes sure the user submitted a currentPassword and checks it's correct
-  #checkPassword = catchAsync(async (req) => {
+  #checkPassword = async (req) => {
     // 1.1) Demands currentPassword
     if (!req.body.currentPassword)
       throw new AppError(
@@ -36,7 +39,7 @@ class UserController {
       // 1.3) Check if POSTed currentPassword is correct. If so, continues, else it errors
       throw new AppError('La contraseña que ingresaste es incorrecta.', 401);
     }
-  });
+  };
 
   // Returns the logged in users' information
   // FIXME: This is duplicating getUserById code. PosSol: Pass (req.params.id || req.user.id) into .getUserById()
@@ -208,13 +211,18 @@ class UserController {
       { status: 'posted' },
     );
 
+    await this.#CommentService.updateComments(
+      { author: req.user.username, status: 'inactive' },
+      { status: 'posted' },
+    );
+
     res.status(200).json({
       status: 'success',
       data: user,
     });
   });
 
-  // Finds the document for the current logged in user and sets it 'active' property to true, effectively reenabling it.
+  // Finds the document for the current logged in user and sets it 'active' property to true, effectively disabling it.
   deactivateMe = catchAsync(async (req, res, next) => {
     await this.#UserService.updateUser({ _id: req.user.id }, { active: false });
 
@@ -230,6 +238,11 @@ class UserController {
 
     await this.#SharedService.updateShareds(
       { sharer: req.user.username, status: 'posted' },
+      { status: 'inactive' },
+    );
+
+    await this.#CommentService.updateComments(
+      { author: req.user.username, status: 'posted' },
       { status: 'inactive' },
     );
 
