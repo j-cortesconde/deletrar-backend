@@ -212,7 +212,7 @@ class PostController {
     if (!doc) {
       return res.status(404).json({
         status: 'fail',
-        message: 'No se encontró ningún texto con ese ID.',
+        message: 'No se encontró el texto que estás buscando.',
       });
     }
 

@@ -180,7 +180,7 @@ class CollectionController {
     if (!doc) {
       return res.status(404).json({
         status: 'fail',
-        message: 'No se encontró ninguna colección con ese ID.',
+        message: 'No se encontró la colección que estás buscando.',
       });
     }
 

@@ -264,7 +264,7 @@ class SharedController {
     if (!doc) {
       return res.status(404).json({
         status: 'fail',
-        message: 'No se encontró ningún documento compartido con ese ID.',
+        message: 'No se encontró el documento compartido que estás buscando.',
       });
     }
 

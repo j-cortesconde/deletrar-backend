@@ -282,7 +282,7 @@ class CommentController {
     if (!doc || doc.status !== 'posted') {
       return res.status(404).json({
         status: 'fail',
-        message: 'No se encontró ningún comentario con ese ID.',
+        message: 'No se encontró el comentario que estás buscando.',
       });
     }
 
