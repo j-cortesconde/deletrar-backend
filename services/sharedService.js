@@ -57,7 +57,9 @@ class SharedService {
           from: 'users',
           localField: 'sharer',
           foreignField: 'username',
-          pipeline: [{ $project: { _id: 1, username: 1, name: 1, photo: 1 } }],
+          pipeline: [
+            { $project: { _id: 1, username: 1, name: 1, photo: 1, active: 1 } },
+          ],
           as: 'sharer',
         },
       },
@@ -65,6 +67,11 @@ class SharedService {
       {
         $addFields: {
           sharer: { $arrayElemAt: ['$sharer', 0] },
+        },
+      },
+      {
+        $match: {
+          'sharer.active': true,
         },
       },
       // Lookup information for the sharedPost
@@ -75,41 +82,67 @@ class SharedService {
           foreignField: '_id',
           pipeline: [
             {
-              $project: {
-                author: 1,
-                _id: 1,
-                title: 1,
-                summary: 1,
-                coverImage: 1,
-                updatedAt: 1,
-                postedAt: 1,
-                status: 1,
-              },
-            },
-            {
-              $lookup: {
-                from: 'users',
-                localField: 'author',
-                foreignField: 'username',
-                pipeline: [
+              $facet: {
+                posted: [
+                  { $match: { status: 'posted' } },
                   {
                     $project: {
+                      author: 1,
                       _id: 1,
-                      username: 1,
-                      name: 1,
-                      photo: 1,
+                      title: 1,
+                      summary: 1,
+                      coverImage: 1,
+                      updatedAt: 1,
+                      postedAt: 1,
+                      status: 1,
+                    },
+                  },
+                  {
+                    $lookup: {
+                      from: 'users',
+                      localField: 'author',
+                      foreignField: 'username',
+                      pipeline: [
+                        {
+                          $project: {
+                            _id: 1,
+                            username: 1,
+                            name: 1,
+                            photo: 1,
+                          },
+                        },
+                      ],
+                      as: 'author',
+                    },
+                  },
+                  // The user document is returned inside a one element array. This removes the array from between
+                  {
+                    $addFields: {
+                      author: { $arrayElemAt: ['$author', 0] },
                     },
                   },
                 ],
-                as: 'author',
+                notPosted: [
+                  { $match: { status: { $ne: 'posted' } } },
+                  { $project: { _id: 1, status: 1 } },
+                ],
               },
             },
-            // The user document is returned inside a one element array. This removes the array from between
             {
-              $addFields: {
-                author: { $arrayElemAt: ['$author', 0] },
+              $project: {
+                result: {
+                  $cond: {
+                    if: { $eq: [{ $size: '$posted' }, 0] },
+                    then: '$notPosted',
+                    else: '$posted',
+                  },
+                },
               },
             },
+            {
+              $unwind: '$result', // Flatten the resulting array if you expect one document at a time
+            },
+            { $replaceRoot: { newRoot: '$result' } },
           ],
           as: 'sharedPost',
         },
@@ -128,198 +161,9 @@ class SharedService {
           foreignField: '_id',
           pipeline: [
             {
-              $project: {
-                collector: 1,
-                _id: 1,
-                title: 1,
-                subtitle: 1,
-                summary: 1,
-                coverImage: 1,
-                updatedAt: 1,
-                postedAt: 1,
-                posts: 1,
-                status: 1,
-              },
-            },
-            {
-              $lookup: {
-                from: 'users',
-                localField: 'collector',
-                foreignField: 'username',
-                pipeline: [
-                  {
-                    $project: {
-                      _id: 1,
-                      username: 1,
-                      name: 1,
-                      photo: 1,
-                    },
-                  },
-                ],
-                as: 'collector',
-              },
-            },
-            // The user document is returned inside a one element array. This removes the array from between
-            {
-              $addFields: {
-                collector: { $arrayElemAt: ['$collector', 0] },
-              },
-            },
-            // Lookup information for the sharedCollection's posts
-            {
-              $lookup: {
-                from: 'posts',
-                localField: 'posts',
-                foreignField: '_id',
-                pipeline: [
-                  {
-                    $project: {
-                      _id: 1,
-                      title: 1,
-                      summary: 1,
-                      coverImage: 1,
-                      postedAt: 1,
-                      author: 1,
-                      status: 1,
-                    },
-                  },
-                  {
-                    $lookup: {
-                      from: 'users',
-                      localField: 'author',
-                      foreignField: 'username',
-                      pipeline: [
-                        {
-                          $project: {
-                            _id: 1,
-                            username: 1,
-                            name: 1,
-                            photo: 1,
-                          },
-                        },
-                      ],
-                      as: 'author',
-                    },
-                  },
-                  // The user document is returned inside a one element array. This removes the array from between
-                  {
-                    $addFields: {
-                      author: { $arrayElemAt: ['$author', 0] },
-                    },
-                  },
-                ],
-                as: 'posts',
-              },
-            },
-          ],
-          as: 'sharedCollection',
-        },
-      },
-      // The collection document is returned inside a one element array. This removes the array from between
-      {
-        $addFields: {
-          sharedCollection: { $arrayElemAt: ['$sharedCollection', 0] },
-        },
-      },
-      // Lookup information for the sharedComment
-      {
-        $lookup: {
-          from: 'comments',
-          localField: 'sharedComment',
-          foreignField: '_id',
-          pipeline: [
-            {
-              $project: {
-                author: 1,
-                _id: 1,
-                content: 1,
-                targetPost: 1,
-                targetCollection: 1,
-                replyingTo: 1,
-                replyingToArray: 1,
-                postedAt: 1,
-                status: 1,
-              },
-            },
-            // Lookup information for the author of the sharedComment
-            {
-              $lookup: {
-                from: 'users',
-                localField: 'author',
-                foreignField: 'username',
-                pipeline: [
-                  { $match: { active: true } },
-                  { $project: { _id: 1, username: 1, name: 1, photo: 1 } },
-                ],
-                as: 'author',
-              },
-            },
-            // The user document is returned inside a one element array. This removes the array from between
-            {
-              $addFields: {
-                author: { $arrayElemAt: ['$author', 0] },
-              },
-            },
-            // Lookup information for the targetPost of the sharedComment
-            {
-              $lookup: {
-                from: 'posts',
-                localField: 'targetPost',
-                foreignField: '_id',
-                pipeline: [
-                  {
-                    $project: {
-                      author: 1,
-                      _id: 1,
-                      title: 1,
-                      summary: 1,
-                      coverImage: 1,
-                      updatedAt: 1,
-                      postedAt: 1,
-                      status: 1,
-                    },
-                  },
-                  {
-                    $lookup: {
-                      from: 'users',
-                      localField: 'author',
-                      foreignField: 'username',
-                      pipeline: [
-                        {
-                          $project: {
-                            _id: 1,
-                            username: 1,
-                            name: 1,
-                            photo: 1,
-                          },
-                        },
-                      ],
-                      as: 'author',
-                    },
-                  },
-                  // The user document is returned inside a one element array. This removes the array from between
-                  {
-                    $addFields: {
-                      author: { $arrayElemAt: ['$author', 0] },
-                    },
-                  },
-                ],
-                as: 'targetPost',
-              },
-            },
-            // The post document is returned inside a one element array. This removes the array from between
-            {
-              $addFields: {
-                targetPost: { $arrayElemAt: ['$targetPost', 0] },
-              },
-            },
-            // Lookup information for the targetCollection of the sharedComment
-            {
-              $lookup: {
-                from: 'collections',
-                localField: 'targetCollection',
-                foreignField: '_id',
-                pipeline: [
+              $facet: {
+                posted: [
+                  { $match: { status: 'posted' } },
                   {
                     $project: {
                       collector: 1,
@@ -330,6 +174,7 @@ class SharedService {
                       coverImage: 1,
                       updatedAt: 1,
                       postedAt: 1,
+                      posts: 1,
                       status: 1,
                     },
                   },
@@ -357,34 +202,109 @@ class SharedService {
                       collector: { $arrayElemAt: ['$collector', 0] },
                     },
                   },
+                  // Lookup information for the sharedCollection's posts
+                  {
+                    $lookup: {
+                      from: 'posts',
+                      localField: 'posts',
+                      foreignField: '_id',
+                      pipeline: [
+                        {
+                          $project: {
+                            _id: 1,
+                            title: 1,
+                            summary: 1,
+                            coverImage: 1,
+                            postedAt: 1,
+                            author: 1,
+                            status: 1,
+                          },
+                        },
+                        {
+                          $lookup: {
+                            from: 'users',
+                            localField: 'author',
+                            foreignField: 'username',
+                            pipeline: [
+                              {
+                                $project: {
+                                  _id: 1,
+                                  username: 1,
+                                  name: 1,
+                                  photo: 1,
+                                },
+                              },
+                            ],
+                            as: 'author',
+                          },
+                        },
+                        // The user document is returned inside a one element array. This removes the array from between
+                        {
+                          $addFields: {
+                            author: { $arrayElemAt: ['$author', 0] },
+                          },
+                        },
+                      ],
+                      as: 'posts',
+                    },
+                  },
                 ],
-                as: 'targetCollection',
+                notPosted: [
+                  { $match: { status: { $ne: 'posted' } } },
+                  { $project: { _id: 1, status: 1 } },
+                ],
               },
             },
-            // The collection document is returned inside a one element array. This removes the array from between
             {
-              $addFields: {
-                targetCollection: { $arrayElemAt: ['$targetCollection', 0] },
+              $project: {
+                result: {
+                  $cond: {
+                    if: { $eq: [{ $size: '$posted' }, 0] },
+                    then: '$notPosted',
+                    else: '$posted',
+                  },
+                },
               },
             },
-            // Lookup information for the replyingTo comment of the sharedComment
             {
-              $lookup: {
-                from: 'comments',
-                localField: 'replyingTo',
-                foreignField: '_id',
-                pipeline: [
+              $unwind: '$result', // Flatten the resulting array if you expect one document at a time
+            },
+            { $replaceRoot: { newRoot: '$result' } },
+          ],
+          as: 'sharedCollection',
+        },
+      },
+      // The collection document is returned inside a one element array. This removes the array from between
+      {
+        $addFields: {
+          sharedCollection: { $arrayElemAt: ['$sharedCollection', 0] },
+        },
+      },
+      // Lookup information for the sharedComment
+      {
+        $lookup: {
+          from: 'comments',
+          localField: 'sharedComment',
+          foreignField: '_id',
+          pipeline: [
+            {
+              $facet: {
+                posted: [
+                  { $match: { status: 'posted' } },
                   {
                     $project: {
+                      author: 1,
                       _id: 1,
                       content: 1,
-                      author: 1,
-                      replyingToArray: 1,
+                      targetPost: 1,
+                      targetCollection: 1,
                       replyingTo: 1,
+                      replyingToArray: 1,
                       postedAt: 1,
                       status: 1,
                     },
                   },
+                  // Lookup information for the author of the sharedComment
                   {
                     $lookup: {
                       from: 'users',
@@ -393,12 +313,7 @@ class SharedService {
                       pipeline: [
                         { $match: { active: true } },
                         {
-                          $project: {
-                            _id: 1,
-                            username: 1,
-                            name: 1,
-                            photo: 1,
-                          },
+                          $project: { _id: 1, username: 1, name: 1, photo: 1 },
                         },
                       ],
                       as: 'author',
@@ -410,30 +325,204 @@ class SharedService {
                       author: { $arrayElemAt: ['$author', 0] },
                     },
                   },
+                  // Lookup information for the targetPost of the sharedComment
+                  {
+                    $lookup: {
+                      from: 'posts',
+                      localField: 'targetPost',
+                      foreignField: '_id',
+                      pipeline: [
+                        {
+                          $project: {
+                            author: 1,
+                            _id: 1,
+                            title: 1,
+                            summary: 1,
+                            coverImage: 1,
+                            updatedAt: 1,
+                            postedAt: 1,
+                            status: 1,
+                          },
+                        },
+                        {
+                          $lookup: {
+                            from: 'users',
+                            localField: 'author',
+                            foreignField: 'username',
+                            pipeline: [
+                              {
+                                $project: {
+                                  _id: 1,
+                                  username: 1,
+                                  name: 1,
+                                  photo: 1,
+                                },
+                              },
+                            ],
+                            as: 'author',
+                          },
+                        },
+                        // The user document is returned inside a one element array. This removes the array from between
+                        {
+                          $addFields: {
+                            author: { $arrayElemAt: ['$author', 0] },
+                          },
+                        },
+                      ],
+                      as: 'targetPost',
+                    },
+                  },
+                  // The post document is returned inside a one element array. This removes the array from between
+                  {
+                    $addFields: {
+                      targetPost: { $arrayElemAt: ['$targetPost', 0] },
+                    },
+                  },
+                  // Lookup information for the targetCollection of the sharedComment
+                  {
+                    $lookup: {
+                      from: 'collections',
+                      localField: 'targetCollection',
+                      foreignField: '_id',
+                      pipeline: [
+                        {
+                          $project: {
+                            collector: 1,
+                            _id: 1,
+                            title: 1,
+                            subtitle: 1,
+                            summary: 1,
+                            coverImage: 1,
+                            updatedAt: 1,
+                            postedAt: 1,
+                            status: 1,
+                          },
+                        },
+                        {
+                          $lookup: {
+                            from: 'users',
+                            localField: 'collector',
+                            foreignField: 'username',
+                            pipeline: [
+                              {
+                                $project: {
+                                  _id: 1,
+                                  username: 1,
+                                  name: 1,
+                                  photo: 1,
+                                },
+                              },
+                            ],
+                            as: 'collector',
+                          },
+                        },
+                        // The user document is returned inside a one element array. This removes the array from between
+                        {
+                          $addFields: {
+                            collector: { $arrayElemAt: ['$collector', 0] },
+                          },
+                        },
+                      ],
+                      as: 'targetCollection',
+                    },
+                  },
+                  // The collection document is returned inside a one element array. This removes the array from between
+                  {
+                    $addFields: {
+                      targetCollection: {
+                        $arrayElemAt: ['$targetCollection', 0],
+                      },
+                    },
+                  },
+                  // Lookup information for the replyingTo comment of the sharedComment
+                  {
+                    $lookup: {
+                      from: 'comments',
+                      localField: 'replyingTo',
+                      foreignField: '_id',
+                      pipeline: [
+                        {
+                          $project: {
+                            _id: 1,
+                            content: 1,
+                            author: 1,
+                            replyingToArray: 1,
+                            replyingTo: 1,
+                            postedAt: 1,
+                            status: 1,
+                          },
+                        },
+                        {
+                          $lookup: {
+                            from: 'users',
+                            localField: 'author',
+                            foreignField: 'username',
+                            pipeline: [
+                              { $match: { active: true } },
+                              {
+                                $project: {
+                                  _id: 1,
+                                  username: 1,
+                                  name: 1,
+                                  photo: 1,
+                                },
+                              },
+                            ],
+                            as: 'author',
+                          },
+                        },
+                        // The user document is returned inside a one element array. This removes the array from between
+                        {
+                          $addFields: {
+                            author: { $arrayElemAt: ['$author', 0] },
+                          },
+                        },
+                      ],
+                      as: 'replyingTo',
+                    },
+                  },
+                  // The comment document is returned inside a one element array. This removes the array from between
+                  {
+                    $addFields: {
+                      replyingTo: { $arrayElemAt: ['$replyingTo', 0] },
+                    },
+                  },
+                  {
+                    $project: {
+                      _id: 1,
+                      content: 1,
+                      author: 1,
+                      replyingToArray: 1,
+                      postedAt: 1,
+                      targetPost: 1,
+                      targetCollection: 1,
+                      replyingTo: 1,
+                      documentType: 1,
+                      status: 1,
+                    },
+                  },
                 ],
-                as: 'replyingTo',
-              },
-            },
-            // The comment document is returned inside a one element array. This removes the array from between
-            {
-              $addFields: {
-                replyingTo: { $arrayElemAt: ['$replyingTo', 0] },
+                notPosted: [
+                  { $match: { status: { $ne: 'posted' } } },
+                  { $project: { _id: 1, status: 1 } },
+                ],
               },
             },
             {
               $project: {
-                _id: 1,
-                content: 1,
-                author: 1,
-                replyingToArray: 1,
-                postedAt: 1,
-                targetPost: 1,
-                targetCollection: 1,
-                replyingTo: 1,
-                documentType: 1,
-                status: 1,
+                result: {
+                  $cond: {
+                    if: { $eq: [{ $size: '$posted' }, 0] },
+                    then: '$notPosted',
+                    else: '$posted',
+                  },
+                },
               },
             },
+            {
+              $unwind: '$result', // Flatten the resulting array if you expect one document at a time
+            },
+            { $replaceRoot: { newRoot: '$result' } },
           ],
           as: 'sharedComment',
         },
