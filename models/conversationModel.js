@@ -32,7 +32,7 @@ conversationSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'participants',
     model: 'User',
-    select: 'name photo username',
+    select: 'name photo username active',
     foreignField: 'username',
   });
   next();
