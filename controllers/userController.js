@@ -59,7 +59,7 @@ class UserController {
     });
 
     if (!doc) {
-      return next(new AppError('No se encontró ese usuario.', 404));
+      return next(new AppError('No se encontró a ese usuario.', 404));
     }
 
     res.status(200).json({
@@ -263,7 +263,7 @@ class UserController {
     );
 
     if (!doc) {
-      return next(new AppError('No se encontró ese usuario.', 404));
+      return next(new AppError('No se encontró a ese usuario.', 404));
     }
 
     res.status(200).json({
@@ -293,7 +293,7 @@ class UserController {
     );
 
     if (!doc) {
-      return next(new AppError('No se encontró ese usuario.', 404));
+      return next(new AppError('No se encontró a ese usuario.', 404));
     }
 
     res.status(200).json({
@@ -306,7 +306,7 @@ class UserController {
     const doc = await this.#UserService.deleteUser(req.params.username);
 
     if (!doc) {
-      return next(new AppError('No se encontró ese usuario.', 404));
+      return next(new AppError('No se encontró a ese usuario.', 404));
     }
 
     res.status(204).json({
@@ -522,7 +522,7 @@ class UserController {
       req.params.username,
       req.query,
     );
-    if (!data) return next(new AppError('No se encontró ese usuario.', 404));
+    if (!data) return next(new AppError('No se encontró a ese usuario.', 404));
 
     const response = {
       count: data[0]?.totalAmount,
@@ -597,7 +597,7 @@ class UserController {
       req.params.username,
       req.query,
     );
-    if (!data) return next(new AppError('No se encontró ese usuario.', 404));
+    if (!data) return next(new AppError('No se encontró a ese usuario.', 404));
 
     const response = {
       count: data[0]?.totalAmount,
