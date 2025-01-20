@@ -8,7 +8,6 @@ class ErrorController {
 
   #handleDuplicateFieldsDB = (err) => {
     const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0];
-    console.log(value);
 
     const message = `El siguiente valor está duplicado: ${value}. Por favor usá otro.`;
     return new AppError(message, 400);
