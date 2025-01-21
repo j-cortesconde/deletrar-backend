@@ -189,6 +189,7 @@ class PostService {
           summary: 1,
           coverImage: 1,
           status: 1,
+          postedAt: 1,
           documentType: 1,
           author: {
             name: '$authorInfo.name',

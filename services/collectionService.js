@@ -295,6 +295,7 @@ class CollectionService {
           coverImage: 1,
           status: 1,
           documentType: 1,
+          postedAt: 1,
           collector: {
             name: '$collectorInfo.name',
             _id: '$collectorInfo._id',
