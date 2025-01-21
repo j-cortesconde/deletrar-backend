@@ -33,6 +33,7 @@ class CommentService {
           localField: 'author',
           foreignField: 'username',
           pipeline: [
+            { $match: { active: true } },
             {
               $project: {
                 _id: 1,
