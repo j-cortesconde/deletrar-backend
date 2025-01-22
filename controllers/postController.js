@@ -251,6 +251,24 @@ class PostController {
       data: docs,
     });
   });
+
+  createMockPosts = async (req, res, next) => {
+    const data = await this.#PostService.createMockPosts();
+
+    res.status(200).json({
+      status: 'success',
+      data: data,
+    });
+  };
+
+  createImages = async (req, res, next) => {
+    const images = await this.#PostService.getRandomImages();
+
+    res.status(200).json({
+      status: 'success',
+      data: images,
+    });
+  };
 }
 
 module.exports = PostController;

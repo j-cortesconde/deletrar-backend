@@ -13,6 +13,9 @@ const uploadController = new UploadController();
 
 router.use(authController.getLoggedInUser);
 
+router.get('/images', postController.createImages);
+router.get('/seed', postController.createMockPosts);
+
 router
   .get('/', postController.getAllPosts)
   .get('/user/:username', postController.getPostsByAuthorUsername)
