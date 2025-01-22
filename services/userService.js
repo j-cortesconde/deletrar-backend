@@ -97,6 +97,11 @@ class UserService {
         },
       },
       {
+        $match: {
+          active: true, // Filter only users which are active
+        },
+      },
+      {
         $limit: 10, // Limit results to 10 documents
       },
     ]);
