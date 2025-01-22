@@ -623,6 +623,15 @@ class UserController {
       data: response,
     });
   });
+
+  // createMockUsers = async (req, res) => {
+  //   const data = await this.#UserService.createMockUsers();
+
+  //   res.status(200).json({
+  //     status: 'success',
+  //     data,
+  //   });
+  // };
 }
 
 module.exports = UserController;

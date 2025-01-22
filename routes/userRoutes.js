@@ -79,6 +79,7 @@ router
 // Make the following routes accessible only to admins:
 router.use(authController.restrictTo('admin'));
 
+// router.get('/seed', userController.createMockUsers);
 router.post('/', userController.createUser);
 router
   .route('/id/:username')
