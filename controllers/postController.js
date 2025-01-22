@@ -252,23 +252,23 @@ class PostController {
     });
   });
 
-  createMockPosts = async (req, res, next) => {
-    const data = await this.#PostService.createMockPosts();
+  // createMockPosts = async (req, res, next) => {
+  //   const data = await this.#PostService.createMockPosts();
 
-    res.status(200).json({
-      status: 'success',
-      data: data,
-    });
-  };
+  //   res.status(200).json({
+  //     status: 'success',
+  //     data: data,
+  //   });
+  // };
 
-  createImages = async (req, res, next) => {
-    const images = await this.#PostService.getRandomImages();
+  // createImages = async (req, res, next) => {
+  //   const images = await this.#PostService.getRandomImages();
 
-    res.status(200).json({
-      status: 'success',
-      data: images,
-    });
-  };
+  //   res.status(200).json({
+  //     status: 'success',
+  //     data: images,
+  //   });
+  // };
 }
 
 module.exports = PostController;

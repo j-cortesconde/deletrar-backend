@@ -3,8 +3,8 @@ const Post = require('../models/postModel');
 const AggregationFeatures = require('../utils/aggregationFeatures');
 const APIFeatures = require('../utils/apiFeatures');
 const { AGGREGATION_LIMIT } = require('../utils/constants');
-const mockPostData = require('../helpers/postPreload');
-const mockData = require('../helpers/userPreload');
+// const mockPostData = require('../helpers/postPreload');
+// const mockData = require('../helpers/userPreload');
 
 class PostService {
   #Post = Post;
@@ -209,52 +209,52 @@ class PostService {
     ]);
   }
 
-  async createMockPosts() {
-    function removeAccents(str) {
-      return str
-        .normalize('NFD') // Normalize to decomposed form
-        .replace(/[\u0300-\u036f]/g, ''); // Remove all diacritical marks
-    }
+  // async createMockPosts() {
+  //   function removeAccents(str) {
+  //     return str
+  //       .normalize('NFD') // Normalize to decomposed form
+  //       .replace(/[\u0300-\u036f]/g, ''); // Remove all diacritical marks
+  //   }
 
-    const newPosts = await Promise.all(
-      mockPostData.posts.map(async (post, index) => {
-        const mockPost = { ...post };
-        mockPost.coverImage =
-          mockPostData.images[index] ||
-          'https://fastly.picsum.photos/id/915/1200/400.jpg?hmac=ADZybA0RtIpO_BbuEWi1GWCyDHqKUOMv3sUuuaViKms';
+  //   const newPosts = await Promise.all(
+  //     mockPostData.posts.map(async (post, index) => {
+  //       const mockPost = { ...post };
+  //       mockPost.coverImage =
+  //         mockPostData.images[index] ||
+  //         'https://fastly.picsum.photos/id/915/1200/400.jpg?hmac=ADZybA0RtIpO_BbuEWi1GWCyDHqKUOMv3sUuuaViKms';
 
-        if (index < 30) {
-          const [firstName, lastName] = mockData.names[index].split(' ');
-          const username = removeAccents(
-            firstName.slice(0, 1).concat(lastName).toLowerCase(),
-          );
+  //       if (index < 30) {
+  //         const [firstName, lastName] = mockData.names[index].split(' ');
+  //         const username = removeAccents(
+  //           firstName.slice(0, 1).concat(lastName).toLowerCase(),
+  //         );
 
-          mockPost.author = username;
-        } else if (index < 40) {
-          mockPost.author = 'jcortesconde';
-        } else if (index < 43) {
-          mockPost.author = 'bananator1';
-        } else if (index < 46) {
-          mockPost.author = 'jcortescondet';
-        } else if (index < 49) {
-          mockPost.author = 'twilightreporter';
-        } else {
-          mockPost.author = 'jcortesconde';
-        }
+  //         mockPost.author = username;
+  //       } else if (index < 40) {
+  //         mockPost.author = 'jcortesconde';
+  //       } else if (index < 43) {
+  //         mockPost.author = 'bananator1';
+  //       } else if (index < 46) {
+  //         mockPost.author = 'jcortescondet';
+  //       } else if (index < 49) {
+  //         mockPost.author = 'twilightreporter';
+  //       } else {
+  //         mockPost.author = 'jcortesconde';
+  //       }
 
-        if (index % 3 === 0) {
-          mockPost.status = 'editing';
-        } else if (index % 3 === 1) {
-          mockPost.status = 'posted';
-        } else if (index % 3 === 2) {
-          mockPost.status = 'deleted';
-        }
-        return await this.#Post.create(mockPost);
-      }),
-    );
+  //       if (index % 3 === 0) {
+  //         mockPost.status = 'editing';
+  //       } else if (index % 3 === 1) {
+  //         mockPost.status = 'posted';
+  //       } else if (index % 3 === 2) {
+  //         mockPost.status = 'deleted';
+  //       }
+  //       return await this.#Post.create(mockPost);
+  //     }),
+  //   );
 
-    return newPosts;
-  }
+  //   return newPosts;
+  // }
 
   // async getRandomImages() {
   //   const imageLinks = await Promise.all(
