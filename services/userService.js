@@ -495,8 +495,8 @@ class UserService {
   //       mockUser.name = name;
   //       mockUser.username = username;
   //       mockUser.email = email;
-  //       mockUser.password = 'Admin!1234';
-  //       mockUser.passwordConfirm = 'Admin!1234';
+  //       mockUser.password;
+  //       mockUser.passwordConfirm;
   //       // '$2a$12$BryDI.szpL7zoVUwCndHPezW8VDei1EYuSQ9UvgcwntVuzcJ8t65W';
   //       mockUser.description = mockData.descriptions[index];
   //       mockUser.photo = `https://randomuser.me/api/portraits/${index % 2 === 0 ? 'men' : 'women'}/${index + 1}.jpg`;
