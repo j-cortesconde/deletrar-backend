@@ -127,6 +127,7 @@ class UserService {
           localField: getFieldName,
           foreignField: 'username',
           as: getFieldName,
+          pipeline: [{ $match: { active: true } }],
         },
       },
       // Project the fields for the following user documents
