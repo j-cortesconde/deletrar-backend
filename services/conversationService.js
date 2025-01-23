@@ -32,7 +32,9 @@ class ConversationService {
           from: 'users',
           localField: 'participants',
           foreignField: 'username',
-          pipeline: [{ $project: { _id: 1, username: 1, name: 1, photo: 1 } }],
+          pipeline: [
+            { $project: { _id: 1, username: 1, name: 1, photo: 1, active: 1 } },
+          ],
           as: 'participants',
         },
       },
