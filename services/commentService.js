@@ -52,50 +52,6 @@ class CommentService {
           author: { $arrayElemAt: ['$author', 0] },
         },
       },
-      // Populate targetPost
-      {
-        $lookup: {
-          from: 'posts',
-          localField: 'targetPost',
-          foreignField: '_id',
-          pipeline: [
-            {
-              $project: {
-                _id: 1,
-                title: 1,
-              },
-            },
-          ],
-          as: 'targetPost',
-        },
-      },
-      {
-        $addFields: {
-          targetPost: { $arrayElemAt: ['$targetPost', 0] },
-        },
-      },
-      // Populate targetCollection
-      {
-        $lookup: {
-          from: 'collections',
-          localField: 'targetCollection',
-          foreignField: '_id',
-          pipeline: [
-            {
-              $project: {
-                _id: 1,
-                title: 1,
-              },
-            },
-          ],
-          as: 'targetCollection',
-        },
-      },
-      {
-        $addFields: {
-          targetCollection: { $arrayElemAt: ['$targetCollection', 0] },
-        },
-      },
       // Calculating the amount of (immediate) replies for this comment
       {
         $lookup: {
