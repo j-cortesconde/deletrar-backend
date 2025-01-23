@@ -4,6 +4,7 @@ const AggregationFeatures = require('../utils/aggregationFeatures');
 const APIFeatures = require('../utils/apiFeatures');
 const { AGGREGATION_LIMIT } = require('../utils/constants');
 // const mockPostData = require('../helpers/postPreload');
+// const mockCollectionData = require('../helpers/collectionPreload');
 // const mockData = require('../helpers/userPreload');
 
 class PostService {
@@ -258,9 +259,10 @@ class PostService {
 
   // async getRandomImages() {
   //   const imageLinks = await Promise.all(
-  //     mockPostData.posts.map(
+  //     // mockPostData.posts.map(
+  //     mockCollectionData.collections.map(
   //       // eslint-disable-next-line no-unused-vars
-  //       async (post) => {
+  //       async (element) => {
   //         const response = await axios.get('https://picsum.photos/1200/400');
   //         return response.request.res.responseUrl;
   //       },

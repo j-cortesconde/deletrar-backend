@@ -349,6 +349,15 @@ class CollectionController {
       data: doc,
     });
   });
+
+  // createMockCollections = async (req, res, next) => {
+  //   const data = await this.#CollectionService.createMockCollections();
+
+  //   res.status(200).json({
+  //     status: 'success',
+  //     data,
+  //   });
+  // };
 }
 
 module.exports = CollectionController;

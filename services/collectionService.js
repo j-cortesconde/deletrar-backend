@@ -2,6 +2,8 @@ const Collection = require('../models/collectionModel');
 const AggregationFeatures = require('../utils/aggregationFeatures');
 const APIFeatures = require('../utils/apiFeatures');
 const { AGGREGATION_LIMIT } = require('../utils/constants');
+// const mockCollectionData = require('../helpers/collectionPreload');
+// const mockData = require('../helpers/userPreload');
 
 class CollectionService {
   #Collection = Collection;
@@ -310,6 +312,53 @@ class CollectionService {
       },
     ]);
   }
+
+  // async createMockCollections() {
+  //   function removeAccents(str) {
+  //     return str
+  //       .normalize('NFD') // Normalize to decomposed form
+  //       .replace(/[\u0300-\u036f]/g, ''); // Remove all diacritical marks
+  //   }
+
+  //   const newCollections = await Promise.all(
+  //     mockCollectionData.collections.map(async (collection, index) => {
+  //       const mockCollection = { ...collection };
+  //       mockCollection.coverImage =
+  //         mockCollectionData.images[index] ||
+  //         'https://fastly.picsum.photos/id/915/1200/400.jpg?hmac=ADZybA0RtIpO_BbuEWi1GWCyDHqKUOMv3sUuuaViKms';
+
+  //       if (index < 21) {
+  //         const [firstName, lastName] = mockData.names[index].split(' ');
+  //         const username = removeAccents(
+  //           firstName.slice(0, 1).concat(lastName).toLowerCase(),
+  //         );
+
+  //         mockCollection.collector = username;
+  //       } else if (index < 31) {
+  //         mockCollection.collector = 'jcortesconde';
+  //       } else if (index < 34) {
+  //         mockCollection.collector = 'bananator1';
+  //       } else if (index < 37) {
+  //         mockCollection.collector = 'jcortescondet';
+  //       } else if (index < 40) {
+  //         mockCollection.collector = 'twilightreporter';
+  //       } else {
+  //         mockCollection.collector = 'jcortesconde';
+  //       }
+
+  //       if (index % 3 === 0) {
+  //         mockCollection.status = 'posted';
+  //       } else if (index % 3 === 1) {
+  //         mockCollection.status = 'editing';
+  //       } else if (index % 3 === 2) {
+  //         mockCollection.status = 'deleted';
+  //       }
+  //       return await this.#Collection.create(mockCollection);
+  //     }),
+  //   );
+
+  //   return newCollections;
+  // }
 }
 
 module.exports = CollectionService;

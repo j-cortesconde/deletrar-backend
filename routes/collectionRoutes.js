@@ -49,6 +49,7 @@ router
 // Make the following routes accessible only to admins:
 router.use(authController.restrictTo('admin'));
 
+// router.get('/seed', collectionController.createMockCollections);
 router.delete('/id/:id', collectionController.adminDeleteCollection);
 
 module.exports = router;
