@@ -109,7 +109,7 @@ class UserController {
     // 3) Update user document
     const updatedUser = await this.#UserService.updateUser(
       { _id: req.user.id },
-      filteredBody,
+      { $set: filteredBody },
       {
         new: true,
         runValidators: true,
@@ -159,7 +159,7 @@ class UserController {
 
     const updatedUser = await this.#UserService.updateUser(
       { _id: req.user.id },
-      filteredBody,
+      { $set: filteredBody },
       { select, new: true, runValidators: true },
     );
 
@@ -177,7 +177,10 @@ class UserController {
       return next(error);
     }
 
-    await this.#UserService.updateUser({ _id: req.user.id }, { active: false });
+    await this.#UserService.updateUser(
+      { _id: req.user.id },
+      { $set: { active: false } },
+    );
 
     res.status(204).json({
       status: 'success',
@@ -192,7 +195,7 @@ class UserController {
 
     const user = await this.#UserService.updateUser(
       { _id: req.user.id },
-      { active: true },
+      { $set: { active: true } },
       { select, new: true, includeInactive: true },
     );
 
@@ -224,7 +227,10 @@ class UserController {
 
   // Finds the document for the current logged in user and sets it 'active' property to true, effectively disabling it.
   deactivateMe = catchAsync(async (req, res, next) => {
-    await this.#UserService.updateUser({ _id: req.user.id }, { active: false });
+    await this.#UserService.updateUser(
+      { _id: req.user.id },
+      { $set: { active: false } },
+    );
 
     await this.#CollectionService.updateCollections(
       { collector: req.user.username, status: 'posted' },
@@ -298,7 +304,7 @@ class UserController {
   updateUser = catchAsync(async (req, res, next) => {
     const doc = await this.#UserService.updateUser(
       { username: req.params.username },
-      req.body,
+      { $set: req.body },
       {
         new: true,
         runValidators: true,
@@ -475,11 +481,15 @@ class UserController {
   });
 
   savePost = catchAsync(async (req, res, next) => {
+    const docId = req.params.postId;
+    const docType = 'post';
+    const operation = 'save';
+
     const doc = await this.#UserService.updateUser(
       { _id: req.user.id },
       {
         $push: {
-          savedPosts: { $each: [req.params.postId], $position: 0 },
+          savedPosts: { $each: [docId], $position: 0 },
         },
       },
       {
@@ -491,14 +501,18 @@ class UserController {
     res.status(200).json({
       status: 'success',
       // TODO: See if ownUser must remain
-      data: { ownUser: doc, docId: req.params.postId },
+      data: { ownUser: doc, docId, docType, operation },
     });
   });
 
   unsavePost = catchAsync(async (req, res, next) => {
+    const docId = req.params.postId;
+    const docType = 'post';
+    const operation = 'unsave';
+
     const doc = await this.#UserService.updateUser(
       { _id: req.user.id },
-      { $pull: { savedPosts: req.params.postId } },
+      { $pull: { savedPosts: docId } },
       {
         new: true,
         runValidators: true,
@@ -507,7 +521,7 @@ class UserController {
 
     res.status(200).json({
       status: 'success',
-      data: { ownUser: doc, docId: req.params.postId },
+      data: { ownUser: doc, docId, docType, operation },
     });
   });
 
@@ -550,11 +564,15 @@ class UserController {
   });
 
   saveCollection = catchAsync(async (req, res, next) => {
+    const docId = req.params.collectionId;
+    const docType = 'collection';
+    const operation = 'save';
+
     const doc = await this.#UserService.updateUser(
       { _id: req.user.id },
       {
         $push: {
-          savedCollections: { $each: [req.params.collectionId], $position: 0 },
+          savedCollections: { $each: [docId], $position: 0 },
         },
       },
       {
@@ -566,14 +584,18 @@ class UserController {
     res.status(200).json({
       status: 'success',
       // TODO: See if ownUser must remain
-      data: { ownUser: doc, docId: req.params.collectionId },
+      data: { ownUser: doc, docId, docType, operation },
     });
   });
 
   unsaveCollection = catchAsync(async (req, res, next) => {
+    const docId = req.params.collectionId;
+    const docType = 'collection';
+    const operation = 'unsave';
+
     const doc = await this.#UserService.updateUser(
       { _id: req.user.id },
-      { $pull: { savedCollections: req.params.collectionId } },
+      { $pull: { savedCollections: docId } },
       {
         new: true,
         runValidators: true,
@@ -582,7 +604,7 @@ class UserController {
 
     res.status(200).json({
       status: 'success',
-      data: { ownUser: doc, docId: req.params.collectionId },
+      data: { ownUser: doc, docId, docType, operation },
     });
   });
 

@@ -37,7 +37,8 @@ class UserService {
   updateUser(matchObject, updateObject, updateOptions) {
     return this.#User.findOneAndUpdate(
       matchObject,
-      { $set: updateObject },
+      // { $set: updateObject },
+      updateObject,
       updateOptions,
     );
   }
