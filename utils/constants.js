@@ -24,5 +24,3 @@ exports.CONVERSATION_LIMIT = 30;
 
 // The username set for all anonymous users who are allowed to leave comments or interact in other ways with the app
 exports.ANONYMOUS_USERNAME = 'lectoranonimo';
-
-exports.FRONTEND_ADDRESS = 'http://localhost:5173';

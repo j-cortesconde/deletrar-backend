@@ -9,7 +9,7 @@ const AppError = require('../utils/appError');
 const Email = require('../utils/email');
 const UserService = require('../services/userService');
 
-const { ADMIN, FRONTEND_ADDRESS } = require('../utils/constants');
+const { ADMIN } = require('../utils/constants');
 
 class AuthController {
   #UserService = new UserService();
@@ -93,7 +93,7 @@ class AuthController {
 
   // Highly complex method that handles foreign user's account request (to admins or users) and that contemplates the account already existing (in any role)
   requestInvite = catchAsync(async (req, res, next) => {
-    const homepageURL = `${FRONTEND_ADDRESS}/home`;
+    const homepageURL = `${process.env.FRONTEND_URL}/home`;
     // A) Validate all fields have been sent. toWhom = {isUser=boolean, username}
     if (
       !req.body.email ||
@@ -114,7 +114,7 @@ class AuthController {
     });
     if (existingRequestorUser) {
       try {
-        const forgotPasswordURL = `${FRONTEND_ADDRESS}/password/forgot`;
+        const forgotPasswordURL = `${process.env.FRONTEND_URL}/password/forgot`;
 
         if (existingRequestorUser.role === 'user') {
           await new Email(
@@ -173,7 +173,7 @@ class AuthController {
             passwordConfirm: password,
           });
 
-          const inviteURL = `${FRONTEND_ADDRESS}/users/invite?email=${req.body.email}`;
+          const inviteURL = `${process.env.FRONTEND_URL}/users/invite?email=${req.body.email}`;
 
           // Email requester and requested users
           await new Email(requestedUser, inviteURL).sendAccountRequestReceived(
@@ -305,7 +305,7 @@ class AuthController {
 
     // 3) Sends a welcome email to the user's email (including the pw reset token link)
     try {
-      const resetURL = `${FRONTEND_ADDRESS}/password/reset/${resetToken}`;
+      const resetURL = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`;
       await new Email(user, resetURL).sendWelcome();
 
       res.status(200).json({
@@ -408,7 +408,7 @@ class AuthController {
   // Checks the user is initialized (isn't invitee). If so, nexts, if not, errors and prompts to initialize.
   isInitialized = (req, res, next) => {
     if (req.user.role === 'invitee') {
-      const initializeURL = `${process.env.FRONTEND_ADDRESS}/account/initialize`;
+      const initializeURL = `${process.env.process.env.FRONTEND_URL}/account/initialize`;
       return next(
         new AppError(
           `Tu cuenta aún no fue inicializada. Para hacerlo, dirigite a ${initializeURL}`,
@@ -423,7 +423,7 @@ class AuthController {
   // Checks the user account is active. If so, nexts, if not, errors and prompts to reactivate.
   isActive = (req, res, next) => {
     if (!req.user.active) {
-      const reactivateURL = `${process.env.FRONTEND_ADDRESS}/account/reactivate`;
+      const reactivateURL = `${process.env.process.env.FRONTEND_URL}/account/reactivate`;
       return next(
         new AppError(
           `Tu cuenta está desactivada. Para reactivarla dirigite a ${reactivateURL}`,
@@ -470,7 +470,7 @@ class AuthController {
 
     // 3) Send it to user's email
     try {
-      const resetURL = `${FRONTEND_ADDRESS}/password/reset/${resetToken}`;
+      const resetURL = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`;
       await new Email(user, resetURL).sendPasswordReset();
 
       res.status(200).json({
