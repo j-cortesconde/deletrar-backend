@@ -258,7 +258,7 @@ class UserController {
   });
 
   getAllUsers = catchAsync(async (req, res, next) => {
-    const doc = await this.#UserService.getAllUsers(
+    const doc = await this.#UserService.getUsers(
       req.query,
       'name username email photo description createdAt',
     );
