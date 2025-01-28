@@ -19,7 +19,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = socketIo(httpServer, {
   cors: {
-    origin: '*',
+    origin: [process.env.FRONTEND_URL],
     credentials: true,
   },
 });
