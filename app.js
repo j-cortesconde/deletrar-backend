@@ -17,14 +17,11 @@ const ErrorController = require('./controllers/errorController');
 
 const app = express();
 const httpServer = createServer(app);
-const io = socketIo(
-  httpServer,
-  // , {
-  // cors: {
-  //   origin: process.env.FRONTEND_URL,
-  // },
-  // }
-);
+const io = socketIo(httpServer, {
+  cors: {
+    origin: [process.env.FRONTEND_URL],
+  },
+});
 
 const ioController = new IoController(io);
 const errorController = new ErrorController();
