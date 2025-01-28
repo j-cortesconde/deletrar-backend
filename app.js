@@ -19,7 +19,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = socketIo(httpServer, {
   cors: {
-    origin: [process.env.FRONTEND_URL],
+    origin: '*',
   },
 });
 
@@ -32,7 +32,12 @@ if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 // Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  }),
+);
 
 app.use('/api/v1', indexRouter);
 
