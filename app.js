@@ -20,6 +20,7 @@ const httpServer = createServer(app);
 const io = socketIo(httpServer, {
   cors: {
     origin: '*',
+    credentials: true,
   },
 });
 
