@@ -2,7 +2,6 @@
 const User = require('../models/userModel');
 const APIFeatures = require('../utils/apiFeatures');
 const { AGGREGATION_LIMIT } = require('../utils/constants');
-// const mockData = require('../helpers/userPreload');
 
 class UserService {
   #User = User;
@@ -474,39 +473,6 @@ class UserService {
       },
     ]);
   }
-
-  // async createMockUsers() {
-  //   function removeAccents(str) {
-  //     return str
-  //       .normalize('NFD') // Normalize to decomposed form
-  //       .replace(/[\u0300-\u036f]/g, ''); // Remove all diacritical marks
-  //   }
-
-  //   const newUsers = await Promise.all(
-  //     mockData.names.map(async (name, index) => {
-  //       const [firstName, lastName] = name.split(' ');
-  //       const username = removeAccents(
-  //         firstName.slice(0, 1).concat(lastName).toLowerCase(),
-  //       );
-  //       const email = username.concat('@deletrar.com');
-
-  //       const mockUser = { ...mockData.userExamples[0] };
-  //       mockUser.role = 'user';
-  //       mockUser.name = name;
-  //       mockUser.username = username;
-  //       mockUser.email = email;
-  //       mockUser.password;
-  //       mockUser.passwordConfirm;
-  //       // '$2a$12$BryDI.szpL7zoVUwCndHPezW8VDei1EYuSQ9UvgcwntVuzcJ8t65W';
-  //       mockUser.description = mockData.descriptions[index];
-  //       mockUser.photo = `https://randomuser.me/api/portraits/${index % 2 === 0 ? 'men' : 'women'}/${index + 1}.jpg`;
-
-  //       return await this.#User.create(mockUser);
-  //     }),
-  //   );
-
-  //   return newUsers;
-  // }
 }
 
 module.exports = UserService;
