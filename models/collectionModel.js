@@ -23,7 +23,7 @@ const collectionSchema = new mongoose.Schema(
     },
     coverImage: {
       type: String,
-      default: 'default.jpg',
+      // default: 'default.jpg',
     },
     posts: [
       {

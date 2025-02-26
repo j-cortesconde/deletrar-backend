@@ -27,7 +27,8 @@ const userSchema = new mongoose.Schema(
     },
     photo: {
       type: String,
-      default: 'default.jpg',
+      default:
+        'https://deletrar-images.s3.us-east-1.amazonaws.com/profile-pictures/default.jpg',
     },
     description: {
       type: String,

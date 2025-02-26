@@ -19,7 +19,7 @@ const postSchema = new mongoose.Schema(
     },
     coverImage: {
       type: String,
-      default: 'default.jpg',
+      // default: 'default.jpg',
     },
     createdAt: {
       type: Date,
